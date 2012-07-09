@@ -1,0 +1,12 @@
+
+
+OCDirectory
+
+enum Status: Disabled, Waiting, Idle, Error
+enum Error: TimeSync, Connection, Disk, Other
+
+enable()
+disable()
+
+add()
+remove()

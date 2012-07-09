@@ -241,3 +241,5 @@ if(KRAZY2_EXECUTABLE)
 )
 endif()
 
+
+add_subdirectory(plasma)
