@@ -35,7 +35,7 @@ public:
     QString localPath;
     QString remotePath;
 
-    QList<QObject*> folders;
+    QList<OwncloudFolder*> folders;
 
     void loadFolders();
 };
@@ -47,6 +47,8 @@ OwncloudSettings::OwncloudSettings()
 
     kDebug() << "OwncloudSettings module loaded.";
     d->loadFolders();
+    emit foldersChanged();
+
 }
 
 OwncloudSettings::~OwncloudSettings()
@@ -55,29 +57,36 @@ OwncloudSettings::~OwncloudSettings()
     delete d;
 }
 
-QList<QObject*> OwncloudSettings::items()
+QDeclarativeListProperty<OwncloudFolder> OwncloudSettings::folders()
 {
-    return d->folders;
+    return QDeclarativeListProperty<OwncloudFolder>(this, d->folders);
 }
+
 
 void OwncloudSettingsPrivate::loadFolders()
 {
+    OwncloudFolder *f1;
+
+    f1 = new OwncloudFolder(q);
+    f1->setDisplayName("My Computer");
+    folders << f1;
+
     OwncloudFolder *f;
 
     f = new OwncloudFolder(q);
-    f->setName("My Documents");
+    f->setDisplayName("My Documents");
     folders << f;
 
     f = new OwncloudFolder(q);
-    f->setName("My Videos");
+    f->setDisplayName("My Videos");
     folders << f;
 
     f = new OwncloudFolder(q);
-    f->setName("My Images");
+    f->setDisplayName("My Images");
     folders << f;
 
     f = new OwncloudFolder(q);
-    f->setName("My Files");
+    f->setDisplayName("My Files");
     folders << f;
 
     kDebug() << "Loaded folders : " << folders.count();

@@ -7,10 +7,11 @@ import org.kde.plasma.owncloud 0.1 as OC
 ListView {
     id: folderList
     header: PlasmaExtras.Heading { level: 3; text: i18n("My Folders") }
-    model: owncloudSettings
+    footer: PlasmaComponents.Label { text: "muchos Folders." }
+    model: owncloudSettings.folders
 
     delegate: PlasmaComponents.Label {
-        text: "FOlder: "
+        text: displayName
         width: 200
         height: 48
     }

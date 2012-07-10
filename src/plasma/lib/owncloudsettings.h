@@ -24,10 +24,14 @@
 
 #include <KIconLoader>
 
+#include "owncloudfolder.h"
+
+#include <QDeclarativeComponent>
 #include <QObject>
 #include <QIcon>
 #include <QVariant>
 #include <QStringListModel>
+
 
 class OwncloudSettingsPrivate;
 
@@ -35,14 +39,18 @@ class OwncloudSettings : public QObject
 {
     Q_OBJECT
 
+    Q_PROPERTY(QDeclarativeListProperty<OwncloudFolder> folders READ folders NOTIFY foldersChanged)
+
     public:
         OwncloudSettings();
         virtual ~OwncloudSettings();
 
-        QList<QObject*> items();
+//         QList<QObject*> items();
+        QDeclarativeListProperty<OwncloudFolder> folders();
 
     Q_SIGNALS:
         void dataChanged();
+        void foldersChanged();
 
     private:
         OwncloudSettingsPrivate* d;
