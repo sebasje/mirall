@@ -56,6 +56,10 @@ class OwncloudFolder : public QObject
         void setName(const QString &n);
         void setDisplayName(const QString &n);
 
+        Q_INVOKABLE void enable();
+        Q_INVOKABLE void disable();
+        Q_INVOKABLE void remove();
+
     Q_SIGNALS:
         void statusChanged();
         void errorChanged();

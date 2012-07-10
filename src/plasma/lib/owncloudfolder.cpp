@@ -99,5 +99,24 @@ void OwncloudFolder::setDisplayName(const QString &n)
     emit displayNameChanged();
 }
 
+// Q_INVOKABLES
+
+void OwncloudFolder::enable()
+{
+    kDebug() << "Enable folder." << d->name;
+    setStatus(Idle);
+}
+
+void OwncloudFolder::disable()
+{
+    kDebug() << "Disable folder." << d->name;
+    setStatus(Disabled);
+}
+
+void OwncloudFolder::remove()
+{
+    kDebug() << "Remove folder." << d->name;
+}
+
 
 #include "owncloudfolder.moc"
