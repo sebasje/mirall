@@ -3,12 +3,14 @@ project( active_settings_owncloud )
 #include(KDE4Defaults)
 add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
 
-#include_directories(${KDE4_INCLUDES} ../../../../components/settings)
+include_directories(../lib/)
 
 
 set(owncloudsettings_SRCS
     owncloudsettingsplugin.cpp
-    owncloudsettings.cpp
+    ../lib/owncloudsettings.cpp
+    ../lib/owncloudfolder.cpp
+
 )
 
 

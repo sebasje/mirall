@@ -18,55 +18,33 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************/
 
+#ifndef OWNCLOUDFOLDER_H
+#define OWNCLOUDFOLDER_H
 
-#include "owncloudsettings.h"
+#include <QObject>
+#include <QString>
 
-#include <kdebug.h>
-// #include <KIcon>
-// #include <KLocale>
+class OwncloudFolderPrivate;
 
-// #include <QStandardItemModel>
-// #include <QTimer>
-#include <QVariant>
+class OwncloudFolder : public QObject
+{
+    Q_OBJECT
 
-// #include <kdemacros.h>
-// #include <KPluginFactory>
-// #include <KPluginLoader>
-// #include <KSharedConfig>
-// #include <KStandardDirs>
-// #include <KConfigGroup>
-// #include <KGlobalSettings>
-// #include <KSystemTimeZone>
-// #include <KTimeZone>
+    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
 
-#include <QtDeclarative/qdeclarative.h>
-#include <QtDeclarative/QDeclarativeItem>
-#include <QtCore/QDate>
+    public:
+        explicit OwncloudFolder(QObject *parent = 0);
+        virtual ~OwncloudFolder();
 
+        QString name();
+    public Q_SLOTS:
+        void setName(const QString &n);
 
-class OwncloudSettingsPrivate {
-public:
-    OwncloudSettings *q;
-    QString name;
-    QString localPath;
-    QString remotePath;
+    Q_SIGNALS:
+        void nameChanged();
 
-    QList<QObject*> folders;
+    private:
+        OwncloudFolderPrivate* d;
 };
 
-OwncloudSettings::OwncloudSettings()
-{
-    d = new OwncloudSettingsPrivate;
-    d->q = this;
-
-    kDebug() << "OwncloudSettings module loaded.";
-}
-
-OwncloudSettings::~OwncloudSettings()
-{
-    kDebug() << "========================== owncloudsettings destroy";
-    delete d;
-}
-
-
-#include "owncloudsettings.moc"
+#endif // OWNCLOUDFOLDER_H

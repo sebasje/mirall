@@ -3,7 +3,10 @@ project(plasma-applet-owncloud)
 include (KDE4Defaults)
 
 set(owncloud_SRCS
-    owncloudapplet.cpp)
+    owncloudapplet.cpp
+    ../lib/owncloudsettings.cpp
+    ../lib/owncloudfolder.cpp
+)
 
 add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
 
