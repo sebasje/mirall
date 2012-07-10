@@ -26,26 +26,54 @@ import org.kde.qtextracomponents 0.1
 
 ListView {
     id: folderList
-    header: PlasmaExtras.Heading { level: 3; text: i18n("My Folders") }
+    header: PlasmaExtras.Heading { level: 3; text: i18n("My Folders"); height: 64 }
     footer: PlasmaComponents.Label { text: "muchos Folders." }
     model: owncloudSettings.folders
+    interactive: height < contentHeight
 
     delegate: Item {
-        width: 200
+        width: parent.width
         height: 48
-        PlasmaComponents.Label {
+        PlasmaComponents.Switch {
+            id: enabledSwitch
+            checked: OwncloudFolder.Disabled != status
+            anchors { top: parent.top; left: parent.left; rightMargin: 12 }
+            onClicked: {
+                if (checked) {
+                    enable();
+                } else {
+                    disable();
+                }
+            }
+        }
+        PlasmaExtras.Heading {
+            level: 4
             text: displayName
-            anchors { top: parent.top; left: parent.left; }
+            anchors { top: parent.top; left: enabledSwitch.right; leftMargin: 12; }
         }
         QIconItem {
-            icon: status == OwncloudFolder.Idle ? "task-complete" : "task-ongoing"
-            width: parent.height
-            height: parent.height
+            icon: statusIcon(status)
+            width: parent.height/2
+            height: parent.height/2
             anchors { top: parent.top; right: parent.right; }
         }
     }
+
     OwncloudSettings {
         id: owncloudSettings
     }
 
+    function statusIcon(e) {
+        if (e == OwncloudFolder.Idle) return "task-complete";
+        if (e == OwncloudFolder.Waiting) return "task-ongoing";
+        if (e == OwncloudFolder.Disabled) return "user-offline";
+        if (e == OwncloudFolder.Error) return "task-reject";
+    }
+
+    function statusMessage(e) {
+        if (e == OwncloudFolder.Idle) return i18n("Idle");
+        if (e == OwncloudFolder.Waiting) return i18n("Syncing...");
+        if (e == OwncloudFolder.Disabled) return i18n("Disabled");
+        if (e == OwncloudFolder.Error) return i18n("Error");
+    }
 }

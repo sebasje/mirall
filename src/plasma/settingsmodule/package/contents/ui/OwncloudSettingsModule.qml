@@ -53,15 +53,17 @@ Item {
             id: descriptionLabel
             text: settingsComponent.description
             opacity: .4
-        }
-        FolderList {
-            id: folderList
-            width: parent.width
-            height: 400
+            //anchors.bottomMargin: 20
         }
 
     }
 
+    FolderList {
+        id: folderList
+        width: parent.width*.6
+        height: 400
+        anchors { top: titleCol.bottom; topMargin: 24; left: parent.left; }
+    }
 
     Component.onCompleted: {
         print("Loaded OwncloudSettingsModule.qml successfully.");

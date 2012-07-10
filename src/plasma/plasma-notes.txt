@@ -1,12 +1,18 @@
 
 
-OCDirectory
+OwncloudFolder
 
-enum Status: Disabled, Waiting, Idle, Error
-enum Error: TimeSync, Connection, Disk, Other
+o enum Status: Disabled, Waiting, Idle, Error
+o enum Error: TimeSync, Connection, Disk, Other
 
-enable()
-disable()
+* enable()
+* disable()
 
-add()
 remove()
+
+OwncloudSettings:
+o folders()
+* add()
+
+
+o == done; * == todo
