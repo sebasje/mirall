@@ -1,0 +1,79 @@
+/***************************************************************************
+ *                                                                         *
+ *   Copyright 2012 Sebastian Kügler <sebas@kde.org>                       *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
+ ***************************************************************************/
+
+
+#ifndef TIMESETTINGS_H
+#define TIMESETTINGS_H
+
+#include <KIconLoader>
+
+#include <QObject>
+#include <QIcon>
+#include <QVariant>
+#include <QStringListModel>
+
+//#include "settingsmodule.h"
+
+class OwncloudSettingsPrivate;
+
+/**
+ * @class A class to manage time and date related settings. This class serves two functions:
+ * - Provide a plugin implementation
+ * - Provide a settings module
+ * This is done from one class in order to simplify the code. You can export any QObject-based
+ * class through qmlRegisterType(), however.
+ */
+class OwncloudSettings : public QObject
+{
+    Q_OBJECT
+
+//     Q_PROPERTY(QString timeFormat READ timeFormat WRITE setTimeFormat NOTIFY timeFormatChanged)
+//     Q_PROPERTY(bool twentyFour READ twentyFour WRITE setTwentyFour NOTIFY twentyFourChanged)
+//     Q_PROPERTY(QString timeZone READ timeZone WRITE setTimeZone NOTIFY timeZoneChanged)
+//     Q_PROPERTY(QList<QObject*> timeZones READ timeZones WRITE setTimeZones NOTIFY timeZonesChanged)
+//     Q_PROPERTY(QObject* timeZonesModel READ timeZonesModel WRITE setTimeZonesModel NOTIFY timeZonesModelChanged)
+//     Q_PROPERTY(QTime currentTime READ currentTime WRITE setCurrentTime NOTIFY currentTimeChanged)
+//     Q_PROPERTY(QDate currentDate READ currentDate WRITE setCurrentDate NOTIFY currentDateChanged)
+//     Q_PROPERTY(QString ntpServer READ ntpServer WRITE setNtpServer NOTIFY ntpServerChanged)
+//     Q_PROPERTY(QStringList availableNtpServers READ availableNtpServers CONSTANT)
+//     Q_PROPERTY(QString currentTimeText READ currentTimeText NOTIFY currentTimeTextChanged)
+
+    public:
+        /**
+         * @name Plugin Constructor
+         *
+         * @arg parent The parent object
+         * @arg list Arguments, currently unused
+         */
+//         explicit TimeSettings(QObject *parent, const QVariantList &list = QVariantList());
+        /**
+         * @name Settings Module Constructor
+         *
+         * @arg parent The parent object
+         * @arg list Arguments, currently unused
+         */
+        OwncloudSettings();
+        virtual ~OwncloudSettings();
+
+    private:
+        OwncloudSettingsPrivate* d;
+};
+
+#endif // TIMESETTINGS_H
