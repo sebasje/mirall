@@ -24,13 +24,21 @@
 #include <KConfigGroup>
 
 #include <Plasma/DeclarativeWidget>
+#include <Plasma/Package>
 
 OwncloudApplet::OwncloudApplet(QObject *parent, const QVariantList &args)
     : Plasma::PopupApplet(parent, args),
     m_declarativeWidget(0)
 {
+    Plasma::PackageStructure::Ptr structure = Plasma::PackageStructure::load("Plasma/Generic");
+    Plasma::Package *package = new Plasma::Package(QString(), "org.kde.active.settings.owncloud", structure);
+    const QString qmlFile = package->filePath("ui", "OwncloudPlasmoid.qml");
+    delete package;
+
+    kDebug() << " Loading QML File from package: " << qmlFile;
+    m_declarativeWidget = new Plasma::DeclarativeWidget(this);
+    m_declarativeWidget->setQmlPath(qmlFile);
     setAspectRatioMode(Plasma::IgnoreAspectRatio);
-//    setCacheMode(DeviceCoordinateCache);
 }
 
 OwncloudApplet::~OwncloudApplet()
@@ -39,7 +47,7 @@ OwncloudApplet::~OwncloudApplet()
 
 void OwncloudApplet::init()
 {
-    setPopupIcon("view-pim-calendar");
+    setPopupIcon("owncloud");
     m_declarativeWidget = new Plasma::DeclarativeWidget(this);
     m_declarativeWidget->setMinimumSize(220, 250);
     configChanged();

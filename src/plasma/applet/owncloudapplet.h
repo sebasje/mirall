@@ -48,6 +48,7 @@ class OwncloudApplet : public Plasma::PopupApplet
 
     private:
         Plasma::DeclarativeWidget *m_declarativeWidget;
+        //Plasma::Package *m_package;
 };
 
 K_EXPORT_PLASMA_APPLET(owncloud, OwncloudApplet)
