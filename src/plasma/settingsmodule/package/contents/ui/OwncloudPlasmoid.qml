@@ -23,6 +23,7 @@ import org.kde.plasma.core 0.1 as PlasmaCore
 import org.kde.plasma.components 0.1 as PlasmaComponents
 import org.kde.plasma.extras 0.1 as PlasmaExtras
 
+
 Item {
     id: owncloudModule
     objectName: "owncloudModule"
@@ -43,6 +44,8 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
+        anchors.leftMargin: 20
+        anchors.topMargin: 20
         PlasmaExtras.Title {
             text: i18n("ownCloud")
             opacity: 1
@@ -51,6 +54,12 @@ Item {
             id: descriptionLabel
             text: "synching etc."
             opacity: .4
+        }
+
+        FolderList {
+            id: folderList
+            width: parent.width
+            height: 400
         }
     }
 

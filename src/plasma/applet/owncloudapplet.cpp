@@ -18,6 +18,10 @@
  ***************************************************************************/
 
 #include "owncloudapplet.h"
+#include "owncloudsettings.h"
+#include "owncloudfolder.h"
+
+#include <QtDeclarative>
 
 #include <KDebug>
 #include <KConfigDialog>
@@ -37,6 +41,10 @@ OwncloudApplet::OwncloudApplet(QObject *parent, const QVariantList &args)
 
     kDebug() << " Loading QML File from package: " << qmlFile;
     m_declarativeWidget = new Plasma::DeclarativeWidget(this);
+
+    qmlRegisterType<OwncloudSettings>("org.kde.plasma.owncloud", 0, 1, "OwncloudSettings");
+    qmlRegisterType<OwncloudFolder>("org.kde.plasma.owncloud", 0, 1, "OwncloudFolder");
+
     m_declarativeWidget->setQmlPath(qmlFile);
     setAspectRatioMode(Plasma::IgnoreAspectRatio);
 }

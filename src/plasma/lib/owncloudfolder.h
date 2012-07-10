@@ -31,17 +31,22 @@ class OwncloudFolder : public QObject
     Q_OBJECT
 
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
+    Q_PROPERTY(QString displayName READ displayName WRITE setDisplayName NOTIFY displayNameChanged)
 
     public:
         explicit OwncloudFolder(QObject *parent = 0);
         virtual ~OwncloudFolder();
 
         QString name();
+        QString displayName();
+
     public Q_SLOTS:
         void setName(const QString &n);
+        void setDisplayName(const QString &n);
 
     Q_SIGNALS:
         void nameChanged();
+        void displayNameChanged();
 
     private:
         OwncloudFolderPrivate* d;

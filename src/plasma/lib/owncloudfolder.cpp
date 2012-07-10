@@ -34,7 +34,8 @@ OwncloudFolder::OwncloudFolder(QObject* parent)
 {
     d = new OwncloudFolderPrivate;
     d->q = this;
-    setName("My Documents");
+    setName("d-fault.");
+    setDisplayName(name());
 }
 
 OwncloudFolder::~OwncloudFolder()
@@ -51,6 +52,21 @@ void OwncloudFolder::setName(const QString &n)
 {
     d->name = n;
     emit nameChanged();
+    setDisplayName(n);
+}
+
+QString OwncloudFolder::displayName()
+{
+    return d->name;
+}
+
+void OwncloudFolder::setDisplayName(const QString &n)
+{
+    if (d->name == n) {
+        return;
+    }
+    d->name = n;
+    emit displayNameChanged();
 }
 
 #include "owncloudfolder.moc"

@@ -20,14 +20,13 @@
 
 
 #include "owncloudsettings.h"
+#include "owncloudfolder.h"
 
 #include <kdebug.h>
 #include <QVariant>
 
 #include <QtDeclarative/qdeclarative.h>
 #include <QtDeclarative/QDeclarativeItem>
-#include <QtCore/QDate>
-
 
 class OwncloudSettingsPrivate {
 public:
@@ -37,6 +36,8 @@ public:
     QString remotePath;
 
     QList<QObject*> folders;
+
+    void loadFolders();
 };
 
 OwncloudSettings::OwncloudSettings()
@@ -45,12 +46,41 @@ OwncloudSettings::OwncloudSettings()
     d->q = this;
 
     kDebug() << "OwncloudSettings module loaded.";
+    d->loadFolders();
 }
 
 OwncloudSettings::~OwncloudSettings()
 {
     kDebug() << "========================== owncloudsettings destroy";
     delete d;
+}
+
+QList<QObject*> OwncloudSettings::items()
+{
+    return d->folders;
+}
+
+void OwncloudSettingsPrivate::loadFolders()
+{
+    OwncloudFolder *f;
+
+    f = new OwncloudFolder(q);
+    f->setName("My Documents");
+    folders << f;
+
+    f = new OwncloudFolder(q);
+    f->setName("My Videos");
+    folders << f;
+
+    f = new OwncloudFolder(q);
+    f->setName("My Images");
+    folders << f;
+
+    f = new OwncloudFolder(q);
+    f->setName("My Files");
+    folders << f;
+
+    kDebug() << "Loaded folders : " << folders.count();
 }
 
 

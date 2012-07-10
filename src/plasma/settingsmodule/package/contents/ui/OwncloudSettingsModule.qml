@@ -29,9 +29,9 @@ Item {
     id: owncloudModule
     objectName: "owncloudModule"
 
-    OwncloudSettings {
-        id: owncloudSettings
-    }
+//     OwncloudSettings {
+//         id: owncloudSettings
+//     }
 
     width: 800; height: 500
 
@@ -54,11 +54,17 @@ Item {
             text: settingsComponent.description
             opacity: .4
         }
+        FolderList {
+            id: folderList
+            width: parent.width
+            height: 400
+        }
+
     }
 
 
     Component.onCompleted: {
-        print("Loaded Owncloud.qml successfully.");
+        print("Loaded OwncloudSettingsModule.qml successfully.");
     }
 
 }

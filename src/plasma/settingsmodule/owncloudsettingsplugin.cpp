@@ -20,6 +20,7 @@
 
 #include "owncloudsettingsplugin.h"
 #include "owncloudsettings.h"
+#include "owncloudfolder.h"
 
 #include <kdebug.h>
 #include <KIcon>
@@ -47,8 +48,9 @@ OwncloudSettingsPlugin::OwncloudSettingsPlugin(QObject *parent, const QVariantLi
     Q_UNUSED(list)
 
     kDebug() << "OwncloudSettingsPlugin created:)";
-    qmlRegisterType<OwncloudSettings>();
-    qmlRegisterType<OwncloudSettings>("org.kde.active.settings", 0, 1, "OwncloudSettings");
+    //qmlRegisterType<OwncloudSettings>();
+    qmlRegisterType<OwncloudSettings>("org.kde.plasma.owncloud", 0, 1, "OwncloudSettings");
+    qmlRegisterType<OwncloudFolder>("org.kde.plasma.owncloud", 0, 1, "OwncloudFolder");
 }
 
 OwncloudSettingsPlugin::~OwncloudSettingsPlugin()

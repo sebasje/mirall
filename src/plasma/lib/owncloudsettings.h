@@ -19,8 +19,8 @@
  ***************************************************************************/
 
 
-#ifndef TIMESETTINGS_H
-#define TIMESETTINGS_H
+#ifndef OWNCLOUDSETTINGS_H
+#define OWNCLOUDSETTINGS_H
 
 #include <KIconLoader>
 
@@ -29,51 +29,23 @@
 #include <QVariant>
 #include <QStringListModel>
 
-//#include "settingsmodule.h"
-
 class OwncloudSettingsPrivate;
 
-/**
- * @class A class to manage time and date related settings. This class serves two functions:
- * - Provide a plugin implementation
- * - Provide a settings module
- * This is done from one class in order to simplify the code. You can export any QObject-based
- * class through qmlRegisterType(), however.
- */
 class OwncloudSettings : public QObject
 {
     Q_OBJECT
 
-//     Q_PROPERTY(QString timeFormat READ timeFormat WRITE setTimeFormat NOTIFY timeFormatChanged)
-//     Q_PROPERTY(bool twentyFour READ twentyFour WRITE setTwentyFour NOTIFY twentyFourChanged)
-//     Q_PROPERTY(QString timeZone READ timeZone WRITE setTimeZone NOTIFY timeZoneChanged)
-//     Q_PROPERTY(QList<QObject*> timeZones READ timeZones WRITE setTimeZones NOTIFY timeZonesChanged)
-//     Q_PROPERTY(QObject* timeZonesModel READ timeZonesModel WRITE setTimeZonesModel NOTIFY timeZonesModelChanged)
-//     Q_PROPERTY(QTime currentTime READ currentTime WRITE setCurrentTime NOTIFY currentTimeChanged)
-//     Q_PROPERTY(QDate currentDate READ currentDate WRITE setCurrentDate NOTIFY currentDateChanged)
-//     Q_PROPERTY(QString ntpServer READ ntpServer WRITE setNtpServer NOTIFY ntpServerChanged)
-//     Q_PROPERTY(QStringList availableNtpServers READ availableNtpServers CONSTANT)
-//     Q_PROPERTY(QString currentTimeText READ currentTimeText NOTIFY currentTimeTextChanged)
-
     public:
-        /**
-         * @name Plugin Constructor
-         *
-         * @arg parent The parent object
-         * @arg list Arguments, currently unused
-         */
-//         explicit TimeSettings(QObject *parent, const QVariantList &list = QVariantList());
-        /**
-         * @name Settings Module Constructor
-         *
-         * @arg parent The parent object
-         * @arg list Arguments, currently unused
-         */
         OwncloudSettings();
         virtual ~OwncloudSettings();
+
+        QList<QObject*> items();
+
+    Q_SIGNALS:
+        void dataChanged();
 
     private:
         OwncloudSettingsPrivate* d;
 };
 
-#endif // TIMESETTINGS_H
+#endif // OWNCLOUDSETTINGS_H
