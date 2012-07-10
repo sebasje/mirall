@@ -21,7 +21,8 @@
 import QtQuick 1.1
 import org.kde.plasma.components 0.1 as PlasmaComponents
 import org.kde.plasma.extras 0.1 as PlasmaExtras
-import org.kde.plasma.owncloud 0.1 as OC
+import org.kde.plasma.owncloud 0.1
+import org.kde.qtextracomponents 0.1
 
 ListView {
     id: folderList
@@ -29,13 +30,21 @@ ListView {
     footer: PlasmaComponents.Label { text: "muchos Folders." }
     model: owncloudSettings.folders
 
-    delegate: PlasmaComponents.Label {
-        text: displayName
+    delegate: Item {
         width: 200
         height: 48
+        PlasmaComponents.Label {
+            text: displayName
+            anchors { top: parent.top; left: parent.left; }
+        }
+        QIconItem {
+            icon: status == OwncloudFolder.Idle ? "task-complete" : "task-ongoing"
+            width: parent.height
+            height: parent.height
+            anchors { top: parent.top; right: parent.right; }
+        }
     }
-
-    OC.OwncloudSettings {
+    OwncloudSettings {
         id: owncloudSettings
     }
 

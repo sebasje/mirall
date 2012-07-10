@@ -75,6 +75,7 @@ void OwncloudSettingsPrivate::loadFolders()
 
     f = new OwncloudFolder(q);
     f->setDisplayName("My Documents");
+    f->setStatus(OwncloudFolder::Error);
     folders << f;
 
     f = new OwncloudFolder(q);
@@ -83,10 +84,12 @@ void OwncloudSettingsPrivate::loadFolders()
 
     f = new OwncloudFolder(q);
     f->setDisplayName("My Images");
+    f->setStatus(OwncloudFolder::Waiting);
     folders << f;
 
     f = new OwncloudFolder(q);
     f->setDisplayName("My Files");
+    f->setStatus(OwncloudFolder::Disabled);
     folders << f;
 
     kDebug() << "Loaded folders : " << folders.count();

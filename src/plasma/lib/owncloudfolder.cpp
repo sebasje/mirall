@@ -27,6 +27,8 @@ class OwncloudFolderPrivate {
 public:
     OwncloudFolder *q;
     QString name;
+    int error;
+    int status;
 };
 
 OwncloudFolder::OwncloudFolder(QObject* parent)
@@ -36,11 +38,39 @@ OwncloudFolder::OwncloudFolder(QObject* parent)
     d->q = this;
     setName("d-fault.");
     setDisplayName(name());
+    d->error = NoError;
+    d->status = Idle;
 }
 
 OwncloudFolder::~OwncloudFolder()
 {
     delete d;
+}
+
+int OwncloudFolder::status()
+{
+    return d->status;
+}
+
+void OwncloudFolder::setStatus(int i)
+{
+    if (d->status != i) {
+        d->status = i;
+        emit statusChanged();
+    }
+}
+
+int OwncloudFolder::error()
+{
+    return d->error;
+}
+
+void OwncloudFolder::setError(int i)
+{
+    if (d->error != i) {
+        d->error = i;
+        emit errorChanged();
+    }
 }
 
 QString OwncloudFolder::name()
@@ -68,5 +98,6 @@ void OwncloudFolder::setDisplayName(const QString &n)
     d->name = n;
     emit displayNameChanged();
 }
+
 
 #include "owncloudfolder.moc"
