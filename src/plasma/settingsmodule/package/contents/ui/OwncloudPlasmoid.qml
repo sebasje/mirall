@@ -32,7 +32,8 @@ Item {
 //         id: owncloudSettings
 //     }
 
-    width: 800; height: 500
+    width: childrenRect.width + 48
+    height: childrenRect.height + 48
 
 //     MobileComponents.Package {
 //         id: owncloudPackage
@@ -43,7 +44,8 @@ Item {
         id: titleCol
         anchors.top: parent.top
         anchors.left: parent.left
-        anchors.right: parent.right
+        //anchors.right: parent.right
+        width: parent.width - 48
         anchors.leftMargin: 20
         anchors.topMargin: 20
         PlasmaExtras.Title {

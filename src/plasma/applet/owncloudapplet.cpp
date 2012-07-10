@@ -34,6 +34,18 @@ OwncloudApplet::OwncloudApplet(QObject *parent, const QVariantList &args)
     : Plasma::PopupApplet(parent, args),
     m_declarativeWidget(0)
 {
+    setAspectRatioMode(Plasma::IgnoreAspectRatio);
+}
+
+OwncloudApplet::~OwncloudApplet()
+{
+}
+
+void OwncloudApplet::init()
+{
+    setPopupIcon("owncloud");
+    configChanged();
+
     Plasma::PackageStructure::Ptr structure = Plasma::PackageStructure::load("Plasma/Generic");
     Plasma::Package *package = new Plasma::Package(QString(), "org.kde.active.settings.owncloud", structure);
     const QString qmlFile = package->filePath("ui", "OwncloudPlasmoid.qml");
@@ -46,19 +58,7 @@ OwncloudApplet::OwncloudApplet(QObject *parent, const QVariantList &args)
     qmlRegisterType<OwncloudFolder>("org.kde.plasma.owncloud", 0, 1, "OwncloudFolder");
 
     m_declarativeWidget->setQmlPath(qmlFile);
-    setAspectRatioMode(Plasma::IgnoreAspectRatio);
-}
-
-OwncloudApplet::~OwncloudApplet()
-{
-}
-
-void OwncloudApplet::init()
-{
-    setPopupIcon("owncloud");
-    m_declarativeWidget = new Plasma::DeclarativeWidget(this);
     m_declarativeWidget->setMinimumSize(220, 250);
-    configChanged();
 }
 
 void OwncloudApplet::configChanged()
