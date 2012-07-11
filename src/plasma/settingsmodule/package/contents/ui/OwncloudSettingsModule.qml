@@ -63,6 +63,8 @@ Item {
         width: parent.width*.6
         height: 400
         anchors { top: titleCol.bottom; topMargin: 24; left: parent.left; }
+        header: PlasmaExtras.Heading { level: 3; text: i18n("My Folders"); height: 64 }
+        footer: PlasmaComponents.Label { text: "muchos Folders." }
     }
 
     Component.onCompleted: {

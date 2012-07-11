@@ -26,8 +26,6 @@ import org.kde.qtextracomponents 0.1
 
 ListView {
     id: folderList
-    header: PlasmaExtras.Heading { level: 3; text: i18n("My Folders"); height: 64 }
-    footer: PlasmaComponents.Label { text: "muchos Folders." }
     model: owncloudSettings.folders
     interactive: height < contentHeight
 

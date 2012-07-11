@@ -44,18 +44,13 @@ Item {
         id: titleCol
         anchors.top: parent.top
         anchors.left: parent.left
-        //anchors.right: parent.right
         width: parent.width - 48
         anchors.leftMargin: 20
         anchors.topMargin: 20
-        PlasmaExtras.Title {
-            text: i18n("ownCloud")
-            opacity: 1
-        }
-        PlasmaComponents.Label {
-            id: descriptionLabel
-            text: "synching etc."
-            opacity: .4
+        spacing: 20
+        PlasmaExtras.Heading {
+            level: 2
+            text: i18n("ownCloud Sync")
         }
 
         FolderList {
