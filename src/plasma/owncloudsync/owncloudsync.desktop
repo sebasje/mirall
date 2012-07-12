@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Service
+Exec=owncloudsync
+X-KDE-StartupNotify=false
+OnlyShowIn=KDE;
+X-KDE-autostart-phase=1
+Name=ownCloud Sync
+Comment=Daemon to handle data synchronization with ownCloud
