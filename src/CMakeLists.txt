@@ -191,6 +191,16 @@ if(NOT BUILD_OWNCLOUD_OSX_BUNDLE)
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
+    #install(TARGETS owncloudsync ${INSTALL_TARGETS_DEFAULT_ARGS})
+
+
+    install(TARGETS owncloudsync
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        BUNDLE  DESTINATION library
+    )
+
 else()
     set(BIN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
     include(DeployQt4)
