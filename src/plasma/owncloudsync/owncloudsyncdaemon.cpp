@@ -26,6 +26,11 @@
 #include <QVariant>
 #include <QTimer>
 
+#include "mirall/syncresult.h"
+#include "mirall/folder.h"
+#include "mirall/logbrowser.h"
+#include "mirall/folderman.h"
+
 
 class OwncloudSyncDaemonPrivate {
 public:
@@ -39,6 +44,7 @@ public:
     QHash<QString, QVariantMap> folders;
     QTimer *timer;
 
+    Mirall::FolderMan* folderMan;
     void loadFolders();
 
     int c;
@@ -51,6 +57,11 @@ OwncloudSyncDaemon::OwncloudSyncDaemon(QObject *parent)
     d->loadFolders();
     d->display = "ownCloud Sync Daemon";
 
+    d->folderMan = new Mirall::FolderMan();
+//     connect( _folderMan, SIGNAL(folderSyncStateChange(QString)),
+//              this,SLOT(slotSyncStateChange(QString)));
+
+    
     d->timer = new QTimer(this);
     d->c = 0;
     d->timer->setInterval(3000);

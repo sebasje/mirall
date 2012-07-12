@@ -1,34 +1,38 @@
-project(owncloudsync)
+project(owncloudsyncd)
 
 include_directories(
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${owncloudsync_BINARY_DIR}
+  ${owncloudsyncdaemon_BINARY_DIR}
+  ../..
   )
 
-set(owncloudsync_SRCS
+set(owncloudsyncd_SRCS
   owncloudsync.cpp
   owncloudsyncdaemon.cpp
   main.cpp
   )
 
-qt4_add_dbus_adaptor(owncloudsync_SRCS
+qt4_add_dbus_adaptor(owncloudsyncd_SRCS
   org.kde.owncloudsync.xml
   owncloudsyncdaemon.h
   OwncloudSyncDaemon)
 
-kde4_add_kdeinit_executable(owncloudsync ${owncloudsync_SRCS})
+kde4_add_kdeinit_executable(owncloudsyncd ${owncloudsyncd_SRCS})
 
-target_link_libraries(kdeinit_owncloudsync
+ADD_LIBRARY(owncloudsyncd_SRCS STATIC IMPORTED)
+
+target_link_libraries(kdeinit_owncloudsyncd
   #${KDE4_KDEUI_LIBS}
   ${QT_QTDBUS_LIBRARY}
   ${QT_QTCORE_LIBRARY}
+  owncloudsync
 
 )
 
-target_link_libraries(owncloudsync
-  kdeinit_owncloudsync
+target_link_libraries(owncloudsyncd
+  kdeinit_owncloudsyncd
 )
 
 install(
@@ -36,9 +40,9 @@ install(
   DESTINATION ${AUTOSTART_INSTALL_DIR})
 
 install(
-  TARGETS kdeinit_owncloudsync
+  TARGETS kdeinit_owncloudsyncd
   DESTINATION ${LIB_INSTALL_DIR})
 
 install(
-  TARGETS owncloudsync
+  TARGETS owncloudsyncd
   ${INSTALL_TARGETS_DEFAULT_ARGS})

@@ -28,7 +28,6 @@
 #include <QVariant>
 #include <QStringListModel>
 
-
 class OwncloudSyncDaemonPrivate;
 
 class OwncloudSyncDaemon : public QObject
