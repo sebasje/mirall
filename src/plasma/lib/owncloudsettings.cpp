@@ -22,6 +22,8 @@
 #include "owncloudsettings.h"
 #include "owncloudfolder.h"
 
+#include "../applet/owncloud_interface.h"
+
 #include <kdebug.h>
 #include <QVariant>
 
@@ -31,9 +33,11 @@
 class OwncloudSettingsPrivate {
 public:
     OwncloudSettings *q;
+    OrgKdeOwncloudsyncInterface* client;
     QString name;
     QString localPath;
     QString remotePath;
+    QString statusMessage;
 
     QList<OwncloudFolder*> folders;
 
@@ -46,6 +50,7 @@ OwncloudSettings::OwncloudSettings()
     d->q = this;
 
     kDebug() << "OwncloudSettings module loaded.";
+    init();
     d->loadFolders();
     emit foldersChanged();
 
@@ -57,6 +62,57 @@ OwncloudSettings::~OwncloudSettings()
     delete d;
 }
 
+
+void OwncloudSettings::init()
+{
+    d->client = new OrgKdeOwncloudsyncInterface("org.kde.owncloudsync", "/", QDBusConnection::sessionBus(), this);
+    QObject::connect(d->client, SIGNAL(displayChanged(QString)), this, SLOT(setStatusMessage(QString)));
+    QObject::connect(d->client, SIGNAL(statusMessageChanged(QString)), this, SLOT(setStatusMessage(QString)));
+    QObject::connect(d->client, SIGNAL(folderListChanged(const QVariantMap&)), this, SLOT(setFolderList(const QVariantMap&)));
+
+    kDebug() << d->client->display();
+    setStatusMessage(d->client->display());
+}
+
+void OwncloudSettings::setDisplay(const QString& n)
+{
+    kDebug() << "displayChanged" << n;
+}
+
+void OwncloudSettings::setStatusMessage(const QString& n)
+{
+    if (d->statusMessage != n) {
+        //kDebug() << "Setting status message: " << n;
+        d->statusMessage = n;
+        emit statusMessageChanged();
+    }
+}
+
+QString OwncloudSettings::statusMessage()
+{
+    return d->statusMessage;
+}
+
+void OwncloudSettings::setFolderList(const QVariantMap& m)
+{
+    kDebug() << "Folder changed!" << m;
+    foreach (QObject* f, d->folders) {
+        delete f;
+    }
+    d->folders.clear();
+    foreach (const QString &k, m.keys()) {
+        OwncloudFolder *f1;
+
+        f1 = new OwncloudFolder(this);
+        f1->setDisplayName(k);
+        f1->setStatus(m[k].toInt());
+        d->folders << f1;
+    }
+    emit foldersChanged();
+}
+
+
+
 QDeclarativeListProperty<OwncloudFolder> OwncloudSettings::folders()
 {
     return QDeclarativeListProperty<OwncloudFolder>(this, d->folders);
@@ -65,6 +121,7 @@ QDeclarativeListProperty<OwncloudFolder> OwncloudSettings::folders()
 
 void OwncloudSettingsPrivate::loadFolders()
 {
+    return;
     OwncloudFolder *f1;
 
     f1 = new OwncloudFolder(q);

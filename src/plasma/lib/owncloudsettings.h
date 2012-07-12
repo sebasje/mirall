@@ -40,17 +40,27 @@ class OwncloudSettings : public QObject
     Q_OBJECT
 
     Q_PROPERTY(QDeclarativeListProperty<OwncloudFolder> folders READ folders NOTIFY foldersChanged)
+    Q_PROPERTY(QString statusMessage READ statusMessage WRITE setStatusMessage NOTIFY statusMessageChanged)
 
     public:
         OwncloudSettings();
         virtual ~OwncloudSettings();
 
-//         QList<QObject*> items();
+        void init();
+
+    public Q_SLOTS:
         QDeclarativeListProperty<OwncloudFolder> folders();
+        void setDisplay(const QString &n);
+
+        QString statusMessage();
+        void setStatusMessage(const QString &n);
+
+        void setFolderList(const QVariantMap &m);
 
     Q_SIGNALS:
         void dataChanged();
         void foldersChanged();
+        void statusMessageChanged();
 
     private:
         OwncloudSettingsPrivate* d;

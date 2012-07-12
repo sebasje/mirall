@@ -24,14 +24,15 @@ import org.kde.plasma.components 0.1 as PlasmaComponents
 import org.kde.plasma.extras 0.1 as PlasmaExtras
 import org.kde.plasma.mobilecomponents 0.1 as MobileComponents
 import org.kde.active.settings 0.1
+import org.kde.plasma.owncloud 0.1
 
 Item {
     id: owncloudModule
     objectName: "owncloudModule"
 
-//     OwncloudSettings {
-//         id: owncloudSettings
-//     }
+    OwncloudSettings {
+        id: owncloudSettings
+    }
 
     width: 800; height: 500
 

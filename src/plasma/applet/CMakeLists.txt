@@ -2,11 +2,21 @@ project(plasma-applet-owncloud)
 
 include (KDE4Defaults)
 
+include_directories(
+  ${CMAKE_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${plasma_applet_owncloud_BINARY_DIR}
+  )
+
 set(owncloud_SRCS
     owncloudapplet.cpp
     ../lib/owncloudsettings.cpp
     ../lib/owncloudfolder.cpp
 )
+
+qt4_add_dbus_interface(owncloud_SRCS ../owncloudsync/org.kde.owncloudsync.xml owncloud_interface )
 
 add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
 

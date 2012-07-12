@@ -5,6 +5,27 @@
       <arg type="s" direction="out" />
     </method>
     <signal name="displayChanged">
+      <arg type="s" direction="out" />
     </signal>
+    <signal name="statusMessageChanged">
+      <arg type="s" direction="out" />
+    </signal>
+
+    <method name="folder">
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
+      <arg name="name" type="s" direction="in" />
+      <arg type="a{sv}" direction="out" />
+    </method>
+
+    <method name="folderList">
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
+      <arg type="a{sv}" direction="out" />
+    </method>
+    <signal name="folderListChanged">
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QVariantMap"/>
+      <arg type="a{sv}" direction="out" />
+    </signal>
+
+
   </interface>
 </node>

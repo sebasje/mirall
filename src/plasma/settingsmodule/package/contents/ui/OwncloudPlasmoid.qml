@@ -22,6 +22,7 @@ import QtQuick 1.1
 import org.kde.plasma.core 0.1 as PlasmaCore
 import org.kde.plasma.components 0.1 as PlasmaComponents
 import org.kde.plasma.extras 0.1 as PlasmaExtras
+import org.kde.plasma.owncloud 0.1
 
 
 Item {
@@ -39,7 +40,11 @@ Item {
 //         id: owncloudPackage
 //         name: "org.kde.active.settings.owncloud"
 //     }
-// 
+//
+    OwncloudSettings {
+        id: owncloudSettings
+    }
+
     Column {
         id: titleCol
         anchors.top: parent.top
@@ -57,6 +62,13 @@ Item {
             id: folderList
             width: parent.width
             height: 400
+        }
+
+        PlasmaComponents.Label {
+            id: statusLabel
+            text: owncloudSettings.statusMessage
+            height: 64
+            width: parent.width
         }
     }
 

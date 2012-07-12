@@ -57,10 +57,6 @@ ListView {
         }
     }
 
-    OwncloudSettings {
-        id: owncloudSettings
-    }
-
     function statusIcon(e) {
         if (e == OwncloudFolder.Idle) return "task-complete";
         if (e == OwncloudFolder.Waiting) return "task-ongoing";

@@ -43,9 +43,15 @@ class OwncloudSyncDaemon : public QObject
 
     public Q_SLOTS:
         QString display();
+        QVariantMap folder(QString name);
+        QVariantMap folderList();
+
+        void timeout();
 
     Q_SIGNALS:
         void displayChanged();
+        void folderListChanged(QVariantMap);
+        void statusMessageChanged(QString);
 
     private:
         OwncloudSyncDaemonPrivate* d;

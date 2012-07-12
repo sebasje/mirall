@@ -12,6 +12,7 @@ set(owncloudsettings_SRCS
     ../lib/owncloudfolder.cpp
 
 )
+qt4_add_dbus_interface(owncloudsettings_SRCS ../owncloudsync/org.kde.owncloudsync.xml owncloud_interface )
 
 
 kde4_add_plugin(active_settings_owncloud ${owncloudsettings_SRCS})
