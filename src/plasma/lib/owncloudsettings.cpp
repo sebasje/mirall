@@ -95,7 +95,7 @@ QString OwncloudSettings::statusMessage()
 
 void OwncloudSettings::setFolderList(const QVariantMap& m)
 {
-    kDebug() << "Folder changed!" << m;
+    //kDebug() << "Folder changed!" << m;
     foreach (QObject* f, d->folders) {
         delete f;
     }
