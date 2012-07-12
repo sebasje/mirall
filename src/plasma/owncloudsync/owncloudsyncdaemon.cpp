@@ -69,7 +69,7 @@ OwncloudSyncDaemon::~OwncloudSyncDaemon()
 void OwncloudSyncDaemon::timeout()
 {
     //qDebug() << "timer " << d->c;
-    emit statusMessageChanged(QString("Timeout has fired " + QString::number(d->c/4) + " times."));
+    emit statusMessageChanged(QString("Timeout has fired " + QString::number(d->c/5) + " times."));
     d->c++;
 
     d->loadFolders();
