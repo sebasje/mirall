@@ -25,10 +25,14 @@
 
 #include <QObject>
 #include <QIcon>
+#include <QNetworkReply>
 #include <QVariant>
 #include <QStringListModel>
 
 class OwncloudSyncDaemonPrivate;
+namespace Mirall {
+    class Folder;
+}
 
 class OwncloudSyncDaemon : public QObject
 {
@@ -44,13 +48,22 @@ class OwncloudSyncDaemon : public QObject
         QString display();
         QVariantMap folder(QString name);
         QVariantMap folderList();
+        void updateFolder(const Mirall::Folder *folder);
 
         void timeout();
 
     Q_SIGNALS:
         void displayChanged();
         void folderListChanged(QVariantMap);
+        void folderChanged(QVariantMap);
         void statusMessageChanged(QString);
+
+    protected Q_SLOTS:
+        void slotSyncStateChange(const QString&);
+        void slotOwnCloudFound( const QString&, const QString&, const QString&, const QString& );
+        void slotNoOwnCloudFound( QNetworkReply* );
+        void slotCheckAuthentication();
+        void slotAuthCheck( const QString& ,QNetworkReply* );
 
     private:
         OwncloudSyncDaemonPrivate* d;

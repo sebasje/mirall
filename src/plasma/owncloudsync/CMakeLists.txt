@@ -11,6 +11,7 @@ include_directories(
 set(owncloudsyncd_SRCS
   owncloudsync.cpp
   owncloudsyncdaemon.cpp
+  ../../mirall/owncloudinfo.cpp
   main.cpp
   )
 
@@ -28,7 +29,6 @@ target_link_libraries(kdeinit_owncloudsyncd
   ${QT_QTDBUS_LIBRARY}
   ${QT_QTCORE_LIBRARY}
   owncloudsync
-
 )
 
 target_link_libraries(owncloudsyncd

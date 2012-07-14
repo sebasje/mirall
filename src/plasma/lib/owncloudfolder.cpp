@@ -28,6 +28,7 @@ public:
     OwncloudFolder *q;
     QString name;
     int error;
+    QString errorMessage;
     int status;
 };
 
@@ -47,7 +48,7 @@ OwncloudFolder::~OwncloudFolder()
     delete d;
 }
 
-int OwncloudFolder::status()
+int OwncloudFolder::status() const
 {
     return d->status;
 }
@@ -60,7 +61,7 @@ void OwncloudFolder::setStatus(int i)
     }
 }
 
-int OwncloudFolder::error()
+int OwncloudFolder::error() const
 {
     return d->error;
 }
@@ -73,7 +74,20 @@ void OwncloudFolder::setError(int i)
     }
 }
 
-QString OwncloudFolder::name()
+QString OwncloudFolder::errorMessage() const
+{
+    return d->errorMessage;
+}
+
+void OwncloudFolder::setErrorMessage(const QString& n)
+{
+    if (d->errorMessage != n) {
+        d->errorMessage = n;
+        emit errorMessageChanged();
+    }
+}
+
+QString OwncloudFolder::name() const
 {
     return d->name;
 }
@@ -85,7 +99,7 @@ void OwncloudFolder::setName(const QString &n)
     setDisplayName(n);
 }
 
-QString OwncloudFolder::displayName()
+QString OwncloudFolder::displayName() const
 {
     return d->name;
 }

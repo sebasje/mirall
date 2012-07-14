@@ -35,6 +35,7 @@ class OwncloudFolder : public QObject
 
     Q_PROPERTY(int status READ status NOTIFY statusChanged)
     Q_PROPERTY(int error READ error NOTIFY errorChanged)
+    Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
     Q_PROPERTY(QString displayName READ displayName WRITE setDisplayName NOTIFY displayNameChanged)
 
@@ -42,17 +43,19 @@ class OwncloudFolder : public QObject
         explicit OwncloudFolder(QObject *parent = 0);
         virtual ~OwncloudFolder();
 
-        enum Status { Disabled, Waiting, Idle, Error };
+        enum Status { Disabled, Waiting, Running, Idle, Error };
         enum Error { NoError, TimeSync, Connection, Disk, Other };
 
-        int status();
-        int error();
-        QString name();
-        QString displayName();
+        int status() const;
+        int error() const;
+        QString errorMessage() const;
+        QString name() const;
+        QString displayName() const;
 
     public Q_SLOTS:
         void setStatus(int i);
         void setError(int i);
+        void setErrorMessage(const QString &n);
         void setName(const QString &n);
         void setDisplayName(const QString &n);
 
@@ -63,6 +66,7 @@ class OwncloudFolder : public QObject
     Q_SIGNALS:
         void statusChanged();
         void errorChanged();
+        void errorMessageChanged();
         void nameChanged();
         void displayNameChanged();
 

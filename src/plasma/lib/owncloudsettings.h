@@ -56,6 +56,7 @@ class OwncloudSettings : public QObject
         void setStatusMessage(const QString &n);
 
         void setFolderList(const QVariantMap &m);
+        void setFolder(const QVariantMap &m);
 
     Q_SIGNALS:
         void dataChanged();

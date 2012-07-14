@@ -33,8 +33,8 @@ Item {
 //         id: owncloudSettings
 //     }
 
-    width: childrenRect.width + 48
-    height: childrenRect.height + 48
+//     width: childrenRect.width + 48
+//     height: childrenRect.height + 48
 
 //     MobileComponents.Package {
 //         id: owncloudPackage
@@ -48,6 +48,7 @@ Item {
     Column {
         id: titleCol
         anchors.top: parent.top
+        anchors.bottom: parent.bottom
         anchors.left: parent.left
         width: parent.width - 48
         anchors.leftMargin: 20
@@ -55,13 +56,14 @@ Item {
         spacing: 20
         PlasmaExtras.Heading {
             level: 2
+            height: 48
             text: i18n("ownCloud Sync")
         }
 
         FolderList {
             id: folderList
             width: parent.width
-            height: 400
+            height: 240
         }
 
         PlasmaComponents.Label {

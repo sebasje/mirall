@@ -78,6 +78,7 @@ extern "C" KDE_EXPORT int kdemain( int argc, char** argv )
 //     KCmdLineArgs::init( argc, argv, &aboutData );
 //     KComponentData componentData( &aboutData );
     QCoreApplication app(argc, argv);
+    app.setApplicationName("Mirall"); // Needed to locate the right config file
 
     if (QDBusConnection::sessionBus().interface()->isServiceRegistered(QLatin1String("org.kde.owncloudsync"))) {
         fprintf( stderr, "owncloudsync already running.\n" );

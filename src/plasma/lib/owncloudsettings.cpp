@@ -69,6 +69,7 @@ void OwncloudSettings::init()
     QObject::connect(d->client, SIGNAL(displayChanged(QString)), this, SLOT(setStatusMessage(QString)));
     QObject::connect(d->client, SIGNAL(statusMessageChanged(QString)), this, SLOT(setStatusMessage(QString)));
     QObject::connect(d->client, SIGNAL(folderListChanged(const QVariantMap&)), this, SLOT(setFolderList(const QVariantMap&)));
+    QObject::connect(d->client, SIGNAL(folderChanged(const QVariantMap&)), this, SLOT(setFolder(const QVariantMap&)));
 
     kDebug() << d->client->display();
     setStatusMessage(d->client->display());
@@ -111,7 +112,34 @@ void OwncloudSettings::setFolderList(const QVariantMap& m)
     emit foldersChanged();
 }
 
+void OwncloudSettings::setFolder(const QVariantMap& m)
+{
+    QString alias = m["name"].toString();
+    OwncloudFolder *folder = 0;
 
+    bool exists = false;
+    foreach (OwncloudFolder *f, d->folders) {
+
+        if (f->displayName() == alias) {
+            folder = f;
+            exists = true;
+            continue;
+        }
+    }
+    if (exists) {
+        //kDebug() << "OC Updating existing folder" << alias;
+    } else {
+        kDebug() << "OC New Folder" << alias;
+        folder = new OwncloudFolder(this);
+        d->folders << folder;
+    }
+    folder->setDisplayName(alias);
+    folder->setStatus(m["status"].toInt());
+    folder->setErrorMessage(m["errorMessage"].toString());
+    kDebug() << "OC Updating" << alias << folder->errorMessage();
+
+    emit foldersChanged();
+}
 
 QDeclarativeListProperty<OwncloudFolder> OwncloudSettings::folders()
 {

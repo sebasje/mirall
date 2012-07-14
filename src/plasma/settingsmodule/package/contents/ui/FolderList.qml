@@ -31,7 +31,12 @@ ListView {
 
     delegate: Item {
         width: parent.width
-        height: 48
+        height: status == OwncloudFolder.Idle ? 48 : 96;
+
+        Behavior on height {
+            NumberAnimation { easing.type: Easing.InOutDouble; duration: 400 }
+        }
+
         PlasmaComponents.Switch {
             id: enabledSwitch
             checked: OwncloudFolder.Disabled != status
@@ -46,8 +51,19 @@ ListView {
         }
         PlasmaExtras.Heading {
             level: 4
+            id: aliasLabel
             text: displayName
             anchors { top: parent.top; left: enabledSwitch.right; leftMargin: 12; }
+        }
+        PlasmaComponents.Label {
+            id: errorLabel
+            font.pointSize: theme.smallestFont.pointSize
+            anchors { left: aliasLabel.left; right: statusIcon.left; top: aliasLabel.bottom; }
+            text: errorMessage
+            opacity: status == OwncloudFolder.Error ? 1 : 0
+            Behavior on opacity {
+                NumberAnimation { easing.type: Easing.InOutDouble; duration: 400 }
+            }
         }
         QIconItem {
             icon: statusIcon(status)

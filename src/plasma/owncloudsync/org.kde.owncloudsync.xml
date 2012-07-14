@@ -26,6 +26,11 @@
       <arg type="a{sv}" direction="out" />
     </signal>
 
+    <signal name="folderChanged">
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QVariantMap"/>
+      <arg type="a{sv}" direction="out" />
+    </signal>
+
 
   </interface>
 </node>
