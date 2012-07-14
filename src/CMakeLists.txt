@@ -63,13 +63,16 @@ set(libsync_SRCS
     mirall/mirallconfigfile.cpp
     mirall/csyncfolder.cpp
     mirall/owncloudfolder.cpp
+    #mirall/owncloudinfo.cpp
     mirall/csyncthread.cpp
     mirall/fileutils.cpp
     mirall/theme.cpp
     mirall/owncloudtheme.cpp
     mirall/miralltheme.cpp
 )
-set(libsync_HEADERS 
+
+
+set(libsync_HEADERS
     mirall/folderman.h
     mirall/folder.h
     mirall/folderwatcher.h
@@ -89,7 +92,7 @@ qt4_wrap_cpp(syncMoc ${libsync_HEADERS})
 
 add_library(mirallsync   SHARED ${libsync_SRCS} ${syncMoc})
 add_library(owncloudsync SHARED ${libsync_SRCS} ${syncMoc})
-set_target_properties( owncloudsync PROPERTIES COMPILE_DEFINITIONS OWNCLOUD_CLIENT)
+#set_target_properties( owncloudsync PROPERTIES COMPILE_DEFINITIONS OWNCLOUD_CLIENT)
 target_link_libraries(mirallsync ${QT_LIBRARIES} ${CSYNC_LIBRARY} )
 target_link_libraries(owncloudsync ${QT_LIBRARIES} ${CSYNC_LIBRARY} )
 
@@ -191,9 +194,13 @@ if(NOT BUILD_OWNCLOUD_OSX_BUNDLE)
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
-    #install(TARGETS owncloudsync ${INSTALL_TARGETS_DEFAULT_ARGS})
 
+    target_link_libraries(owncloudsync ${QT_LIBRARIES} )
+    target_link_libraries(owncloudsync owncloudsync)
+    target_link_libraries(owncloudsync ${CSYNC_LIBRARY})
 
+    set_target_properties(owncloudsync PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY  ${BIN_OUTPUT_DIRECTORY} )
     install(TARGETS owncloudsync
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
