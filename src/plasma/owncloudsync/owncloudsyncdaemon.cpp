@@ -91,8 +91,8 @@ OwncloudSyncDaemon::OwncloudSyncDaemon(QObject *parent)
     }
 
     //int cnt = d->folderMan->setupFolders();
-    int cnt;
-    qDebug() << " no: " << cnt;
+//     int cnt;
+//     qDebug() << " no: " << cnt;
 
     //d->loadFolders();
 
@@ -270,7 +270,8 @@ void OwncloudSyncDaemon::slotAuthCheck( const QString& ,QNetworkReply *reply )
         //_actionAddFolder->setEnabled( false );
     } else {
         qDebug() << "######## Credentials are ok!";
-        int cnt = d->folderMan->setupFolders();
+        d->folderMan->setupFolders();
+        //int cnt = d->folderMan->setupFolders();
         d->loadFolders();
     }
 }
