@@ -43,6 +43,7 @@ public:
     QString display;
 
     QVariantMap folderList;
+    QVariantMap owncloudInfo;
     QHash<QString, QVariantMap> folders;
     QTimer *timer;
 
@@ -55,6 +56,7 @@ public:
 };
 
 OwncloudSyncDaemon::OwncloudSyncDaemon(QObject *parent)
+    : QObject(parent)
 {
     d = new OwncloudSyncDaemonPrivate;
     d->q = this;
@@ -80,29 +82,19 @@ OwncloudSyncDaemon::OwncloudSyncDaemon(QObject *parent)
         d->ocInfo->checkInstallation();
     } else {
         QString er = tr("No ownCloud Configuration"),
-                                tr("<p>No server connection has been configured for this ownCloud client.</p>"
-                                "<p>Please right click on the ownCloud system tray icon and select <i>Configure</i> "
-                                "to connect this client to an ownCloud server.</p>");
-        // It was evaluated to open the config dialog from here directly but decided
-        // against because the user does not know why. The popup gives a better user
-        // guidance, even if its a click more.
+        emit statusMessageChanged(er);
         qDebug() << " Error: " << er;
         d->ocInfo->checkInstallation();
     }
 
-    //int cnt = d->folderMan->setupFolders();
-//     int cnt;
-//     qDebug() << " no: " << cnt;
+    d->loadFolders();
 
-    //d->loadFolders();
-
-    d->timer = new QTimer(this);
-    d->c = 0;
-    d->timer->setInterval(500);
-    d->timer->setSingleShot(true);
-    d->timer->start();
-    connect(d->timer, SIGNAL(timeout()), SLOT(timeout()));
-    //emit folderListChanged(d->folderList);
+//     d->timer = new QTimer(this);
+//     d->c = 0;
+//     d->timer->setInterval(500);
+//     d->timer->setSingleShot(true);
+//     d->timer->start();
+//     connect(d->timer, SIGNAL(timeout()), SLOT(timeout()));
     qDebug() << "OwncloudSyncDaemon loaded.";
 }
 
@@ -115,36 +107,54 @@ OwncloudSyncDaemon::~OwncloudSyncDaemon()
 void OwncloudSyncDaemon::timeout()
 {
     //qDebug() << "timer " << d->c;
-    emit statusMessageChanged(QString("Timeout has fired " + QString::number(d->c/5) + " times."));
+    //emit statusMessageChanged(QString("Timeout has fired " + QString::number(d->c/5) + " times."));
     d->c++;
 
     d->loadFolders();
     emit folderListChanged(d->folderList);
-    //qDebug() << d->folderList;
 }
 
 void OwncloudSyncDaemon::slotSyncStateChange(const QString &s )
 {
 //     qDebug() << "OC slotSyncStateChange : " << s;
-    //d->loadFolders();
     updateFolder(d->folderMan->folder(s));
 }
 
 QString OwncloudSyncDaemon::display()
 {
-    qDebug() << "display() " << d->display;
+    qDebug() << "OC display() " << d->display;
     return d->display;
 }
 
 QVariantMap OwncloudSyncDaemon::folder(QString name)
 {
-    qDebug() << "folder()" << name;
+    qDebug() << "OC folder()" << name;
     return d->folders[name];
 }
+
+void OwncloudSyncDaemon::enableFolder(const QString &name, bool enabled)
+{
+    qDebug() << " OC enableFolder: " << name << enabled;
+    Mirall::Folder *f = d->folderMan->folder(name);
+    if (f) {
+        f->setSyncEnabled(enabled);
+        updateFolder(f);
+    } else {
+        qWarning() << "Folder \"" << name << "\" does not exist.";
+    }
+}
+
 
 QVariantMap OwncloudSyncDaemon::folderList()
 {
     return d->folderList;
+}
+
+void OwncloudSyncDaemon::refresh()
+{
+    qDebug() << "OC Syncdaemon refresh()";
+    d->loadFolders();
+    emit owncloudChanged(d->owncloudInfo);
 }
 
 void OwncloudSyncDaemonPrivate::loadFolders()
@@ -208,8 +218,10 @@ void OwncloudSyncDaemon::updateFolder(const Mirall::Folder* folder)
         if (r == Mirall::SyncResult::Undefined) s = OwncloudFolder::Error;
     } else {
         s = OwncloudFolder::Disabled;
+        //qDebug() << "OC sync enabled? " << folder->alias() << folder->syncEnabled();
     }
-    qDebug() << "OC updateFolder: " << errorMsg(r);
+    qDebug() << "OC sync enabled? " << folder->alias() << folder->syncEnabled();
+    //qDebug() << "OC updateFolder: " << errorMsg(r);
     if (r == 999) {
         //qDebug() << "OC dunno what to do with " << r;
         s = OwncloudFolder::Error;
@@ -235,6 +247,13 @@ void OwncloudSyncDaemon::slotOwnCloudFound( const QString& url, const QString& v
     Mirall::MirallConfigFile cfgFile;
     cfgFile.setOwnCloudVersion( version );
 
+    d->owncloudInfo["url"] = url;
+    d->owncloudInfo["version"] = version;
+    d->owncloudInfo["versionString"] = versionStr;
+    d->owncloudInfo["edition"] = edition;
+
+    emit owncloudChanged(d->owncloudInfo);
+
     QTimer::singleShot( 0, this, SLOT( slotCheckAuthentication() ));
 }
 
@@ -251,6 +270,7 @@ void OwncloudSyncDaemon::slotNoOwnCloudFound( QNetworkReply* reply )
     msg += tr("<p>Please check your configuration by clicking on the tray icon.</p>");
 
     QString er = tr("ownCloud Connection Failed");
+    emit statusMessageChanged(er);
     //_actionAddFolder->setEnabled( false );
     //setupContextMenu();
 }
@@ -286,6 +306,5 @@ void OwncloudSyncDaemon::slotAuthCheck( const QString& ,QNetworkReply *reply )
         d->loadFolders();
     }
 }
-
 
 #include "owncloudsyncdaemon.moc"

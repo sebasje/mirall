@@ -118,13 +118,15 @@ void OwncloudFolder::setDisplayName(const QString &n)
 void OwncloudFolder::enable()
 {
     kDebug() << "Enable folder." << d->name;
-    setFolderStatus(Idle);
+    //setFolderStatus(Idle);
+    emit enableFolder(d->name, true);
 }
 
 void OwncloudFolder::disable()
 {
     kDebug() << "Disable folder." << d->name;
-    setFolderStatus(Disabled);
+    //setFolderStatus(Disabled);
+    emit enableFolder(d->name, false);
 }
 
 void OwncloudFolder::remove()

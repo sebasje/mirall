@@ -30,18 +30,6 @@ Item {
     objectName: "owncloudModule"
     anchors.margins: 24
 
-//     OwncloudSettings {
-//         id: owncloudSettings
-//     }
-
-//     width: childrenRect.width + 48
-//     height: childrenRect.height + 48
-
-//     MobileComponents.Package {
-//         id: owncloudPackage
-//         name: "org.kde.active.settings.owncloud"
-//     }
-//
     OwncloudSettings {
         id: owncloudSettings
     }
@@ -58,13 +46,12 @@ Item {
         FolderList {
             id: folderList
             width: parent.width
-            //height: 240
-            anchors { top: headingLabel.bottom; left: parent.left; right: parent.right; bottom: statusLabel.top; }
+            anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: statusLabel.top; }
         }
 
         PlasmaComponents.Label {
             id: statusLabel
-            text: owncloudSettings.statusMessage
+            text: owncloudSettings.statusMessage + "\n " + owncloudSettings.url + " " + owncloudSettings.version
             height: 64
             width: parent.width
             anchors { bottom: parent.bottom; left: parent.left; right: parent.right; }

@@ -69,6 +69,7 @@ class OwncloudFolder : public QObject
         void errorMessageChanged();
         void nameChanged();
         void displayNameChanged();
+        void enableFolder(const QString &name, bool enabled = true);
 
     private:
         OwncloudFolderPrivate* d;

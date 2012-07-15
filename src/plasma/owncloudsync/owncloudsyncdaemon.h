@@ -46,9 +46,11 @@ class OwncloudSyncDaemon : public QObject
 
     public Q_SLOTS:
         QString display();
+        void refresh();
         QVariantMap folder(QString name);
         QVariantMap folderList();
         void updateFolder(const Mirall::Folder *folder);
+        void enableFolder(const QString &name, bool enabled = true);
 
         void timeout();
 
@@ -57,6 +59,7 @@ class OwncloudSyncDaemon : public QObject
         void folderListChanged(QVariantMap);
         void folderChanged(QVariantMap);
         void statusMessageChanged(QString);
+        void owncloudChanged(QVariantMap);
 
     protected Q_SLOTS:
         void slotSyncStateChange(const QString&);

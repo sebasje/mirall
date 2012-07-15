@@ -40,11 +40,13 @@ public:
     QString statusMessage;
 
     QList<OwncloudFolder*> folders;
+    QVariantMap owncloudInfo;
 
     void loadFolders();
 };
 
-OwncloudSettings::OwncloudSettings()
+OwncloudSettings::OwncloudSettings(QObject* parent) :
+    QObject(parent)
 {
     d = new OwncloudSettingsPrivate;
     d->q = this;
@@ -70,9 +72,11 @@ void OwncloudSettings::init()
     QObject::connect(d->client, SIGNAL(statusMessageChanged(QString)), this, SLOT(setStatusMessage(QString)));
     QObject::connect(d->client, SIGNAL(folderListChanged(const QVariantMap&)), this, SLOT(setFolderList(const QVariantMap&)));
     QObject::connect(d->client, SIGNAL(folderChanged(const QVariantMap&)), this, SLOT(setFolder(const QVariantMap&)));
+    QObject::connect(d->client, SIGNAL(owncloudChanged(const QVariantMap&)), this, SLOT(setOwncloud(const QVariantMap&)));
 
     kDebug() << d->client->display();
     setStatusMessage(d->client->display());
+    //refresh();
 }
 
 void OwncloudSettings::setDisplay(const QString& n)
@@ -83,7 +87,7 @@ void OwncloudSettings::setDisplay(const QString& n)
 void OwncloudSettings::setStatusMessage(const QString& n)
 {
     if (d->statusMessage != n) {
-        //kDebug() << "Setting status message: " << n;
+        kDebug() << "Setting status message: " << n;
         d->statusMessage = n;
         emit statusMessageChanged();
     }
@@ -93,6 +97,40 @@ QString OwncloudSettings::statusMessage()
 {
     return d->statusMessage;
 }
+
+
+// -- owncloud Info handling
+
+void OwncloudSettings::setOwncloud(const QVariantMap& m)
+{
+    d->owncloudInfo = m;
+    emit editionChanged();
+    emit versionChanged();
+    emit urlChanged();
+}
+
+QString OwncloudSettings::edition()
+{
+    return d->owncloudInfo["edition"].toString();
+}
+
+QString OwncloudSettings::version()
+{
+    return d->owncloudInfo["version"].toString();
+}
+
+void OwncloudSettings::setUrl(const QString& u)
+{
+    kWarning() << "setUrl is not supported yet.";
+}
+
+QString OwncloudSettings::url()
+{
+    return d->owncloudInfo["url"].toString();
+
+}
+
+// -- Folder handling
 
 void OwncloudSettings::setFolderList(const QVariantMap& m)
 {
@@ -132,6 +170,7 @@ void OwncloudSettings::setFolder(const QVariantMap& m)
         kDebug() << "OC New Folder" << alias;
         folder = new OwncloudFolder(this);
         d->folders << folder;
+        connect(folder, SIGNAL(enableFolder(const QString&, bool)), this, SLOT(enableFolder(const QString&, bool)));
     }
     folder->setDisplayName(alias);
     folder->setFolderStatus(m["status"].toInt());
@@ -141,11 +180,20 @@ void OwncloudSettings::setFolder(const QVariantMap& m)
     emit foldersChanged();
 }
 
+void OwncloudSettings::enableFolder(const QString& name, bool enabled)
+{
+    d->client->enableFolder(name, enabled);
+}
+
 QDeclarativeListProperty<OwncloudFolder> OwncloudSettings::folders()
 {
     return QDeclarativeListProperty<OwncloudFolder>(this, d->folders);
 }
 
+void OwncloudSettings::refresh()
+{
+    d->client->refresh();
+}
 
 void OwncloudSettingsPrivate::loadFolders()
 {

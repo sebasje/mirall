@@ -103,4 +103,6 @@ ListView {
         if (e == OwncloudFolder.Disabled) return i18n("Disabled");
         if (e == OwncloudFolder.Error) return i18n("Error");
     }
+
+    Component.onCompleted: owncloudSettings.refresh()
 }
