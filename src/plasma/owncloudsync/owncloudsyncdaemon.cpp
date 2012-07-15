@@ -179,6 +179,17 @@ void OwncloudSyncDaemonPrivate::loadFolders()
 //     }
 }
 
+QString errorMsg(int r) {
+    QString s;
+    if (r == Mirall::SyncResult::Success) s = "Mirall::SyncResult::Success -> OwncloudFolder::Idle";
+    if (r == Mirall::SyncResult::Error) s = "Mirall::SyncResult::Error -> OwncloudFolder::Error";
+    if (r == Mirall::SyncResult::NotYetStarted) s = "Mirall::SyncResult::NotYetStarted -> OwncloudFolder::Waiting";
+    if (r == Mirall::SyncResult::SyncRunning) s = "Mirall::SyncResult::SyncRunning -> OwncloudFolder::Running";
+    if (r == Mirall::SyncResult::SetupError) s = "Mirall::SyncResult::SetupError -> OwncloudFolder::Error";
+    if (r == Mirall::SyncResult::Undefined) s = "Mirall::SyncResult::Undefined -> OwncloudFolder::Error";
+    return s;
+}
+
 void OwncloudSyncDaemon::updateFolder(const Mirall::Folder* folder)
 {
     QVariantMap m;
@@ -198,6 +209,7 @@ void OwncloudSyncDaemon::updateFolder(const Mirall::Folder* folder)
     } else {
         s = OwncloudFolder::Disabled;
     }
+    qDebug() << "OC updateFolder: " << errorMsg(r);
     if (r == 999) {
         //qDebug() << "OC dunno what to do with " << r;
         s = OwncloudFolder::Error;
@@ -248,8 +260,6 @@ void OwncloudSyncDaemon::slotCheckAuthentication()
     qDebug() << "OC slotCheckAuthentication";
     qDebug() << "# checking for authentication settings.";
     d->ocInfo->getRequest("/", true ); // this call needs to be authenticated.
-    // simply GET the webdav root, will fail if credentials are wrong.
-    // continue in slotAuthCheck here :-)
 }
 
 void OwncloudSyncDaemon::slotAuthCheck( const QString& ,QNetworkReply *reply )
@@ -260,16 +270,17 @@ void OwncloudSyncDaemon::slotAuthCheck( const QString& ,QNetworkReply *reply )
         QString er = tr("No ownCloud Connection"),
                              tr("<p>Your ownCloud credentials are not correct.</p>"
                                 "<p>Please correct them by starting the configuration dialog from the tray!</p>");
-        //_actionAddFolder->setEnabled( false );
+        emit statusMessageChanged(er);
     } else if( reply->error() == QNetworkReply::OperationCanceledError ) {
         // the username was wrong and ownCloudInfo was closing the request after a couple of auth tries.
         qDebug() << "******** Username or password is wrong!";
         QString er = tr("No ownCloud Connection"),
                              tr("<p>Your ownCloud user name or password is not correct.</p>"
                                 "<p>Please correct it by starting the configuration dialog from the tray!</p>");
-        //_actionAddFolder->setEnabled( false );
+        emit statusMessageChanged(er);
     } else {
         qDebug() << "######## Credentials are ok!";
+        emit statusMessageChanged(tr("Logged in"));
         d->folderMan->setupFolders();
         //int cnt = d->folderMan->setupFolders();
         d->loadFolders();

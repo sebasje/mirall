@@ -48,16 +48,16 @@ OwncloudFolder::~OwncloudFolder()
     delete d;
 }
 
-int OwncloudFolder::status() const
+int OwncloudFolder::folderStatus() const
 {
     return d->status;
 }
 
-void OwncloudFolder::setStatus(int i)
+void OwncloudFolder::setFolderStatus(int i)
 {
     if (d->status != i) {
         d->status = i;
-        emit statusChanged();
+        emit folderStatusChanged();
     }
 }
 
@@ -118,13 +118,13 @@ void OwncloudFolder::setDisplayName(const QString &n)
 void OwncloudFolder::enable()
 {
     kDebug() << "Enable folder." << d->name;
-    setStatus(Idle);
+    setFolderStatus(Idle);
 }
 
 void OwncloudFolder::disable()
 {
     kDebug() << "Disable folder." << d->name;
-    setStatus(Disabled);
+    setFolderStatus(Disabled);
 }
 
 void OwncloudFolder::remove()

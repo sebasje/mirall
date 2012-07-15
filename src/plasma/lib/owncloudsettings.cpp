@@ -106,7 +106,7 @@ void OwncloudSettings::setFolderList(const QVariantMap& m)
 
         f1 = new OwncloudFolder(this);
         f1->setDisplayName(k);
-        f1->setStatus(m[k].toInt());
+        f1->setFolderStatus(m[k].toInt());
         d->folders << f1;
     }
     emit foldersChanged();
@@ -134,9 +134,9 @@ void OwncloudSettings::setFolder(const QVariantMap& m)
         d->folders << folder;
     }
     folder->setDisplayName(alias);
-    folder->setStatus(m["status"].toInt());
+    folder->setFolderStatus(m["status"].toInt());
     folder->setErrorMessage(m["errorMessage"].toString());
-    kDebug() << "OC Updating" << alias << folder->errorMessage();
+    kDebug() << "OC Updating" << alias << folder->folderStatus() << folder->errorMessage();
 
     emit foldersChanged();
 }
@@ -160,7 +160,7 @@ void OwncloudSettingsPrivate::loadFolders()
 
     f = new OwncloudFolder(q);
     f->setDisplayName("My Documents");
-    f->setStatus(OwncloudFolder::Error);
+    f->setFolderStatus(OwncloudFolder::Error);
     folders << f;
 
     f = new OwncloudFolder(q);
@@ -169,12 +169,12 @@ void OwncloudSettingsPrivate::loadFolders()
 
     f = new OwncloudFolder(q);
     f->setDisplayName("My Images");
-    f->setStatus(OwncloudFolder::Waiting);
+    f->setFolderStatus(OwncloudFolder::Waiting);
     folders << f;
 
     f = new OwncloudFolder(q);
     f->setDisplayName("My Files");
-    f->setStatus(OwncloudFolder::Disabled);
+    f->setFolderStatus(OwncloudFolder::Disabled);
     folders << f;
 
     kDebug() << "Loaded folders : " << folders.count();

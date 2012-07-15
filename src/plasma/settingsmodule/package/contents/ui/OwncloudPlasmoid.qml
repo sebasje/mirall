@@ -28,6 +28,7 @@ import org.kde.plasma.owncloud 0.1
 Item {
     id: owncloudModule
     objectName: "owncloudModule"
+    anchors.margins: 24
 
 //     OwncloudSettings {
 //         id: owncloudSettings
@@ -44,26 +45,21 @@ Item {
     OwncloudSettings {
         id: owncloudSettings
     }
-
-    Column {
-        id: titleCol
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        width: parent.width - 48
-        anchors.leftMargin: 20
-        anchors.topMargin: 20
-        spacing: 20
+    Item {
+        anchors { fill: parent; margins: 12; }
         PlasmaExtras.Heading {
+            id: headingLabel
             level: 2
             height: 48
             text: i18n("ownCloud Sync")
+            anchors { top: parent.top; left: parent.left; right: parent.right; }
         }
 
         FolderList {
             id: folderList
             width: parent.width
-            height: 240
+            //height: 240
+            anchors { top: headingLabel.bottom; left: parent.left; right: parent.right; bottom: statusLabel.top; }
         }
 
         PlasmaComponents.Label {
@@ -71,10 +67,9 @@ Item {
             text: owncloudSettings.statusMessage
             height: 64
             width: parent.width
+            anchors { bottom: parent.bottom; left: parent.left; right: parent.right; }
         }
     }
-
-
     Component.onCompleted: {
         print("Loaded OwncloudPlasmoid.qml successfully.");
     }
