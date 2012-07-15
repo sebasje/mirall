@@ -34,7 +34,7 @@ ListView {
         height: folderStatus == OwncloudFolder.Error ? 96 : 48;
 
         Behavior on height {
-            NumberAnimation { easing.type: Easing.InOutQuart; duration: 800 }
+            NumberAnimation { easing.type: Easing.InOutQuart; duration: 400 }
         }
 
         PlasmaComponents.Switch {
@@ -62,7 +62,7 @@ ListView {
             text: errorMessage + " " + statusMessage(folderStatus)
             opacity: (folderStatus == OwncloudFolder.Error) ? 1.0 : 0.0
             Behavior on opacity {
-                PropertyAnimation { easing.type: Easing.InOutQuart; duration: 800 }
+                PropertyAnimation { easing.type: Easing.InOutQuart; duration: 400 }
             }
         }
         QIconItem {
@@ -72,7 +72,7 @@ ListView {
             anchors { top: parent.top; right: parent.right; }
             opacity: (folderStatus == OwncloudFolder.Running) ? 0.0 : 1.0
             Behavior on opacity {
-                PropertyAnimation { easing.type: Easing.InOutQuart; duration: 4000 }
+                PropertyAnimation { easing.type: Easing.InOutQuart; duration: 400 }
             }
         }
         PlasmaComponents.BusyIndicator {
@@ -82,7 +82,7 @@ ListView {
             opacity: (folderStatus == OwncloudFolder.Running) ? 1.0 : 0.0
             running: folderStatus == OwncloudFolder.Running
             Behavior on opacity {
-                PropertyAnimation { easing.type: Easing.InOutQuart; duration: 4000 }
+                PropertyAnimation { easing.type: Easing.InOutQuart; duration: 400 }
             }
         }
     }
