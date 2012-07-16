@@ -14,5 +14,10 @@ OwncloudSettings:
 o folders()
 * add()
 
+* Login.qml - generic log in form w/ title, user, pass, url (line edit or list)
+
+
+
+
 
 o == done; * == todo

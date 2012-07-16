@@ -58,8 +58,11 @@ class OwncloudSyncDaemon : public QObject
         void displayChanged();
         void folderListChanged(QVariantMap);
         void folderChanged(QVariantMap);
-        void statusMessageChanged(QString);
         void owncloudChanged(QVariantMap);
+        void errorChanged(int);
+        void errorMessageChanged(QString);
+        void statusChanged(int);
+        void statusMessageChanged(QString);
 
     protected Q_SLOTS:
         void slotSyncStateChange(const QString&);

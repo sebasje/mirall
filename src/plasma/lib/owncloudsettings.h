@@ -39,8 +39,14 @@ class OwncloudSettings : public QObject
 {
     Q_OBJECT
 
+    Q_ENUMS(Status)
+    Q_ENUMS(Error)
+
+    Q_PROPERTY(int owncloudStatus READ owncloudStatus NOTIFY owncloudStatusChanged)
+    Q_PROPERTY(int error READ error NOTIFY errorChanged)
     Q_PROPERTY(QDeclarativeListProperty<OwncloudFolder> folders READ folders NOTIFY foldersChanged)
     Q_PROPERTY(QString statusMessage READ statusMessage WRITE setStatusMessage NOTIFY statusMessageChanged)
+    Q_PROPERTY(QString errorMessage READ errorMessage WRITE setErrorMessage NOTIFY errorMessageChanged)
     Q_PROPERTY(QString url READ url WRITE setUrl NOTIFY urlChanged)
     Q_PROPERTY(QString version READ version NOTIFY versionChanged)
     Q_PROPERTY(QString edition READ edition NOTIFY editionChanged)
@@ -49,7 +55,22 @@ class OwncloudSettings : public QObject
         OwncloudSettings(QObject* parent = 0);
         virtual ~OwncloudSettings();
 
+        enum Status {
+            Disconnected,
+            Connected,
+            Error
+        };
+        enum Error {
+            NoError, // We're fine
+            AuthenticationError, // owncloud server doesn't accept credentials
+            NetworkError, // server is unreachable
+            NoConfigurationError, // no configuration found
+            NoDaemonError, // owncloudsyncd is not running
+            CustomError // Anything else
+        };
+
         void init();
+
 
     public Q_SLOTS:
         QDeclarativeListProperty<OwncloudFolder> folders();
@@ -58,9 +79,16 @@ class OwncloudSettings : public QObject
         QString version();
         QString edition();
         void setDisplay(const QString &n);
+        int owncloudStatus() const;
+        int error() const;
 
-        QString statusMessage();
+        void setOwncloudStatus(int i);
+        void setError(int i);
+        QString statusMessage() const;
         void setStatusMessage(const QString &n);
+
+        QString errorMessage() const;
+        void setErrorMessage(const QString &n);
 
         void setFolderList(const QVariantMap &m);
         void setFolder(const QVariantMap &m);
@@ -72,8 +100,11 @@ class OwncloudSettings : public QObject
 
     Q_SIGNALS:
         void dataChanged();
+        void owncloudStatusChanged();
+        void errorChanged();
         void foldersChanged();
         void statusMessageChanged();
+        void errorMessageChanged();
         void editionChanged();
         void versionChanged();
         void urlChanged();

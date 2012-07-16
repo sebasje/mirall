@@ -12,6 +12,15 @@
     <signal name="statusMessageChanged">
       <arg type="s" direction="out" />
     </signal>
+    <signal name="errorMessageChanged">
+      <arg type="s" direction="out" />
+    </signal>
+    <signal name="statusChanged">
+      <arg type="i" direction="out" />
+    </signal>
+    <signal name="errorChanged">
+      <arg type="i" direction="out" />
+    </signal>
 
     <signal name="owncloudChanged">
       <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QVariantMap"/>

@@ -37,6 +37,9 @@ public:
     QString name;
     QString localPath;
     QString remotePath;
+    int status;
+    int error;
+    QString errorMessage;
     QString statusMessage;
 
     QList<OwncloudFolder*> folders;
@@ -70,6 +73,9 @@ void OwncloudSettings::init()
     d->client = new OrgKdeOwncloudsyncInterface("org.kde.owncloudsync", "/", QDBusConnection::sessionBus(), this);
     QObject::connect(d->client, SIGNAL(displayChanged(QString)), this, SLOT(setStatusMessage(QString)));
     QObject::connect(d->client, SIGNAL(statusMessageChanged(QString)), this, SLOT(setStatusMessage(QString)));
+    QObject::connect(d->client, SIGNAL(statusChanged(int)), this, SLOT(setOwncloudStatus(int)));
+    QObject::connect(d->client, SIGNAL(errorChanged(int)), this, SLOT(setError(int)));
+    QObject::connect(d->client, SIGNAL(errorMessageChanged(QString)), this, SLOT(setErrorMessage(QString)));
     QObject::connect(d->client, SIGNAL(folderListChanged(const QVariantMap&)), this, SLOT(setFolderList(const QVariantMap&)));
     QObject::connect(d->client, SIGNAL(folderChanged(const QVariantMap&)), this, SLOT(setFolder(const QVariantMap&)));
     QObject::connect(d->client, SIGNAL(owncloudChanged(const QVariantMap&)), this, SLOT(setOwncloud(const QVariantMap&)));
@@ -93,7 +99,7 @@ void OwncloudSettings::setStatusMessage(const QString& n)
     }
 }
 
-QString OwncloudSettings::statusMessage()
+QString OwncloudSettings::statusMessage() const
 {
     return d->statusMessage;
 }
@@ -129,6 +135,46 @@ QString OwncloudSettings::url()
     return d->owncloudInfo["url"].toString();
 
 }
+
+int OwncloudSettings::owncloudStatus() const
+{
+    return d->status;
+}
+
+void OwncloudSettings::setOwncloudStatus(int i)
+{
+    if (d->status != i) {
+        d->status = i;
+        emit owncloudStatusChanged();
+    }
+}
+
+int OwncloudSettings::error() const
+{
+    return d->error;
+}
+
+void OwncloudSettings::setError(int i)
+{
+    if (d->error != i) {
+        d->error = i;
+        emit errorChanged();
+    }
+}
+
+QString OwncloudSettings::errorMessage() const
+{
+    return d->errorMessage;
+}
+
+void OwncloudSettings::setErrorMessage(const QString& n)
+{
+    if (d->errorMessage != n) {
+        d->errorMessage = n;
+        emit errorMessageChanged();
+    }
+}
+
 
 // -- Folder handling
 

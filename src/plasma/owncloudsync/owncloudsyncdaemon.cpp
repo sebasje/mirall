@@ -21,6 +21,7 @@
 
 #include "owncloudsyncdaemon.h"
 #include "owncloudfolder.h"
+#include "owncloudsettings.h"
 
 #include <qdebug.h>
 //#include <QMessageBox>
@@ -60,7 +61,7 @@ OwncloudSyncDaemon::OwncloudSyncDaemon(QObject *parent)
 {
     d = new OwncloudSyncDaemonPrivate;
     d->q = this;
-    d->display = "ownCloud Sync Daemon";
+    d->display = "";
 
     d->folderMan = new Mirall::FolderMan();
     connect( d->folderMan, SIGNAL(folderSyncStateChange(QString)),
@@ -159,8 +160,6 @@ void OwncloudSyncDaemon::refresh()
 
 void OwncloudSyncDaemonPrivate::loadFolders()
 {
-
-
     //kDebug() << "Loaded folders : " << folders.count();
     QStringList fs;
     qDebug() << "Loading folders";
@@ -169,24 +168,6 @@ void OwncloudSyncDaemonPrivate::loadFolders()
         //fs << f->alias();
         q->updateFolder(f);
     }
-//     //fs << "Nirvana" << "Pearl Jam" << "Lana del Rey" << "Placebo" << "Cash";
-//     foreach (const QString &_f, fs) {
-//         int s = 0;
-//         int r = c % 4;
-//         //qDebug() << " c" << c << " r" << r;
-//         if (r == 0) s = OwncloudFolder::Idle;
-//         if (r == 1) s = OwncloudFolder::Disabled;
-//         if (r == 2) s = OwncloudFolder::Waiting;
-//         if (r == 3) s = OwncloudFolder::Error;
-// 
-//         folderList[_f] = s;
-// 
-//         QVariantMap m;
-//         m["name"] = _f;
-//         m["localPath"] = "/home/sebas/" + _f;
-//         folders[name] = m;
-//         c++;
-//     }
 }
 
 QString errorMsg(int r) {
@@ -253,6 +234,10 @@ void OwncloudSyncDaemon::slotOwnCloudFound( const QString& url, const QString& v
     d->owncloudInfo["edition"] = edition;
 
     emit owncloudChanged(d->owncloudInfo);
+    emit statusMessageChanged(tr("Logging in..."));
+    emit errorMessageChanged(QString());
+    emit errorChanged(OwncloudSettings::NoError);
+    emit statusChanged(OwncloudSettings::Disconnected);
 
     QTimer::singleShot( 0, this, SLOT( slotCheckAuthentication() ));
 }
@@ -271,6 +256,9 @@ void OwncloudSyncDaemon::slotNoOwnCloudFound( QNetworkReply* reply )
 
     QString er = tr("ownCloud Connection Failed");
     emit statusMessageChanged(er);
+    emit errorMessageChanged(msg);
+    emit statusChanged(OwncloudSettings::Error);
+    emit errorChanged(OwncloudSettings::NoConfigurationError);
     //_actionAddFolder->setEnabled( false );
     //setupContextMenu();
 }
@@ -291,18 +279,28 @@ void OwncloudSyncDaemon::slotAuthCheck( const QString& ,QNetworkReply *reply )
                              tr("<p>Your ownCloud credentials are not correct.</p>"
                                 "<p>Please correct them by starting the configuration dialog from the tray!</p>");
         emit statusMessageChanged(er);
+        emit statusChanged(OwncloudSettings::Error);
+        emit errorChanged(OwncloudSettings::NoConfigurationError);
+        emit errorMessageChanged(er);
     } else if( reply->error() == QNetworkReply::OperationCanceledError ) {
         // the username was wrong and ownCloudInfo was closing the request after a couple of auth tries.
         qDebug() << "******** Username or password is wrong!";
         QString er = tr("No ownCloud Connection"),
                              tr("<p>Your ownCloud user name or password is not correct.</p>"
                                 "<p>Please correct it by starting the configuration dialog from the tray!</p>");
+        //emit statusMessageChanged(er);
         emit statusMessageChanged(er);
+        emit statusChanged(OwncloudSettings::Error);
+        emit errorChanged(OwncloudSettings::AuthenticationError);
+        emit errorMessageChanged(er);
     } else {
         qDebug() << "######## Credentials are ok!";
         emit statusMessageChanged(tr("Logged in"));
+        //emit statusMessageChanged(er);
+        emit statusChanged(OwncloudSettings::Connected);
+        emit errorChanged(OwncloudSettings::NoError);
+        emit errorMessageChanged(QString());
         d->folderMan->setupFolders();
-        //int cnt = d->folderMan->setupFolders();
         d->loadFolders();
     }
 }
