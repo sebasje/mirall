@@ -54,6 +54,9 @@ OwncloudSettings::OwncloudSettings(QObject* parent) :
     d = new OwncloudSettingsPrivate;
     d->q = this;
 
+    d->error = OwncloudSettings::NoError;
+    d->status = OwncloudSettings::Disconnected;
+
     kDebug() << "OwncloudSettings module loaded.";
     init();
     d->loadFolders();
@@ -221,7 +224,7 @@ void OwncloudSettings::setFolder(const QVariantMap& m)
     folder->setDisplayName(alias);
     folder->setFolderStatus(m["status"].toInt());
     folder->setErrorMessage(m["errorMessage"].toString());
-    kDebug() << "OC Updating" << alias << folder->folderStatus() << folder->errorMessage();
+    //kDebug() << "OC Updating" << alias << folder->folderStatus() << folder->errorMessage();
 
     emit foldersChanged();
 }

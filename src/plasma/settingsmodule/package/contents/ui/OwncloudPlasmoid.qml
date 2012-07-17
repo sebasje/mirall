@@ -56,6 +56,11 @@ Item {
             width: parent.width
             anchors { bottom: parent.bottom; left: parent.left; right: parent.right; }
         }
+
+        ErrorHandler {
+            anchors { bottom: parent.bottom; left: parent.left; right: parent.right; }
+            height: 200
+        }
     }
     Component.onCompleted: {
         print("Loaded OwncloudPlasmoid.qml successfully.");

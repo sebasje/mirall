@@ -94,6 +94,7 @@ ListView {
         if (e == OwncloudFolder.Running) return "task-ongoing";
         if (e == OwncloudFolder.Disabled) return "user-offline";
         if (e == OwncloudFolder.Error) return "task-reject";
+        return "task-complete";
     }
 
     function statusMessage(e) {
