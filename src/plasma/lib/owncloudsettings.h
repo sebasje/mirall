@@ -69,21 +69,24 @@ class OwncloudSettings : public QObject
             CustomError // Anything else
         };
 
-        void init();
 
 
     public Q_SLOTS:
+        void init();
+
+        QString url() const;
+        QString version() const;
+        QString edition() const;
         QDeclarativeListProperty<OwncloudFolder> folders();
 
-        QString url();
-        QString version();
-        QString edition();
         void setDisplay(const QString &n);
-        int owncloudStatus() const;
-        int error() const;
 
+        int owncloudStatus() const;
         void setOwncloudStatus(int i);
+
+        int error() const;
         void setError(int i);
+
         QString statusMessage() const;
         void setStatusMessage(const QString &n);
 

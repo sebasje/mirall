@@ -25,6 +25,9 @@
 #include "../applet/owncloud_interface.h"
 
 #include <kdebug.h>
+#include <KProcess>
+
+#include <QTimer>
 #include <QVariant>
 
 #include <QtDeclarative/qdeclarative.h>
@@ -94,7 +97,7 @@ void OwncloudSettings::init()
 
         kDebug() << d->client->display();
         setStatusMessage(d->client->display());
-        //refresh();
+        refresh();
     }
 }
 
@@ -128,22 +131,23 @@ void OwncloudSettings::setOwncloud(const QVariantMap& m)
     emit urlChanged();
 }
 
-QString OwncloudSettings::edition()
+QString OwncloudSettings::edition() const
 {
     return d->owncloudInfo["edition"].toString();
 }
 
-QString OwncloudSettings::version()
+QString OwncloudSettings::version() const
 {
     return d->owncloudInfo["version"].toString();
 }
 
 void OwncloudSettings::setUrl(const QString& u)
 {
+    Q_UNUSED(u);
     kWarning() << "setUrl is not supported yet.";
 }
 
-QString OwncloudSettings::url()
+QString OwncloudSettings::url() const
 {
     return d->owncloudInfo["url"].toString();
 
@@ -193,7 +197,8 @@ void OwncloudSettings::startDaemon()
     // start daemon
     //d->client->startDaemon(); FIXME
     kDebug() << "Start Daemon...";
-    init();
+    KProcess::startDetached("owncloudsyncd");
+    QTimer::singleShot(1000, this, SLOT(init()));
 }
 
 // -- Folder handling
