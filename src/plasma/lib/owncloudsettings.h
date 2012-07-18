@@ -96,6 +96,7 @@ class OwncloudSettings : public QObject
         void setUrl(const QString &u);
 
         Q_INVOKABLE void refresh();
+        Q_INVOKABLE void startDaemon();
         Q_INVOKABLE void enableFolder(const QString &name, bool enabled = true);
 
     Q_SIGNALS:

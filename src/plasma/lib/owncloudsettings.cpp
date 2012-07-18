@@ -53,6 +53,7 @@ OwncloudSettings::OwncloudSettings(QObject* parent) :
 {
     d = new OwncloudSettingsPrivate;
     d->q = this;
+    d->client = 0;
 
     d->error = OwncloudSettings::NoError;
     d->status = OwncloudSettings::Disconnected;
@@ -73,19 +74,28 @@ OwncloudSettings::~OwncloudSettings()
 
 void OwncloudSettings::init()
 {
-    d->client = new OrgKdeOwncloudsyncInterface("org.kde.owncloudsync", "/", QDBusConnection::sessionBus(), this);
-    QObject::connect(d->client, SIGNAL(displayChanged(QString)), this, SLOT(setStatusMessage(QString)));
-    QObject::connect(d->client, SIGNAL(statusMessageChanged(QString)), this, SLOT(setStatusMessage(QString)));
-    QObject::connect(d->client, SIGNAL(statusChanged(int)), this, SLOT(setOwncloudStatus(int)));
-    QObject::connect(d->client, SIGNAL(errorChanged(int)), this, SLOT(setError(int)));
-    QObject::connect(d->client, SIGNAL(errorMessageChanged(QString)), this, SLOT(setErrorMessage(QString)));
-    QObject::connect(d->client, SIGNAL(folderListChanged(const QVariantMap&)), this, SLOT(setFolderList(const QVariantMap&)));
-    QObject::connect(d->client, SIGNAL(folderChanged(const QVariantMap&)), this, SLOT(setFolder(const QVariantMap&)));
-    QObject::connect(d->client, SIGNAL(owncloudChanged(const QVariantMap&)), this, SLOT(setOwncloud(const QVariantMap&)));
+    if (!QDBusConnection::sessionBus().interface()->isServiceRegistered(QLatin1String("org.kde.owncloudsync"))) {
+        setOwncloudStatus(OwncloudSettings::Error);
+        setError(OwncloudSettings::NoDaemonError);
+        delete d->client;
+        d->client = 0; // invalidate client when dbus connection is lost
+        return;
+    } else if (d->client == 0) {
 
-    kDebug() << d->client->display();
-    setStatusMessage(d->client->display());
-    //refresh();
+        d->client = new OrgKdeOwncloudsyncInterface("org.kde.owncloudsync", "/", QDBusConnection::sessionBus(), this);
+        QObject::connect(d->client, SIGNAL(displayChanged(QString)), this, SLOT(setStatusMessage(QString)));
+        QObject::connect(d->client, SIGNAL(statusMessageChanged(QString)), this, SLOT(setStatusMessage(QString)));
+        QObject::connect(d->client, SIGNAL(statusChanged(int)), this, SLOT(setOwncloudStatus(int)));
+        QObject::connect(d->client, SIGNAL(errorChanged(int)), this, SLOT(setError(int)));
+        QObject::connect(d->client, SIGNAL(errorMessageChanged(QString)), this, SLOT(setErrorMessage(QString)));
+        QObject::connect(d->client, SIGNAL(folderListChanged(const QVariantMap&)), this, SLOT(setFolderList(const QVariantMap&)));
+        QObject::connect(d->client, SIGNAL(folderChanged(const QVariantMap&)), this, SLOT(setFolder(const QVariantMap&)));
+        QObject::connect(d->client, SIGNAL(owncloudChanged(const QVariantMap&)), this, SLOT(setOwncloud(const QVariantMap&)));
+
+        kDebug() << d->client->display();
+        setStatusMessage(d->client->display());
+        //refresh();
+    }
 }
 
 void OwncloudSettings::setDisplay(const QString& n)
@@ -178,6 +188,13 @@ void OwncloudSettings::setErrorMessage(const QString& n)
     }
 }
 
+void OwncloudSettings::startDaemon()
+{
+    // start daemon
+    //d->client->startDaemon(); FIXME
+    kDebug() << "Start Daemon...";
+    init();
+}
 
 // -- Folder handling
 
@@ -231,7 +248,9 @@ void OwncloudSettings::setFolder(const QVariantMap& m)
 
 void OwncloudSettings::enableFolder(const QString& name, bool enabled)
 {
-    d->client->enableFolder(name, enabled);
+    if (d->client) {
+        d->client->enableFolder(name, enabled);
+    }
 }
 
 QDeclarativeListProperty<OwncloudFolder> OwncloudSettings::folders()
@@ -241,7 +260,9 @@ QDeclarativeListProperty<OwncloudFolder> OwncloudSettings::folders()
 
 void OwncloudSettings::refresh()
 {
-    d->client->refresh();
+    if (d->client) {
+        d->client->refresh();
+    }
 }
 
 void OwncloudSettingsPrivate::loadFolders()
