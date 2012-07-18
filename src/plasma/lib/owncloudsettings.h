@@ -97,6 +97,7 @@ class OwncloudSettings : public QObject
         void setFolder(const QVariantMap &m);
         void setOwncloud(const QVariantMap &m);
         void setUrl(const QString &u);
+        void serviceUnregistered();
 
         Q_INVOKABLE void refresh();
         Q_INVOKABLE void startDaemon();

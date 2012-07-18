@@ -39,27 +39,37 @@ Item {
             id: headingLabel
             level: 2
             height: 48
-            text: i18n("ownCloud Sync")
+            text: {
+                if (owncloudSettings.owncloudStatus != OwncloudSettings.Connected) {
+                    return i18n("ownCloud Sync");
+                } else {
+                    var u = owncloudSettings.url;
+                    u = u.replace("https://", "");
+                    u = u.replace("http://", "");
+                    return u;
+                }
+            }
             anchors { top: parent.top; left: parent.left; right: parent.right; }
         }
 
         FolderList {
             id: folderList
             width: parent.width
-            anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: statusLabel.top; }
+            anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: ocStatus.top; }
         }
 
-        PlasmaComponents.Label {
-            id: statusLabel
-            text: owncloudSettings.statusMessage + "\n " + owncloudSettings.url + " " + owncloudSettings.version
-            height: 64
-            width: parent.width
-            anchors { bottom: parent.bottom; left: parent.left; right: parent.right; }
-        }
+//         PlasmaComponents.Label {
+//             id: statusLabel
+//             text: owncloudSettings.statusMessage + "\n " + owncloudSettings.url + " " + owncloudSettings.version
+//             height: 64
+//             width: parent.width
+//             anchors { bottom: parent.bottom; left: parent.left; right: parent.right; }
+//         }
 
         ErrorHandler {
+            id: ocStatus
             anchors { bottom: parent.bottom; left: parent.left; right: parent.right; }
-            height: 200
+            height: owncloudSettings.owncloudStatus == OwncloudSettings.Connected ? 32 : 128
         }
     }
     Component.onCompleted: {

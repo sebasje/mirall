@@ -30,6 +30,7 @@
 #include <QTimer>
 #include <QVariant>
 
+#include <QDBusServiceWatcher>
 #include <QtDeclarative/qdeclarative.h>
 #include <QtDeclarative/QDeclarativeItem>
 
@@ -47,6 +48,7 @@ public:
 
     QList<OwncloudFolder*> folders;
     QVariantMap owncloudInfo;
+    QDBusServiceWatcher *serviceWatcher;
 
     void loadFolders();
 };
@@ -62,6 +64,13 @@ OwncloudSettings::OwncloudSettings(QObject* parent) :
     d->status = OwncloudSettings::Disconnected;
 
     kDebug() << "OwncloudSettings module loaded.";
+    
+    d->serviceWatcher = new QDBusServiceWatcher("org.kde.owncloudsync",
+                                                QDBusConnection::sessionBus(),
+                                                QDBusServiceWatcher::WatchForRegistration & QDBusServiceWatcher::WatchForUnregistration,
+                                                this);
+    connect(d->serviceWatcher, SIGNAL(serviceRegistered(QString)), SLOT(init()));
+    connect(d->serviceWatcher, SIGNAL(serviceUnregistered(QString)), SLOT(serviceUnregistered()));
     init();
     d->loadFolders();
     emit foldersChanged();
@@ -100,6 +109,21 @@ void OwncloudSettings::init()
         refresh();
     }
 }
+
+void OwncloudSettings::serviceUnregistered()
+{
+    // ditch cached data here.
+    foreach (OwncloudFolder *f, d->folders) {
+        delete f;
+    }
+    d->folders.clear();
+    delete d->client;
+    d->client = 0;
+    emit foldersChanged();
+    setOwncloudStatus(OwncloudSettings::Error);
+    setError(OwncloudSettings::NoDaemonError);
+}
+
 
 void OwncloudSettings::setDisplay(const QString& n)
 {
@@ -195,10 +219,8 @@ void OwncloudSettings::setErrorMessage(const QString& n)
 void OwncloudSettings::startDaemon()
 {
     // start daemon
-    //d->client->startDaemon(); FIXME
     kDebug() << "Start Daemon...";
     KProcess::startDetached("owncloudsyncd");
-    QTimer::singleShot(1000, this, SLOT(init()));
 }
 
 // -- Folder handling

@@ -88,13 +88,14 @@ ListView {
     }
 
     function statusIcon(e) {
-        //print(" --> Status changed: " + statusMessage(e) + " " + e);
-        if (e == OwncloudFolder.Idle) return "task-complete";
-        if (e == OwncloudFolder.Waiting) return "task-ongoing";
-        if (e == OwncloudFolder.Running) return "task-ongoing";
-        if (e == OwncloudFolder.Disabled) return "user-offline";
-        if (e == OwncloudFolder.Error) return "task-reject";
-        return "task-complete";
+        var icon = "task-complete";
+        if (e == OwncloudFolder.Idle) icon = "task-complete";
+        if (e == OwncloudFolder.Waiting) icon = "task-ongoing";
+        if (e == OwncloudFolder.Running) icon = "task-ongoing";
+        if (e == OwncloudFolder.Disabled) icon = "user-offline";
+        if (e == OwncloudFolder.Error) icon = "task-reject";
+        //print(" --> statusIcon for: " + statusMessage(e) + " " + e + " " + icon);
+        return icon;
     }
 
     function statusMessage(e) {
