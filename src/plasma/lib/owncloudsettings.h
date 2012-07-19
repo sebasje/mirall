@@ -48,6 +48,7 @@ class OwncloudSettings : public QObject
     Q_PROPERTY(QString statusMessage READ statusMessage WRITE setStatusMessage NOTIFY statusMessageChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage WRITE setErrorMessage NOTIFY errorMessageChanged)
     Q_PROPERTY(QString url READ url WRITE setUrl NOTIFY urlChanged)
+    Q_PROPERTY(int globalStatus READ globalStatus NOTIFY globalStatusChanged)
     Q_PROPERTY(QString version READ version NOTIFY versionChanged)
     Q_PROPERTY(QString edition READ edition NOTIFY editionChanged)
 
@@ -77,11 +78,12 @@ class OwncloudSettings : public QObject
         QString url() const;
         QString version() const;
         QString edition() const;
+        int globalStatus() const; // Returns OwncloudFolder::Status
         QDeclarativeListProperty<OwncloudFolder> folders();
 
         void setDisplay(const QString &n);
 
-        int owncloudStatus() const;
+        int owncloudStatus() const; // returns OwncloudSettings::Status
         void setOwncloudStatus(int i);
 
         int error() const;
@@ -99,7 +101,10 @@ class OwncloudSettings : public QObject
         void setUrl(const QString &u);
         void serviceUnregistered();
 
+        //bool allFoldersEnabled();
+
         Q_INVOKABLE void refresh();
+        Q_INVOKABLE void enableAllFolders(bool enabled);
         Q_INVOKABLE void startDaemon();
         Q_INVOKABLE void enableFolder(const QString &name, bool enabled = true);
 
@@ -108,11 +113,15 @@ class OwncloudSettings : public QObject
         void owncloudStatusChanged();
         void errorChanged();
         void foldersChanged();
+        void globalStatusChanged();
         void statusMessageChanged();
         void errorMessageChanged();
         void editionChanged();
         void versionChanged();
         void urlChanged();
+
+    private Q_SLOTS:
+        void updateGlobalStatus();
 
     private:
         OwncloudSettingsPrivate* d;

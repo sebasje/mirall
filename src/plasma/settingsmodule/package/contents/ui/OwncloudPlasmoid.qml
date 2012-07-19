@@ -28,10 +28,15 @@ import org.kde.plasma.owncloud 0.1
 Item {
     id: owncloudModule
     objectName: "owncloudModule"
+
     anchors.margins: 24
 
     OwncloudSettings {
         id: owncloudSettings
+        objectName: "owncloudSettings"
+        signal updateGlobalStatus(int s)
+        // Update the popup icon
+        onGlobalStatusChanged: updateGlobalStatus(owncloudSettings.globalStatus)
     }
     Item {
         anchors { fill: parent; margins: 12; }
@@ -55,21 +60,22 @@ Item {
         FolderList {
             id: folderList
             width: parent.width
-            anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: ocStatus.top; }
+            visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
+            anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: parent.bottom; }
         }
-
-//         PlasmaComponents.Label {
-//             id: statusLabel
-//             text: owncloudSettings.statusMessage + "\n " + owncloudSettings.url + " " + owncloudSettings.version
-//             height: 64
-//             width: parent.width
-//             anchors { bottom: parent.bottom; left: parent.left; right: parent.right; }
-//         }
 
         ErrorHandler {
             id: ocStatus
-            anchors { bottom: parent.bottom; left: parent.left; right: parent.right; }
-            height: owncloudSettings.owncloudStatus == OwncloudSettings.Connected ? 32 : 128
+            anchors { top: folderList.top; left: folderList.left; right: folderList.right; }
+            visible: owncloudSettings.owncloudStatus != OwncloudSettings.Connected
+        }
+        PlasmaComponents.Switch {
+            id: enabledSwitch
+            text: i18n("All Folders")
+            visible: folderList.count > 0
+            checked: owncloudSettings.globalStatus != OwncloudFolder.Disabled
+            anchors { bottom: folderList.bottom; left: parent.left; rightMargin: 12 }
+            onClicked: owncloudSettings.enableAllFolders(checked)
         }
     }
     Component.onCompleted: {

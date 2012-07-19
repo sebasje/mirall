@@ -26,6 +26,7 @@ import org.kde.qtextracomponents 0.1
 
 ListView {
     id: folderList
+    objectName: "folderList"
     model: owncloudSettings.folders
     interactive: height < contentHeight
 

@@ -41,7 +41,8 @@ public:
     QString name;
     QString localPath;
     QString remotePath;
-    int status;
+    int status; // OwncloudSettings::Status
+    int globalStatus; // OwncloudFolder::Status
     int error;
     QString errorMessage;
     QString statusMessage;
@@ -49,8 +50,6 @@ public:
     QList<OwncloudFolder*> folders;
     QVariantMap owncloudInfo;
     QDBusServiceWatcher *serviceWatcher;
-
-    void loadFolders();
 };
 
 OwncloudSettings::OwncloudSettings(QObject* parent) :
@@ -64,17 +63,18 @@ OwncloudSettings::OwncloudSettings(QObject* parent) :
     d->status = OwncloudSettings::Disconnected;
 
     kDebug() << "OwncloudSettings module loaded.";
-    
+
     d->serviceWatcher = new QDBusServiceWatcher("org.kde.owncloudsync",
                                                 QDBusConnection::sessionBus(),
                                                 QDBusServiceWatcher::WatchForRegistration & QDBusServiceWatcher::WatchForUnregistration,
                                                 this);
     connect(d->serviceWatcher, SIGNAL(serviceRegistered(QString)), SLOT(init()));
     connect(d->serviceWatcher, SIGNAL(serviceUnregistered(QString)), SLOT(serviceUnregistered()));
-    init();
-    d->loadFolders();
-    emit foldersChanged();
 
+    kDebug() << "OwncloudSettings module loaded.";
+    connect(this, SIGNAL(foldersChanged()), SLOT(updateGlobalStatus()));
+    init();
+    emit foldersChanged();
 }
 
 OwncloudSettings::~OwncloudSettings()
@@ -112,16 +112,19 @@ void OwncloudSettings::init()
 
 void OwncloudSettings::serviceUnregistered()
 {
-    // ditch cached data here.
+    // ditch caches
     foreach (OwncloudFolder *f, d->folders) {
         delete f;
     }
     d->folders.clear();
     delete d->client;
     d->client = 0;
-    emit foldersChanged();
+
+    // reset internal caches and emit changed signals
+    setOwncloud(QVariantMap());;
     setOwncloudStatus(OwncloudSettings::Error);
     setError(OwncloudSettings::NoDaemonError);
+    emit foldersChanged();
 }
 
 
@@ -264,6 +267,7 @@ void OwncloudSettings::setFolder(const QVariantMap& m)
         folder = new OwncloudFolder(this);
         d->folders << folder;
         connect(folder, SIGNAL(enableFolder(const QString&, bool)), this, SLOT(enableFolder(const QString&, bool)));
+        connect(folder, SIGNAL(folderStatusChanged()), SLOT(updateGlobalStatus()));
     }
     folder->setDisplayName(alias);
     folder->setFolderStatus(m["status"].toInt());
@@ -280,6 +284,73 @@ void OwncloudSettings::enableFolder(const QString& name, bool enabled)
     }
 }
 
+void OwncloudSettings::enableAllFolders(bool enabled)
+{
+    foreach (OwncloudFolder* f, d->folders) {
+        if (enabled) {
+            f->enable();
+        } else {
+            f->disable();
+        }
+    }
+}
+
+void OwncloudSettings::updateGlobalStatus()
+{
+    //kDebug();
+    int newState = OwncloudFolder::Idle;
+
+    bool disabled = true;
+    bool running = false;
+    bool waiting = false;
+    bool errorneus = false;
+
+    foreach (OwncloudFolder *f, d->folders) {
+        if (f->folderStatus() != OwncloudFolder::Disabled) {
+            disabled = false;
+        }
+        if (f->folderStatus() == OwncloudFolder::Running) {
+            running = true;
+        }
+        if (!running && f->folderStatus() == OwncloudFolder::Waiting) {
+            waiting = true;
+        }
+        if (f->folderStatus() == OwncloudFolder::Error) {
+            errorneus = true;
+        }
+    }
+
+    QString _d = "idle";
+    if (disabled) {
+        _d = "disabled";
+        newState = OwncloudFolder::Disabled;
+    }
+    if (errorneus) {
+        newState = OwncloudFolder::Error;
+        _d = "error";
+    }
+    if (running) {
+        newState = OwncloudFolder::Running;
+        _d = "running";
+    }
+    if (waiting) {
+        newState = OwncloudFolder::Waiting;
+        _d = "waiting";
+    }
+
+//     kDebug() << "disabled" << disabled << "running" << running << "idle" << (newState == OwncloudFolder::Idle);
+    if (d->globalStatus != newState) {
+        d->globalStatus = newState;
+//         kDebug() << "globalStatusChanged: " << _d;
+        emit globalStatusChanged();
+    }
+}
+
+int OwncloudSettings::globalStatus() const
+{
+    return  d->globalStatus;
+}
+
 QDeclarativeListProperty<OwncloudFolder> OwncloudSettings::folders()
 {
     return QDeclarativeListProperty<OwncloudFolder>(this, d->folders);
@@ -291,39 +362,5 @@ void OwncloudSettings::refresh()
         d->client->refresh();
     }
 }
-
-void OwncloudSettingsPrivate::loadFolders()
-{
-    return;
-    OwncloudFolder *f1;
-
-    f1 = new OwncloudFolder(q);
-    f1->setDisplayName("My Computer");
-    folders << f1;
-
-    OwncloudFolder *f;
-
-    f = new OwncloudFolder(q);
-    f->setDisplayName("My Documents");
-    f->setFolderStatus(OwncloudFolder::Error);
-    folders << f;
-
-    f = new OwncloudFolder(q);
-    f->setDisplayName("My Videos");
-    folders << f;
-
-    f = new OwncloudFolder(q);
-    f->setDisplayName("My Images");
-    f->setFolderStatus(OwncloudFolder::Waiting);
-    folders << f;
-
-    f = new OwncloudFolder(q);
-    f->setDisplayName("My Files");
-    f->setFolderStatus(OwncloudFolder::Disabled);
-    folders << f;
-
-    kDebug() << "Loaded folders : " << folders.count();
-}
-
 
 #include "owncloudsettings.moc"
