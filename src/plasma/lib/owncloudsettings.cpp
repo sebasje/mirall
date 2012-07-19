@@ -337,6 +337,9 @@ void OwncloudSettings::updateGlobalStatus()
         newState = OwncloudFolder::Waiting;
         _d = "waiting";
     }
+    if (d->error == OwncloudSettings::NoDaemonError) {
+        newState = OwncloudFolder::Error;
+    }
 
 //     kDebug() << "disabled" << disabled << "running" << running << "idle" << (newState == OwncloudFolder::Idle);
     if (d->globalStatus != newState) {
