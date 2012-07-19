@@ -89,6 +89,8 @@ void OwncloudSettings::init()
     if (!QDBusConnection::sessionBus().interface()->isServiceRegistered(QLatin1String("org.kde.owncloudsync"))) {
         setOwncloudStatus(OwncloudSettings::Error);
         setError(OwncloudSettings::NoDaemonError);
+        d->globalStatus = OwncloudFolder::Error;
+        QTimer::singleShot(2000, this, SIGNAL(globalStatusChanged()));
         delete d->client;
         d->client = 0; // invalidate client when dbus connection is lost
         return;

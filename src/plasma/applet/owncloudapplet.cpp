@@ -62,7 +62,7 @@ void OwncloudApplet::init()
 
     m_declarativeWidget->setQmlPath(qmlFile);
     m_declarativeWidget->setMinimumSize(220, 250);
-    QTimer::singleShot(2000, this, SLOT(connectObjects()));
+    QTimer::singleShot(1000, this, SLOT(connectObjects()));
 }
 
 void OwncloudApplet::connectObjects()
@@ -100,7 +100,7 @@ void OwncloudApplet::updatePopupIcon(int e)
     if (e == OwncloudFolder::Waiting) icon = "task-ongoing";
     if (e == OwncloudFolder::Running) icon = "owncloud";
     if (e == OwncloudFolder::Disabled) icon = "user-offline";
-    if (e == OwncloudFolder::Error) icon = "task-reject";
+    if (e == OwncloudFolder::Error) icon = "task-attempt";
 
     //kDebug() << "===========> Setting popup icon: " << icon;
     setPopupIcon(icon);
