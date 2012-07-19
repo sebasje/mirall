@@ -104,8 +104,6 @@ void OwncloudSettings::init()
         QObject::connect(d->client, SIGNAL(folderChanged(const QVariantMap&)), this, SLOT(setFolder(const QVariantMap&)));
         QObject::connect(d->client, SIGNAL(owncloudChanged(const QVariantMap&)), this, SLOT(setOwncloud(const QVariantMap&)));
 
-        kDebug() << d->client->display();
-        setStatusMessage(d->client->display());
         refresh();
     }
 }
