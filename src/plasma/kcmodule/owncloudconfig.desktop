@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Service
+X-KDE-ServiceTypes=KCModule
+Icon=owncloud
+Exec=kcmshell4 owncloudconfig
+X-KDE-Library=kcm_owncloud
+X-KDE-PluginKeyword=owncloud
+X-KDE-ParentApp=kcontrol
+X-KDE-Weight=60
+Name=ownCloud
+Comment=ownCloud Synchronization Settings
+X-KDE-Keywords=directories,autostart,downloads,music,documents,movies,pictures,cloud,sync

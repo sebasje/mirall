@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>OwncloudConfig</class>
+ <widget class="QWidget" name="OwncloudConfig">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>522</width>
+    <height>424</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QCheckBox" name="enableAll">
+     <property name="text">
+      <string>Enable All</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QListWidget" name="folderList">
+     <item>
+      <property name="text">
+       <string>One</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Two</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Three</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
