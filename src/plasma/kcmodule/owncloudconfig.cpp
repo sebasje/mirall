@@ -20,38 +20,35 @@
 // Own
 #include "owncloudconfig.h"
 
+// from lib/
+#include "owncloudsettings.h"
+#include "owncloudfolder.h"
+
 // Qt
-#include <QtGui/QCheckBox>
-#include <QtGui/QComboBox>
-#include <QtGui/QLabel>
-#include <QtGui/QLayout>
-#include <QtGui/QFormLayout>
-#include <QtGui/QDesktopWidget>
-#include <QtGui/QApplication>
-#include <QtDBus/QtDBus>
+#include <QBoxLayout>
+#include <QDeclarativeView>
 
 // KDE
 #include <kconfiggroup.h>
 #include <kdebug.h>
-#include <kfileitem.h>
-#include <kglobalsettings.h>
-#include <kio/copyjob.h>
-#include <kio/deletejob.h>
-#include <kio/job.h>
-#include <kio/jobuidelegate.h>
-#include <klocale.h>
-#include <kmessagebox.h>
-#include <kmimetype.h>
 #include <kstandarddirs.h>
-#include <kurlrequester.h>
+#include <Plasma/PackageStructure>
+#include <Plasma/Package>
+#include <kdeclarative.h>
+
 
 #include "kcmowncloud.h"
-#include "ui_owncloudconfig.h"
+//#include "ui_owncloudconfig.h"
 
 
 class OwncloudConfigPrivate {
 public:
-    Ui_OwncloudConfig* ui;
+    KDeclarative kdeclarative;
+    Plasma::PackageStructure::Ptr structure;
+    Plasma::Package *package;
+    QString packageName;
+
+    QDeclarativeView *declarativeView;
 
 };
 
@@ -62,15 +59,34 @@ OwncloudConfig::OwncloudConfig(QWidget *parent, const QVariantList &)
     : KCModule( KcmOwncloud::componentData(), parent )
 {
     d = new OwncloudConfigPrivate;
-    d->ui = new Ui_OwncloudConfig();
-    d->ui->setupUi(this);
-/*    
-  QBoxLayout *lay = new QBoxLayout(this);
-  lay->setMargin(0);*/
+    d->declarativeView = new QDeclarativeView(this);
 
-  setQuickHelp( i18n("<h1>Owncloud</h1>\n"
+    d->kdeclarative.setDeclarativeEngine(d->declarativeView->engine());
+    d->kdeclarative.initialize();
+    //binds things like kconfig and icons
+    d->kdeclarative.setupBindings();
+
+//     // avoid flicker on show
+//     d->declarativeView->setAttribute(Qt::WA_OpaquePaintEvent);
+//     d->declarativeView->setAttribute(Qt::WA_NoSystemBackground);
+//     d->declarativeView->viewport()->setAttribute(Qt::WA_OpaquePaintEvent);
+//     d->declarativeView->viewport()->setAttribute(Qt::WA_NoSystemBackground);
+
+    QBoxLayout *lay = new QBoxLayout(QBoxLayout::TopToBottom, this);
+    lay->addWidget(d->declarativeView);
+    lay->setMargin(0);
+
+    setQuickHelp( i18n("<h1>Owncloud</h1>\n"
     "This module allows you to configure ownCloud servers and folders you want to synchronize."));
 
+    qmlRegisterType<OwncloudSettings>("org.kde.plasma.owncloud", 0, 1, "OwncloudSettings");
+    qmlRegisterType<OwncloudFolder>("org.kde.plasma.owncloud", 0, 1, "OwncloudFolder");
+
+    Plasma::PackageStructure::Ptr structure = Plasma::PackageStructure::load("Plasma/Generic");
+    Plasma::Package *package = new Plasma::Package(QString(), "org.kde.active.settings.owncloud", structure);
+    const QString qmlFile = package->filePath("ui", "OwncloudPlasmoid.qml");
+    delete package;
+    d->declarativeView->setSource(qmlFile);
 }
 
 void OwncloudConfig::load()

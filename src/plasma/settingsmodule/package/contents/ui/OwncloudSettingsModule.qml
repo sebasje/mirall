@@ -36,10 +36,10 @@ Item {
 
     width: 800; height: 500
 
-    MobileComponents.Package {
-        id: owncloudPackage
-        name: "org.kde.active.settings.owncloud"
-    }
+//     MobileComponents.Package {
+//         id: owncloudPackage
+//         name: "org.kde.active.settings.owncloud"
+//     }
 
     Column {
         id: titleCol
