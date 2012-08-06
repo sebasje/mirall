@@ -40,8 +40,8 @@ Item {
     PlasmaComponents.ToolButton {
         id: startDaemonButton
         text: i18n("Start Sync Daemon")
-        //visible: owncloudSettings.owncloudStatus == OwncloudSettings.NoDaemonError
-        anchors { top: errorLabel.bottom; left: parent.left; right: parent.right; }
+        visible: owncloudSettings.error == OwncloudSettings.NoDaemonError
+        anchors { top: errorLabel.bottom; right: parent.right; }
 
         onClicked: owncloudSettings.startDaemon()
     }

@@ -69,8 +69,8 @@ Item {
             id: ocStatus
             height: 400
             anchors { top: folderList.top; left: folderList.left; right: folderList.right; }
-            //visible: owncloudSettings.owncloudStatus != OwncloudSettings.Connected
-            Rectangle { color: "green"; anchors.fill: parent; opacity: .4; }
+            visible: owncloudSettings.owncloudStatus != OwncloudSettings.Connected
+            //Rectangle { color: "green"; anchors.fill: parent; opacity: .4; }
         }
         PlasmaComponents.Switch {
             id: enabledSwitch
