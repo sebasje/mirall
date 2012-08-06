@@ -60,14 +60,17 @@ Item {
         FolderList {
             id: folderList
             width: parent.width
+            height: 400
             visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
             anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: parent.bottom; }
         }
 
         ErrorHandler {
             id: ocStatus
+            height: 400
             anchors { top: folderList.top; left: folderList.left; right: folderList.right; }
-            visible: owncloudSettings.owncloudStatus != OwncloudSettings.Connected
+            //visible: owncloudSettings.owncloudStatus != OwncloudSettings.Connected
+            Rectangle { color: "green"; anchors.fill: parent; opacity: .4; }
         }
         PlasmaComponents.Switch {
             id: enabledSwitch

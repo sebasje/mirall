@@ -74,7 +74,7 @@ void OwncloudApplet::connectObjects(QDeclarativeComponent::Status s)
 {
     //kDebug() << "CONNNECT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
     if (s != QDeclarativeComponent::Ready) {
-        //return;
+        return;
     }
     kDebug() << "looking for owncloudModule component ...";
     // "owncloudSettings" is defined as objectName in the QML file
@@ -82,9 +82,9 @@ void OwncloudApplet::connectObjects(QDeclarativeComponent::Status s)
     if (ocSettings) {
         connect(ocSettings, SIGNAL(updateGlobalStatus(int)),
                 this, SLOT(updatePopupIcon(int)));
-        //kDebug() << "Connnected....: )";
+        kDebug() << "Connnected....: )";
     } else {
-        kError() << "owncoudModule component not found.";
+        kError() << "owncloudModule component not found.";
     }
 }
 
