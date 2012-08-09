@@ -32,6 +32,7 @@ class DirectoryLister : public QObject
     Q_OBJECT
 
     Q_PROPERTY(QStringList directories READ directories NOTIFY directoriesChanged)
+    Q_PROPERTY(QString currentPath READ currentPath NOTIFY currentPathChanged)
 
     public:
         DirectoryLister(QObject* parent = 0);
@@ -42,12 +43,14 @@ class DirectoryLister : public QObject
         void init();
 
         QStringList directories();
+        QString currentPath();
 
         Q_INVOKABLE void up();
         Q_INVOKABLE void enterDirectory(const QString &directory);
 
     Q_SIGNALS:
         void directoriesChanged();
+        void currentPathChanged();
 
     private:
         DirectoryListerPrivate* d;

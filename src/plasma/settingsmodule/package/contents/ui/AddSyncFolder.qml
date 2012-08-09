@@ -104,8 +104,11 @@ Item {
             height: expandedHeight - collapsedHeight
             anchors { left: parent.left; right: parent.right; topMargin: collapsedHeight; bottom: parent.bottom; }
             clip: true
-            onDirectoryPicked: {
+            onCurrentPathChanged: {
+                localFolderButton.text = currentPath
                 addSyncFolder.localFolder = currentPath;
+            }
+            onDirectoryPicked: {
                 addSyncFolder.state = "remoteFolder";
             }
         }
@@ -130,7 +133,6 @@ Item {
         Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
     }
 
-    
     Item {
         id: feedbackItem
         anchors.fill: parent
