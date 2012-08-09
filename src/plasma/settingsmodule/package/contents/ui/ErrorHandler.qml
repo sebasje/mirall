@@ -36,7 +36,7 @@ Item {
         text: errorMessage(owncloudSettings.error)
 
     }
-    
+
     PlasmaComponents.ToolButton {
         id: startDaemonButton
         text: i18n("Start Sync Daemon")
@@ -45,20 +45,12 @@ Item {
 
         onClicked: owncloudSettings.startDaemon()
     }
-//         enum Error {
-//             NoError, // We're fine
-//             AuthenticationError, // owncloud server doesn't accept credentials
-//             NetworkError, // server is unreachable
-//             NoConfigurationError, // no configuration found
-//             NoDaemonError, // owncloudsyncd is not running
-//             CustomError // Anything else
-//         };
 
     function errorMessage(e) {
-        if (e == OwncloudSettings.NoError) return i18n("Everything is fine.");
-        if (e == OwncloudSettings.AuthenticationError) return i18n("Your username or password is wrong.");
-        if (e == OwncloudSettings.NetworkError) return i18n("Cannot connect. Check your network connection.");
-        if (e == OwncloudSettings.NoConfigurationError) return i18n("No ownCloud configured.");
+        if (e == OwncloudSettings.NoError) return i18n("You are logged in.");
+        if (e == OwncloudSettings.AuthenticationError) return i18n("The supplied username or password is wrong.");
+        if (e == OwncloudSettings.NetworkError) return i18n("Cannot connect to ownCloud server.");
+        if (e == OwncloudSettings.NoConfigurationError) return i18n("No ownCloud server configured.");
         if (e == OwncloudSettings.NoDaemonError) return i18n("The synchronization daemon is not running.");
         if (e == OwncloudSettings.CustomError) return i18n("Something unexpected happened.");
     }

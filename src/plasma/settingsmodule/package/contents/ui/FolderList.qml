@@ -88,6 +88,10 @@ ListView {
         }
     }
 
+    footer: AddSyncFolder {
+        id: addSyncFolder
+    }
+
     function statusIcon(e) {
         var icon = "task-complete";
         if (e == OwncloudFolder.Idle) icon = "task-complete";
