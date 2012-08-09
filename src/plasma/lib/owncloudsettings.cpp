@@ -295,6 +295,14 @@ void OwncloudSettings::enableAllFolders(bool enabled)
     }
 }
 
+void OwncloudSettings::addSyncFolder(const QString &localFolder, const QString &remoteFolder, const QString &alias)
+{
+    if (d->client) {
+        kDebug() << "addSyncFolder: " << localFolder << remoteFolder << alias;
+        d->client->addSyncFolder(localFolder, remoteFolder, alias);
+    }
+}
+
 void OwncloudSettings::updateGlobalStatus()
 {
     //kDebug();

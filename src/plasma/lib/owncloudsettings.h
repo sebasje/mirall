@@ -107,6 +107,8 @@ class OwncloudSettings : public QObject
         Q_INVOKABLE void enableAllFolders(bool enabled);
         Q_INVOKABLE void startDaemon();
         Q_INVOKABLE void enableFolder(const QString &name, bool enabled = true);
+        Q_INVOKABLE void addSyncFolder(const QString &localFolder, const QString &remoteFolder,
+                                       const QString &alias);
 
     Q_SIGNALS:
         void dataChanged();
