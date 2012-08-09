@@ -72,6 +72,8 @@ OwncloudSyncDaemon::OwncloudSyncDaemon(QObject *parent)
     d->folderMan = new Mirall::FolderMan();
     connect( d->folderMan, SIGNAL(folderSyncStateChange(QString)),
              this,SLOT(slotSyncStateChange(QString)));
+    connect( d->folderMan, SIGNAL(folderSyncStateChange(QNetworkReply*)),
+             this,SLOT(slotSyncStateChange(QNetworkReply)));
 
     d->ocInfo = new Mirall::ownCloudInfo( QString(), this );
     //d->ocInfo->setCustomConfigHandle("mirall");
@@ -150,7 +152,6 @@ void OwncloudSyncDaemon::enableFolder(const QString &name, bool enabled)
     }
 }
 
-
 QVariantMap OwncloudSyncDaemon::folderList()
 {
     return d->folderList;
@@ -228,9 +229,20 @@ void OwncloudSyncDaemon::updateFolder(const Mirall::Folder* folder)
     emit folderChanged(m);
 }
 
+void OwncloudSyncDaemon::addSyncFolder(const QString& localFolder, const QString& remoteFolder, const QString& alias)
+{
+    d->folderMan->addFolderDefinition(QString("owncloud"), alias, localFolder, remoteFolder, false);
+
+    qDebug() << "OCD OwncloudSyncDaemon::addSyncFolder: " << localFolder << remoteFolder << alias;
+
+    d->folderMan->setupFolders();
+    refresh();
+}
+
+
 void OwncloudSyncDaemon::slotOwnCloudFound( const QString& url, const QString& versionStr, const QString& version, const QString& edition)
 {
-    qDebug() << "OC ** Application: ownCloud found: " << url << " with version " << versionStr << "(" << version << ")";
+    qDebug() << "OCD ** Application: ownCloud found: " << url << " with version " << versionStr << "(" << version << ")";
     // now check the authentication
     Mirall::MirallConfigFile cfgFile;
     cfgFile.setOwnCloudVersion( version );
@@ -252,7 +264,7 @@ void OwncloudSyncDaemon::slotOwnCloudFound( const QString& url, const QString& v
 
 void OwncloudSyncDaemon::slotNoOwnCloudFound( QNetworkReply* reply )
 {
-    qDebug() << "OC ** Application: NO ownCloud found!";
+    qDebug() << "OCD ** Application: NO ownCloud found!";
     QString msg;
     if( reply ) {
         QString url( reply->url().toString() );

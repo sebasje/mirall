@@ -38,6 +38,12 @@
       <arg name="enable" type="b" direction="in" />
     </method>
 
+    <method name="addSyncFolder">
+      <arg name="localFolder" type="s" direction="in" />
+      <arg name="remoteFolder" type="s" direction="in" />
+      <arg name="alias" type="s" direction="in" />
+    </method>
+
     <method name="folderList">
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
       <arg type="a{sv}" direction="out" />
