@@ -14,6 +14,7 @@ set(owncloud_SRCS
     owncloudapplet.cpp
     ../lib/owncloudsettings.cpp
     ../lib/owncloudfolder.cpp
+    ../lib/directorylister.cpp
 )
 
 qt4_add_dbus_interface(owncloud_SRCS ../owncloudsync/org.kde.owncloudsync.xml owncloud_interface )

@@ -32,7 +32,7 @@ ListView {
 
     delegate: Item {
         width: parent.width
-        height: folderStatus == OwncloudFolder.Error ? 96 : 48;
+        height: folderStatus == OwncloudFolder.Error ? 64 : 64;
 
         Behavior on height {
             NumberAnimation { easing.type: Easing.InOutQuart; duration: 400 }
@@ -90,6 +90,7 @@ ListView {
 
     footer: AddSyncFolder {
         id: addSyncFolder
+        width: parent.width
     }
 
     function statusIcon(e) {

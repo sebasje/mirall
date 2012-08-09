@@ -28,6 +28,7 @@ Item {
 
     property string localFolder: "/home/sebas/tmp/test"
     property string remoteFolder: "Pictures"
+    height: collapsedHeight
 
     property int cnt: 0
     property int expandedHeight: 200
@@ -36,7 +37,7 @@ Item {
 
 
     Behavior on height { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
-    //Rectangle { anchors.fill: parent; color: "blue"; opacity: 0.3 }
+    Rectangle { anchors.fill: parent; color: "blue"; opacity: 0.05 }
 
     states: [
         State {
@@ -83,17 +84,31 @@ Item {
             return;
         }
         Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
-
     }
-    PlasmaComponents.ToolButton {
+    Item {
         id: localFolderItem
-        text: i18n("Pick Local Folder")
-        iconSource: "folder-green"
-        anchors { top: parent.top; left: parent.left; bottom: parent.bottom; }
-        onClicked: {
-            addSyncFolder.state = "remoteFolder";
-        }
+        anchors.fill: parent
         Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
+        PlasmaComponents.ToolButton {
+            id: localFolderButton
+            text: i18n("Pick Local Folder")
+            iconSource: "folder-green"
+            height: collapsedHeight
+            anchors { top: parent.top; left: parent.left; }
+            onClicked: {
+                addSyncFolder.state = "remoteFolder";
+            }
+        }
+        DirectoryPicker {
+            id: directoryPicker
+            height: expandedHeight - collapsedHeight
+            anchors { left: parent.left; right: parent.right; topMargin: collapsedHeight; bottom: parent.bottom; }
+            clip: true
+            onDirectoryPicked: {
+                addSyncFolder.localFolder = currentPath;
+                addSyncFolder.state = "remoteFolder";
+            }
+        }
     }
     PlasmaComponents.ToolButton {
         id: remoteFolderItem
@@ -115,19 +130,23 @@ Item {
         Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
     }
 
-    PlasmaComponents.Label {
+    
+    Item {
         id: feedbackItem
-        text: "The folder has been set up."
-        anchors { top: parent.top; left: parent.left; bottom: parent.bottom; }
+        anchors.fill: parent
+        PlasmaComponents.Label {
+            id: feedbackLabel
+            text: "The folder has been set up."
+            anchors { top: parent.top; left: parent.left; bottom: parent.bottom; }
+
+            Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
+        }
         Timer {
             id: feedbackTimer
             interval: 2000
             onTriggered: addSyncFolder.state = "default"
         }
-
-        Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
     }
-
     onStateChanged: {
         print("State changed to: " + state);
         if (state == "feedback") {
