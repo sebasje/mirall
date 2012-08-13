@@ -29,13 +29,24 @@ ListView {
     objectName: "folderList"
     model: owncloudSettings.folders
     interactive: height < contentHeight
+    currentIndex: -1
 
-    delegate: Item {
+    delegate: MouseArea {
         width: parent.width
-        height: folderStatus == OwncloudFolder.Error ? 64 : 64;
+        clip: true
+        height:  expanded ? 96 : 48;
+        property bool expanded: folderList.currentIndex == index
 
         Behavior on height {
-            NumberAnimation { easing.type: Easing.InOutQuart; duration: 400 }
+            NumberAnimation { easing.type: Easing.InOutQuart; duration: 200 }
+        }
+
+        onClicked: {
+            if (!expanded) {
+                folderList.currentIndex = index;
+            } else {
+                folderList.currentIndex = -1;
+            }
         }
 
         PlasmaComponents.Switch {
@@ -61,7 +72,7 @@ ListView {
             font.pointSize: theme.smallestFont.pointSize
             anchors { left: aliasLabel.left; right: statusIcon.left; top: aliasLabel.bottom; }
             text: errorMessage + " " + statusMessage(folderStatus)
-            opacity: (folderStatus == OwncloudFolder.Error) ? 1.0 : 0.0
+            opacity: (expanded && folderStatus == OwncloudFolder.Error) ? 1.0 : 0.0
             Behavior on opacity {
                 PropertyAnimation { easing.type: Easing.InOutQuart; duration: 400 }
             }
