@@ -37,7 +37,6 @@ Item {
 
 
     Behavior on height { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
-    Rectangle { anchors.fill: parent; color: "blue"; opacity: 0.05 }
 
     states: [
         State {
@@ -81,13 +80,15 @@ Item {
         anchors { top: parent.top; left: parent.left; bottom: parent.bottom; }
         onClicked: {
             addSyncFolder.state = "localFolder"
-            return;
+            timeZonePickerDialog.open()
+            //return;
         }
         Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
     }
     Item {
         id: localFolderItem
         anchors.fill: parent
+        clip: true
         Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
         PlasmaComponents.ToolButton {
             id: localFolderButton
@@ -97,21 +98,43 @@ Item {
             anchors { top: parent.top; left: parent.left; }
             onClicked: {
                 addSyncFolder.state = "remoteFolder";
+
             }
         }
-        DirectoryPicker {
-            id: directoryPicker
-            height: expandedHeight - collapsedHeight
-            anchors { left: parent.left; right: parent.right; topMargin: collapsedHeight; bottom: parent.bottom; }
-            clip: true
-            onCurrentPathChanged: {
-                localFolderButton.text = currentPath
-                addSyncFolder.localFolder = currentPath;
+        PlasmaComponents.CommonDialog {
+            id: timeZonePickerDialog
+            titleText: i18n("Timezones")
+            buttonTexts: [i18n("Close")]
+            onButtonClicked: close()
+            content: Loader {
+                id: timeZonePickerLoader
+                width: theme.defaultFont.mSize.width*22
+                height: theme.defaultFont.mSize.height*25
             }
-            onDirectoryPicked: {
-                addSyncFolder.state = "remoteFolder";
+            onStatusChanged: {
+                if (status == PlasmaComponents.DialogStatus.Open) {
+                    print("Opening diaog...");
+                    timeZonePickerLoader.source = "DirectoryPicker.qml"
+                    //timeZonePickerLoader.item.focusTextInput()                                                                                                    plasma-desktop(18200)/plasma StatusNotifierItemSource::refreshCallback: DBusMenu disabled for this application
+                }
             }
         }
+
+//         DirectoryPicker {
+//             id: directoryPicker
+//             //height: expandedHeight - collapsedHeight
+//             //anchors { left: parent.left; right: parent.right; topMargin: collapsedHeight; bottom: parent.bottom; }
+//             anchors.fill: owncloudItem
+//             //clip: true
+//             onCurrentPathChanged: {
+//                 localFolderButton.text = currentPath
+//                 addSyncFolder.localFolder = currentPath;
+//             }
+//             onDirectoryPicked: {
+//                 addSyncFolder.state = "remoteFolder";
+//             }
+//             Rectangle { anchors.fill: parent; color: "blue"; opacity: 0.05 }
+//         }
     }
     PlasmaComponents.ToolButton {
         id: remoteFolderItem

@@ -70,6 +70,14 @@ ListView {
             }
         }
     }
+    onCurrentPathChanged: {
+        localFolderButton.text = currentPath
+        addSyncFolder.localFolder = currentPath;
+    }
+    onDirectoryPicked: {
+        addSyncFolder.state = "remoteFolder";
+    }
+    Rectangle { anchors.fill: parent; color: "blue"; opacity: 0.05 }
 
     Component.onCompleted: lister.enterDirectory(currentPath)
 }

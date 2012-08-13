@@ -39,6 +39,7 @@ Item {
         onGlobalStatusChanged: updateGlobalStatus(owncloudSettings.globalStatus)
     }
     Item {
+        id: owncloudItem
         anchors { fill: parent; margins: 12; }
         PlasmaExtras.Heading {
             id: headingLabel
@@ -60,9 +61,10 @@ Item {
         FolderList {
             id: folderList
             width: parent.width
-            height: 400
+            clip: true
+            //height: 400
             visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
-            anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: parent.bottom; }
+            anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: enabledSwitch.top; }
         }
 
         ErrorHandler {
@@ -77,7 +79,7 @@ Item {
             text: i18n("All Folders")
             visible: folderList.count > 0
             checked: owncloudSettings.globalStatus != OwncloudFolder.Disabled
-            anchors { bottom: folderList.bottom; left: parent.left; rightMargin: 12 }
+            anchors { bottom: parent.bottom; left: parent.left; rightMargin: 12 }
             onClicked: owncloudSettings.enableAllFolders(checked)
         }
     }
