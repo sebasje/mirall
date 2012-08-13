@@ -324,7 +324,7 @@ void OwncloudSettings::updateGlobalStatus()
             waiting = true;
         }
         if (f->folderStatus() == OwncloudFolder::Error) {
-            errorneus = true;
+            //errorneus = true; // FIXME: Makes UI too noisy, come up with some elegant way of displaying errors
         }
     }
 
