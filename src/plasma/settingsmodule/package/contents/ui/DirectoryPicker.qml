@@ -20,53 +20,71 @@
 
 import QtQuick 1.1
 import org.kde.plasma.components 0.1 as PlasmaComponents
-//import org.kde.plasma.extras 0.1 as PlasmaExtras
+import org.kde.plasma.extras 0.1 as PlasmaExtras
 import org.kde.plasma.owncloud 0.1
 import org.kde.qtextracomponents 0.1 as QtExtras
 
-ListView {
-    id: directoryPicker
-    //height: 300
-
+Item {
     property alias currentPath: lister.currentPath
     signal directoryPicked(string folder)
 
     DirectoryLister {
         id: lister
+        filter: filterText.text
     }
-
-    anchors.fill: parent
-    model: lister.directories
-
-    delegate: PlasmaComponents.ListItem {
-        enabled: true
-        QtExtras.QIconItem {
-            id: iconItem
-            anchors { left: parent.left; top: parent.top; bottom: parent.bottom; }
-            width: parent.height
+    PlasmaExtras.Heading {
+        id: headingItem
+        level: 2
+        text: i18n("Choose a local folder...");
+        anchors { left: parent.left; right: parent.right; top: parent.top; }
+    }
+    PlasmaComponents.TextField {
+        id: filterText
+        anchors { left: parent.left; right: parent.right; top: headingItem.bottom; }
+        onTextChanged: {
+            lister.filter = text
+            forceActiveFocus();
         }
-        PlasmaComponents.Label {
-            anchors { left: iconItem.right; top: parent.top; bottom: parent.bottom; leftMargin: parent.height / 4}
-            text: {
-                if (modelData == ".") {
-                    iconItem.icon = "dialog-ok-apply"
-                    return i18n("Pick " + currentPath);
-                } else if (modelData == "..") {
-                        iconItem.icon = "go-up"
-                    return i18n("Up");
-                } else {
-                    iconItem.icon = "folder"
-                    return modelData;
+    }
+    ListView {
+        id: directoryPicker
+        //height: 300
+
+
+        anchors { left: parent.left; right: parent.right; top: filterText.bottom; bottom: parent.bottom;}
+        model: lister.directories
+
+
+        delegate: PlasmaComponents.ListItem {
+            enabled: true
+            QtExtras.QIconItem {
+                id: iconItem
+                anchors { left: parent.left; top: parent.top; bottom: parent.bottom; }
+                width: parent.height
+            }
+            PlasmaComponents.Label {
+                anchors { left: iconItem.right; top: parent.top; bottom: parent.bottom; leftMargin: parent.height / 4}
+                text: {
+                    if (modelData == ".") {
+                        iconItem.icon = "dialog-ok-apply"
+                        return i18n("Pick " + currentPath);
+                    } else if (modelData == "..") {
+                            iconItem.icon = "go-up"
+                        return i18n("Up");
+                    } else {
+                        iconItem.icon = "folder"
+                        return modelData;
+                    }
                 }
             }
-        }
-        onClicked: {
-            if (modelData != ".") {
-                print("Enter ModelData: " + modelData);
-                //currentPath = lister.currentPath;
-                lister.enterDirectory(modelData);
-            } else {
-                directoryPicked(currentPath);
+            onClicked: {
+                if (modelData != ".") {
+                    print("Enter ModelData: " + modelData);
+                    //currentPath = lister.currentPath;
+                    lister.enterDirectory(modelData);
+                } else {
+                    directoryPicked(currentPath);
+                }
             }
         }
     }

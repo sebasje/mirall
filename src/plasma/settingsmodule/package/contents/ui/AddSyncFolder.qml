@@ -77,10 +77,10 @@ Item {
         id: addSyncFolderButton
         text: i18n("Add Folder")
         iconSource: "list-add"
-        anchors { top: parent.top; left: parent.left; bottom: parent.bottom; }
+        anchors { top: parent.top; left: parent.left; }
         onClicked: {
             addSyncFolder.state = "localFolder"
-            timeZonePickerDialog.open()
+            directoryPickerDialog.open()
             //return;
         }
         Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
@@ -102,51 +102,40 @@ Item {
             }
         }
         PlasmaComponents.CommonDialog {
-            id: timeZonePickerDialog
-            titleText: i18n("Timezones")
-            buttonTexts: [i18n("Close")]
-            onButtonClicked: close()
+            id: directoryPickerDialog
+            titleText: i18n("Pick Local Folder")
+            buttonTexts: [i18n("Pick %1", directoryPickerLoader.item.currentPath)]
+            onButtonClicked: {
+                addSyncFolder.localFolder = directoryPickerLoader.item.currentPath;
+                addSyncFolder.state = "remoteFolder";
+                close();
+            }
             content: Loader {
-                id: timeZonePickerLoader
+                id: directoryPickerLoader
                 width: theme.defaultFont.mSize.width*22
                 height: theme.defaultFont.mSize.height*25
             }
             onStatusChanged: {
                 if (status == PlasmaComponents.DialogStatus.Open) {
-                    print("Opening diaog...");
-                    timeZonePickerLoader.source = "DirectoryPicker.qml"
-                    //timeZonePickerLoader.item.focusTextInput()                                                                                                    plasma-desktop(18200)/plasma StatusNotifierItemSource::refreshCallback: DBusMenu disabled for this application
+                    print("Opening dialog...");
+                    directoryPickerLoader.source = "DirectoryPicker.qml"
+                    //directoryPickerLoader.item.focusTextInput();
                 }
             }
         }
-
-//         DirectoryPicker {
-//             id: directoryPicker
-//             //height: expandedHeight - collapsedHeight
-//             //anchors { left: parent.left; right: parent.right; topMargin: collapsedHeight; bottom: parent.bottom; }
-//             anchors.fill: owncloudItem
-//             //clip: true
-//             onCurrentPathChanged: {
-//                 localFolderButton.text = currentPath
-//                 addSyncFolder.localFolder = currentPath;
-//             }
-//             onDirectoryPicked: {
-//                 addSyncFolder.state = "remoteFolder";
-//             }
-//             Rectangle { anchors.fill: parent; color: "blue"; opacity: 0.05 }
-//         }
     }
     PlasmaComponents.ToolButton {
         id: remoteFolderItem
 
         text: i18n("Pick Remote Folder")
         iconSource: "folder-sync"
-        anchors { top: parent.top; left: parent.left; bottom: parent.bottom; }
+        anchors { top: parent.top; left: parent.left; }
         onClicked: {
             addSyncFolder.cnt = addSyncFolder.cnt + 1
-            var localFolder = "/home/sebas/tmp/test" + cnt;
+            var localFolder = addSyncFolder.localFolder;
             var remoteFolder = "test" + cnt;
-            var aliasName = "Test " + cnt;
+            var l = addSyncFolder.localFolder.split('/');
+            var aliasName = l[l.length];
             print("Adding folder " + localFolder + " " + remoteFolder + " " + aliasName );
             owncloudSettings.addSyncFolder(localFolder, remoteFolder, aliasName);
 

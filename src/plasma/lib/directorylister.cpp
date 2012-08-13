@@ -31,6 +31,7 @@ public:
     QDir dir;
     QString path;
     QStringList directories;
+    QString filter;
 };
 
 DirectoryLister::DirectoryLister(QObject* parent) :
@@ -62,7 +63,7 @@ void DirectoryLister::up()
 
 QStringList DirectoryLister::directories()
 {
-    return d->directories;
+    return d->directories.filter(d->filter);
 }
 
 QString DirectoryLister::currentPath()
@@ -83,6 +84,21 @@ void DirectoryLister::enterDirectory(const QString &directory)
     //d->directories.removeAll(QString('.'));
     currentPathChanged();
     emit directoriesChanged();
+}
+
+QString DirectoryLister::filter()
+{
+    return d->filter;
+}
+
+void DirectoryLister::setFilter(const QString &f)
+{
+    kDebug() << "Setting filter to : " << f;
+    if (f != d->filter) {
+        d->filter = f;
+        emit directoriesChanged();
+        emit filterChanged();
+    }
 }
 
 
