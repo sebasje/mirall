@@ -377,7 +377,7 @@ void Application::setupLogBrowser()
     // init the log browser.
     _logBrowser = new LogBrowser;
     qInstallMsgHandler( mirallLogCatcher );
-    csync_set_log_callback( csyncLogCatcher );
+    //csync_set_log_callback( csyncLogCatcher );
 
     if( arguments().contains(QLatin1String("--logwindow"))
             || arguments().contains(QLatin1String("-l"))) {
