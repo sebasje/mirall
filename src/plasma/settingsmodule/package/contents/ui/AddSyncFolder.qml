@@ -26,8 +26,9 @@ import org.kde.plasma.components 0.1 as PlasmaComponents
 Item {
     id: addSyncFolder
 
-    property string localFolder: "/home/sebas/tmp/test"
-    property string remoteFolder: "Pictures"
+    property string localFolder: ""
+    property string remoteFolder: ""
+    property string aliasName: ""
     height: collapsedHeight
 
     property int cnt: 0
@@ -85,6 +86,23 @@ Item {
         }
         Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
     }
+
+    function nextPage() {
+        print("Next page" + addSyncFolder.state);
+        if (addSyncFolder.state == "localFolder") {
+            addSyncFolder.state = "remoteFolder";
+            directoryPickerLoader.source = "RemoteFolderPicker.qml";
+        } else if (addSyncFolder.state == "remoteFolder") {
+            addSyncFolder.cnt = addSyncFolder.cnt + 1
+            var localFolder = addSyncFolder.localFolder;
+            var remoteFolder = "test" + cnt;
+            var aliasName = addSyncFolder.aliasName;
+            print("Adding folder " + localFolder + " " + remoteFolder + " " + aliasName );
+            owncloudSettings.addSyncFolder(localFolder, remoteFolder, aliasName);
+            addSyncFolder.state = "feedback";
+            directoryPickerDialog.close();
+        }
+    }
     Item {
         id: localFolderItem
         anchors.fill: parent
@@ -96,20 +114,15 @@ Item {
             iconSource: "folder-green"
             height: collapsedHeight
             anchors { top: parent.top; left: parent.left; }
-            onClicked: {
-                addSyncFolder.state = "remoteFolder";
-
-            }
+            onClicked: nextPage();
         }
         PlasmaComponents.CommonDialog {
             id: directoryPickerDialog
             titleText: i18n("Pick Local Folder")
-            buttonTexts: [i18n("Pick %1", directoryPickerLoader.item.currentPath)]
-            onButtonClicked: {
-                addSyncFolder.localFolder = directoryPickerLoader.item.currentPath;
-                addSyncFolder.state = "remoteFolder";
-                close();
-            }
+            buttonTexts: [i18n("Cancel")]
+//             onButtonClicked: {
+//                 //close();
+//             }
             content: Loader {
                 id: directoryPickerLoader
                 width: theme.defaultFont.mSize.width*22

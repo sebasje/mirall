@@ -62,14 +62,14 @@ Item {
             id: folderList
             width: parent.width
             clip: true
-            //height: 400
+            height: 500
             visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
             anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: enabledSwitch.top; }
         }
 
         ErrorHandler {
             id: ocStatus
-            height: 400
+            //height: 400
             anchors { top: folderList.top; left: folderList.left; right: folderList.right; }
             visible: owncloudSettings.owncloudStatus != OwncloudSettings.Connected
             //Rectangle { color: "green"; anchors.fill: parent; opacity: .4; }

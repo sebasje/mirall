@@ -17,3 +17,4 @@ X-KDE-PluginInfo-License=GPL
 X-KDE-PluginInfo-EnabledByDefault=true
 X-Plasma-Package=org.kde.active.settings.owncloud
 X-Plasma-MainScript=ui/OwncloudSettingsModule.qml
+X-Plasma-DefaultSize=400,400
