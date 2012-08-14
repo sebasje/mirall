@@ -5,21 +5,24 @@ OwncloudFolder
 o enum Status: Disabled, Waiting, Idle, Error
 o enum Error: TimeSync, Connection, Disk, Other
 
-* enable()
-* disable()
+o enable()
+o disable()
 
 remove()
 
 OwncloudSettings:
 o folders()
-* add()
+o add()
+o keep an eye on dbus service, update state accordingly
+o start daemon machinery
 
 * Login.qml - generic log in form w/ title, user, pass, url (line edit or list)
 * kill owncloudsettings::statusmessage and ::errormessage
-* keep an eye on dbus service, update state accordingly
-* start daemon machinery
 
 
+Sync:
+* investigate polling with the goal to kill it
+* retrieve list of remote folders in Mirall::ownCloudInfo
 
 
 o == done; * == todo
