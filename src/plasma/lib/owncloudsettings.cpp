@@ -105,6 +105,7 @@ void OwncloudSettings::init()
         QObject::connect(d->client, SIGNAL(folderListChanged(const QVariantMap&)), this, SLOT(setFolderList(const QVariantMap&)));
         QObject::connect(d->client, SIGNAL(folderChanged(const QVariantMap&)), this, SLOT(setFolder(const QVariantMap&)));
         QObject::connect(d->client, SIGNAL(owncloudChanged(const QVariantMap&)), this, SLOT(setOwncloud(const QVariantMap&)));
+        QObject::connect(d->client, SIGNAL(remoteFolderExists(const QString&, bool)), this, SIGNAL(remoteFolderExists(const QString&, bool)));
 
         refresh();
     }
@@ -281,6 +282,22 @@ void OwncloudSettings::enableFolder(const QString& name, bool enabled)
 {
     if (d->client) {
         d->client->enableFolder(name, enabled);
+    }
+}
+
+void OwncloudSettings::checkRemoteFolder(const QString &folder)
+{
+    //kDebug() << "checkremote folder";
+    if (d->client && !folder.isEmpty()) {
+        d->client->checkRemoteFolder(folder);
+    }
+}
+
+void OwncloudSettings::createRemoteFolder(const QString &folder)
+{
+    if (d->client && !folder.isEmpty()) {
+        kDebug() << "creating remote folder" << folder;
+        d->client->createRemoteFolder(folder);
     }
 }
 

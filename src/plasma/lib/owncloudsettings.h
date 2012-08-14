@@ -109,6 +109,8 @@ class OwncloudSettings : public QObject
         Q_INVOKABLE void enableFolder(const QString &name, bool enabled = true);
         Q_INVOKABLE void addSyncFolder(const QString &localFolder, const QString &remoteFolder,
                                        const QString &alias);
+        Q_INVOKABLE void checkRemoteFolder(const QString &folder);
+        Q_INVOKABLE void createRemoteFolder(const QString &folder);
 
     Q_SIGNALS:
         void dataChanged();
@@ -121,6 +123,7 @@ class OwncloudSettings : public QObject
         void editionChanged();
         void versionChanged();
         void urlChanged();
+        void remoteFolderExists(const QString &folder, bool exists);
 
     private Q_SLOTS:
         void updateGlobalStatus();

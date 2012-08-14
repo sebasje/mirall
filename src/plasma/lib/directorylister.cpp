@@ -39,6 +39,7 @@ DirectoryLister::DirectoryLister(QObject* parent) :
 {
     d = new DirectoryListerPrivate;
     d->q = this;
+    d->dir = QDir::home();
 
     //d->directories = QStringList() << "/home/sebas/tmp/test1/" << "/home/sebas/tmp/test2/" << "/home/sebas/tmp/test3/" << "/home/sebas/tmp/test4/" << "/home/sebas/tmp/test5/";
 
