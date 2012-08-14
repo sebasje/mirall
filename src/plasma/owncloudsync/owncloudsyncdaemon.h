@@ -52,7 +52,9 @@ class OwncloudSyncDaemon : public QObject
         void updateFolder(const Mirall::Folder *folder);
         void enableFolder(const QString &name, bool enabled = true);
         void addSyncFolder(const QString &localFolder, const QString &remoteFolder,
-                           const QString &alias = QString()); 
+                           const QString &alias = QString());
+        void createRemoteFolder(const QString &f);
+        void checkRemoteFolder(const QString &f);
 
         void timeout();
 
@@ -65,6 +67,7 @@ class OwncloudSyncDaemon : public QObject
         void errorMessageChanged(QString);
         void statusChanged(int);
         void statusMessageChanged(QString);
+        void remoteFolderExists(QString, bool);
 
     protected Q_SLOTS:
         void slotSyncStateChange(const QString&);
@@ -72,6 +75,8 @@ class OwncloudSyncDaemon : public QObject
         void slotNoOwnCloudFound( QNetworkReply* );
         void slotCheckAuthentication();
         void slotAuthCheck( const QString& ,QNetworkReply* );
+        void slotCreateRemoteFolderFinished(QNetworkReply::NetworkError);
+        void slotDirCheckReply( const QString&, QNetworkReply* );
 
     private:
         OwncloudSyncDaemonPrivate* d;

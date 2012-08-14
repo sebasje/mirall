@@ -86,6 +86,12 @@ OwncloudSyncDaemon::OwncloudSyncDaemon(QObject *parent)
     connect(d->ocInfo,SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
              this,SLOT(slotAuthCheck(QString,QNetworkReply*)));
 
+    connect(d->ocInfo, SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
+             SLOT(slotDirCheckReply(QString,QNetworkReply*)));
+
+    connect(d->ocInfo, SIGNAL(webdavColCreated(QNetworkReply::NetworkError)),
+             SLOT(slotCreateRemoteFolderFinished(QNetworkReply::NetworkError)));
+
     refresh();
 
     if(d->ocInfo->isConfigured() ) {
@@ -237,6 +243,49 @@ void OwncloudSyncDaemon::addSyncFolder(const QString& localFolder, const QString
 
     d->folderMan->setupFolders();
     refresh();
+}
+
+void OwncloudSyncDaemon::checkRemoteFolder(const QString& f)
+{
+    qDebug() << "OC Querying folder " << f;
+    d->ocInfo->getWebDAVPath(f);
+
+}
+
+void OwncloudSyncDaemon::slotDirCheckReply(const QString &url, QNetworkReply *reply)
+{
+    qDebug() << "OC Got reply from owncloud dir check: " << url << " :" << reply->error();
+    //_dirChecked = (reply->error() == QNetworkReply::NoError);
+    if(reply->error() == QNetworkReply::NoError) {
+        qDebug() << "OC " << "The folder is exists.";
+    } else {
+        qDebug() << "OC " << "The folder is not available on your ownCloud.";
+    }
+    emit remoteFolderExists(url, reply->error() == QNetworkReply::NoError);
+
+    //emit completeChanged();
+}
+
+void OwncloudSyncDaemon::createRemoteFolder(const QString &f)
+{
+    if(f.isEmpty()) return;
+
+    qDebug() << "OC creating folder on ownCloud: " << f;
+    d->ocInfo->mkdirRequest(f);
+}
+
+void OwncloudSyncDaemon::slotCreateRemoteFolderFinished(QNetworkReply::NetworkError error)
+{
+  qDebug() << "OC ** webdav mkdir request finished " << error;
+
+  //_ui.OCFolderLineEdit->setEnabled( true );
+  // the webDAV server seems to return a 202 even if mkdir was successful.
+  if (error == QNetworkReply::NoError || error == QNetworkReply::ContentOperationNotPermittedError) {
+    qDebug() << "OC " << "Folder on ownCloud was successfully created.";
+    //slotTimerFires();
+  } else {
+    //showWarn( tr("Failed to create the folder on ownCloud.<br/>Please check manually."), false );
+  }
 }
 
 

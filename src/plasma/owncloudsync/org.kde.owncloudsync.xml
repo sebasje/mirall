@@ -44,6 +44,19 @@
       <arg name="alias" type="s" direction="in" />
     </method>
 
+    <method name="createRemoteFolder">
+      <arg name="name" type="s" direction="in" />
+    </method>
+
+    <method name="checkRemoteFolder">
+      <arg name="name" type="s" direction="in" />
+    </method>
+
+    <signal name="remoteFolderExists">
+      <arg type="s" direction="out" />
+      <arg type="b" direction="out" />
+    </signal>
+
     <method name="folderList">
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
       <arg type="a{sv}" direction="out" />
