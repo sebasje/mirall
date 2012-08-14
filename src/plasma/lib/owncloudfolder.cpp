@@ -27,6 +27,7 @@ class OwncloudFolderPrivate {
 public:
     OwncloudFolder *q;
     QString name;
+    QString localPath;
     int error;
     QString errorMessage;
     int status;
@@ -111,6 +112,19 @@ void OwncloudFolder::setDisplayName(const QString &n)
     }
     d->name = n;
     emit displayNameChanged();
+}
+
+QString OwncloudFolder::localPath() const
+{
+    return d->localPath;
+}
+
+void OwncloudFolder::setLocalPath(const QString& p)
+{
+    if (d->localPath != p) {
+        d->localPath = p;
+        emit localPathChanged();
+    }
 }
 
 // Q_INVOKABLES

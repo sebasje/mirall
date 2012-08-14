@@ -111,6 +111,8 @@ class OwncloudSettings : public QObject
                                        const QString &alias);
         Q_INVOKABLE void checkRemoteFolder(const QString &folder);
         Q_INVOKABLE void createRemoteFolder(const QString &folder);
+        Q_INVOKABLE void verifyFolder(const QString &localFolder, const QString &remoteFolder,
+                                       const QString &alias);
 
     Q_SIGNALS:
         void dataChanged();
@@ -124,6 +126,7 @@ class OwncloudSettings : public QObject
         void versionChanged();
         void urlChanged();
         void remoteFolderExists(const QString &folder, bool exists);
+        void folderVerified(const QString &error);
 
     private Q_SLOTS:
         void updateGlobalStatus();

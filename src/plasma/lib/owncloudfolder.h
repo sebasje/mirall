@@ -36,6 +36,7 @@ class OwncloudFolder : public QObject
     Q_PROPERTY(int folderStatus READ folderStatus NOTIFY folderStatusChanged)
     Q_PROPERTY(int error READ error NOTIFY errorChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
+    Q_PROPERTY(QString localPath READ localPath WRITE setLocalPath NOTIFY localPathChanged)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
     Q_PROPERTY(QString displayName READ displayName WRITE setDisplayName NOTIFY displayNameChanged)
 
@@ -51,6 +52,7 @@ class OwncloudFolder : public QObject
         QString errorMessage() const;
         QString name() const;
         QString displayName() const;
+        QString localPath() const;
 
     public Q_SLOTS:
         void setFolderStatus(int i);
@@ -58,6 +60,7 @@ class OwncloudFolder : public QObject
         void setErrorMessage(const QString &n);
         void setName(const QString &n);
         void setDisplayName(const QString &n);
+        void setLocalPath(const QString &p);
 
         Q_INVOKABLE void enable();
         Q_INVOKABLE void disable();
@@ -69,6 +72,7 @@ class OwncloudFolder : public QObject
         void errorMessageChanged();
         void nameChanged();
         void displayNameChanged();
+        void localPathChanged();
         void enableFolder(const QString &name, bool enabled = true);
 
     private:

@@ -26,6 +26,7 @@
 
 #include <kdebug.h>
 #include <KProcess>
+#include <KLocale>
 
 #include <QTimer>
 #include <QVariant>
@@ -249,6 +250,7 @@ void OwncloudSettings::setFolderList(const QVariantMap& m)
 
 void OwncloudSettings::setFolder(const QVariantMap& m)
 {
+    //kDebug() << " Fodler updated: " << m;
     QString alias = m["name"].toString();
     OwncloudFolder *folder = 0;
 
@@ -271,6 +273,7 @@ void OwncloudSettings::setFolder(const QVariantMap& m)
         connect(folder, SIGNAL(folderStatusChanged()), SLOT(updateGlobalStatus()));
     }
     folder->setDisplayName(alias);
+    folder->setLocalPath(m["localPath"].toString());
     folder->setFolderStatus(m["status"].toInt());
     folder->setErrorMessage(m["errorMessage"].toString());
     //kDebug() << "OC Updating" << alias << folder->folderStatus() << folder->errorMessage();
@@ -318,6 +321,33 @@ void OwncloudSettings::addSyncFolder(const QString &localFolder, const QString &
         kDebug() << "addSyncFolder: " << localFolder << remoteFolder << alias;
         d->client->addSyncFolder(localFolder, remoteFolder, alias);
     }
+}
+
+void OwncloudSettings::verifyFolder(const QString &localFolder, const QString &remoteFolder, const QString &alias)
+{
+    bool aError = false;
+    //bool rError = false;
+    bool lError = false;
+    kDebug() << "Checking " << alias << localFolder;
+    foreach (const OwncloudFolder *folder, d->folders) {
+        kDebug() << "    ?? " << folder->displayName();
+        kDebug() << "    ?? " << folder->localPath();
+        if (folder->displayName() == alias) aError = true;
+        if (folder->localPath() == localFolder) lError = true;
+        //if (folder.remotePath() == alias) aError = true;
+    }
+    QString err;
+
+    if (aError && lError) {
+        err = i18n("The display name \"%1\" is already in use and the local folder \"%2\" already connected to ownCloud.", alias, localFolder);
+    }
+    if (lError) {
+        err = i18n("The local folder \"%1\" is already connected to ownCloud.", localFolder);
+    }
+    if (aError) {
+        err = i18n("The display name \"%1\" is already in use.", alias);
+    }
+    emit folderVerified(err);
 }
 
 void OwncloudSettings::updateGlobalStatus()
