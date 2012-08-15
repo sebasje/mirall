@@ -75,7 +75,7 @@ OwncloudSyncDaemon::OwncloudSyncDaemon(QObject *parent)
     connect( d->folderMan, SIGNAL(folderSyncStateChange(QNetworkReply*)),
              this,SLOT(slotSyncStateChange(QNetworkReply)));
 
-    d->ocInfo = new Mirall::ownCloudInfo( QString(), this );
+    d->ocInfo = Mirall::ownCloudInfo::instance();
     //d->ocInfo->setCustomConfigHandle("mirall");
     connect(d->ocInfo,SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
              SLOT(slotOwnCloudFound(QString,QString,QString,QString)));
