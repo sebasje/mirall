@@ -326,8 +326,11 @@ void OwncloudSettings::addSyncFolder(const QString &localFolder, const QString &
 void OwncloudSettings::verifyFolder(const QString &localFolder, const QString &remoteFolder, const QString &alias)
 {
     bool aError = false;
-    //bool rError = false;
+    bool rError = false;
     bool lError = false;
+    if (remoteFolder.isEmpty()) {
+        rError = true;
+    }
     kDebug() << "Checking " << alias << localFolder;
     foreach (const OwncloudFolder *folder, d->folders) {
         kDebug() << "    ?? " << folder->displayName();
@@ -339,13 +342,16 @@ void OwncloudSettings::verifyFolder(const QString &localFolder, const QString &r
     QString err;
 
     if (aError && lError) {
-        err = i18n("The display name \"%1\" is already in use and the local folder \"%2\" already connected to ownCloud.", alias, localFolder);
+        err = i18n("The display name \"%1\" is already in use and the local folder \"%2\" already connected to ownCloud. ", alias, localFolder);
     }
     if (lError) {
-        err = i18n("The local folder \"%1\" is already connected to ownCloud.", localFolder);
+        err = i18n("The local folder \"%1\" is already connected to ownCloud. ", localFolder);
     }
     if (aError) {
-        err = i18n("The display name \"%1\" is already in use.", alias);
+        err = i18n("The display name \"%1\" is already in use. ", alias);
+    }
+    if (rError) {
+        err.append(i18n("The remote folder \"%1\" does not exist.", remoteFolder));
     }
     emit folderVerified(err);
 }
