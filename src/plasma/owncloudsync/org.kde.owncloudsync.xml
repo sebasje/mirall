@@ -27,6 +27,12 @@
       <arg type="a{sv}" direction="out" />
     </signal>
 
+    <method name="setupOwncloud">
+      <arg name="server" type="s" direction="in" />
+      <arg name="user" type="s" direction="in" />
+      <arg name="password" type="s" direction="in" />
+    </method>
+
     <method name="folder">
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
       <arg name="name" type="s" direction="in" />

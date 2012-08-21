@@ -50,6 +50,7 @@ public:
 
     Mirall::FolderMan* folderMan;
     Mirall::ownCloudInfo* ocInfo;
+    QString configHandle;
 
     int ocStatus;
     int ocError;
@@ -96,25 +97,13 @@ OwncloudSyncDaemon::OwncloudSyncDaemon(QObject *parent)
 
     if(d->ocInfo->isConfigured() ) {
         d->ocInfo->checkInstallation();
-    } else {
-        //qDebug() << " Error: " << er;
-        d->ocInfo->checkInstallation();
+        d->loadFolders();
     }
-
-    d->loadFolders();
-
-//     d->timer = new QTimer(this);
-//     d->c = 0;
-//     d->timer->setInterval(500);
-//     d->timer->setSingleShot(true);
-//     d->timer->start();
-//     connect(d->timer, SIGNAL(timeout()), SLOT(timeout()));
-    qDebug() << "OwncloudSyncDaemon loaded.";
+    //qDebug() << "OwncloudSyncDaemon loaded.";
 }
 
 OwncloudSyncDaemon::~OwncloudSyncDaemon()
 {
-    qDebug() << "===== owncloudsyncdaemon destroy";
     delete d;
 }
 
@@ -165,6 +154,11 @@ QVariantMap OwncloudSyncDaemon::folderList()
 
 void OwncloudSyncDaemon::refresh()
 {
+    if (!d->ocInfo->isConfigured()) {
+        qDebug() << "OC  No owncloud configured, setting one up";
+        d->ocStatus = OwncloudSettings::Error;
+        d->ocError = OwncloudSettings::NoConfigurationError;
+    }
     qDebug() << "OC Syncdaemon refresh()";
     d->loadFolders();
     emit statusChanged(d->ocStatus);
@@ -342,27 +336,52 @@ void OwncloudSyncDaemon::slotAuthCheck( const QString& ,QNetworkReply *reply )
 {
     qDebug() << "OC slotAuthCheck";
     if( reply->error() == QNetworkReply::AuthenticationRequiredError ) { // returned if the user is wrong.
-        qDebug() << "******** Password is wrong!";
+        qDebug() << "OC ******** Password is wrong!";
         d->ocStatus = OwncloudSettings::Error;
-        d->ocError = OwncloudSettings::NoConfigurationError;
+        d->ocError = OwncloudSettings::AuthenticationError;
         emit statusChanged(d->ocStatus);
         emit errorChanged(d->ocError);
     } else if( reply->error() == QNetworkReply::OperationCanceledError ) {
         // the username was wrong and ownCloudInfo was closing the request after a couple of auth tries.
-        qDebug() << "******** Username or password is wrong!";
+        qDebug() << "OC ******** Username or password is wrong!";
         //emit statusMessageChanged(er);
         d->ocStatus = OwncloudSettings::Error;
         d->ocError = OwncloudSettings::AuthenticationError;
         emit statusChanged(d->ocStatus);
         emit errorChanged(d->ocError);
     } else {
-        qDebug() << "######## Credentials are ok!";
+        qDebug() << "OC ######## Credentials are ok!";
         d->ocStatus = OwncloudSettings::Connected;
         d->ocError = OwncloudSettings::NoError;
         emit statusChanged(d->ocStatus);
         emit errorChanged(d->ocError);
         d->folderMan->setupFolders();
         d->loadFolders();
+    }
+}
+
+void OwncloudSyncDaemon::setupOwncloud(const QString &server, const QString &user, const QString &password)
+{
+    Mirall::MirallConfigFile cfgFile(d->configHandle);
+
+    cfgFile.writeOwncloudConfig(QLatin1String("ownCloud"), server, user, password, false);
+    qDebug() << "OC Setting up: " << server << user << password;
+    cfgFile.acceptCustomConfig();
+
+    if( d->folderMan ) {
+        d->folderMan->removeAllFolderDefinitions();
+    }
+
+    d->configHandle.clear();
+    d->ocInfo->setCustomConfigHandle(QString());
+
+    d->ocInfo->setCustomConfigHandle(d->configHandle);
+    if (d->ocInfo->isConfigured()) {
+        // reset the SSL Untrust flag to let the SSL dialog appear again.
+        d->ocInfo->resetSSLUntrust();
+        d->ocInfo->checkInstallation();
+    } else {
+        qDebug() << " OC  ownCloud seems not configured.";
     }
 }
 

@@ -16,6 +16,7 @@ o add()
 o keep an eye on dbus service, update state accordingly
 o start daemon machinery
 
+* fix up layout in add folder
 * Login.qml - generic log in form w/ title, user, pass, url (line edit or list)
 * kill owncloudsettings::statusmessage and ::errormessage
 

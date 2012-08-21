@@ -55,6 +55,7 @@ class OwncloudSyncDaemon : public QObject
                            const QString &alias = QString());
         void createRemoteFolder(const QString &f);
         void checkRemoteFolder(const QString &f);
+        void setupOwncloud(const QString &server, const QString &user, const QString &password);
 
         void timeout();
 
