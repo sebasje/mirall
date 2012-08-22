@@ -57,8 +57,6 @@ class OwncloudSyncDaemon : public QObject
         void checkRemoteFolder(const QString &f);
         void setupOwncloud(const QString &server, const QString &user, const QString &password);
 
-        void timeout();
-
     Q_SIGNALS:
         void displayChanged();
         void folderListChanged(QVariantMap);

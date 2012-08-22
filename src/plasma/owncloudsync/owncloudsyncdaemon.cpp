@@ -46,7 +46,6 @@ public:
     QVariantMap folderList;
     QVariantMap owncloudInfo;
     QHash<QString, QVariantMap> folders;
-    QTimer *timer;
 
     Mirall::FolderMan* folderMan;
     Mirall::ownCloudInfo* ocInfo;
@@ -93,7 +92,7 @@ OwncloudSyncDaemon::OwncloudSyncDaemon(QObject *parent)
     connect(d->ocInfo, SIGNAL(webdavColCreated(QNetworkReply::NetworkError)),
              SLOT(slotCreateRemoteFolderFinished(QNetworkReply::NetworkError)));
 
-    refresh();
+    //refresh();
 
     if(d->ocInfo->isConfigured() ) {
         d->ocInfo->checkInstallation();
@@ -105,16 +104,6 @@ OwncloudSyncDaemon::OwncloudSyncDaemon(QObject *parent)
 OwncloudSyncDaemon::~OwncloudSyncDaemon()
 {
     delete d;
-}
-
-void OwncloudSyncDaemon::timeout()
-{
-    //qDebug() << "timer " << d->c;
-    //emit statusMessageChanged(QString("Timeout has fired " + QString::number(d->c/5) + " times."));
-    d->c++;
-
-    d->loadFolders();
-    emit folderListChanged(d->folderList);
 }
 
 void OwncloudSyncDaemon::slotSyncStateChange(const QString &s )
@@ -154,12 +143,11 @@ QVariantMap OwncloudSyncDaemon::folderList()
 
 void OwncloudSyncDaemon::refresh()
 {
+    qDebug() << "OC Syncdaemon refresh()";
     if (!d->ocInfo->isConfigured()) {
-        qDebug() << "OC  No owncloud configured, setting one up";
         d->ocStatus = OwncloudSettings::Error;
         d->ocError = OwncloudSettings::NoConfigurationError;
     }
-    qDebug() << "OC Syncdaemon refresh()";
     d->loadFolders();
     emit statusChanged(d->ocStatus);
     emit errorChanged(d->ocError);
