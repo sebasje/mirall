@@ -113,6 +113,8 @@ class OwncloudSettings : public QObject
         Q_INVOKABLE void createRemoteFolder(const QString &folder);
         Q_INVOKABLE void verifyFolder(const QString &localFolder, const QString &remoteFolder,
                                        const QString &alias);
+        Q_INVOKABLE void setupOwncloud(const QString &server, const QString &user,
+                                       const QString &password);
 
     Q_SIGNALS:
         void dataChanged();

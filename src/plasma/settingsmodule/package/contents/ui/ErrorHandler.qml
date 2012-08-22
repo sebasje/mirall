@@ -34,6 +34,7 @@ Item {
         anchors { top: parent.top; left: parent.left; right: parent.right; }
 
         text: errorMessage(owncloudSettings.error)
+        visible: OwncloudSettings.NoConfigurationError != owncloudSettings.error
 
     }
 
@@ -44,6 +45,11 @@ Item {
         anchors { top: errorLabel.bottom; right: parent.right; }
 
         onClicked: owncloudSettings.startDaemon()
+    }
+
+    LoginWidget {
+        visible: owncloudSettings.error == OwncloudSettings.NoConfigurationError
+        anchors.fill: parent
     }
 
     function errorMessage(e) {

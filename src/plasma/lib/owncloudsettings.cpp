@@ -228,6 +228,13 @@ void OwncloudSettings::startDaemon()
     KProcess::startDetached("owncloudsyncd");
 }
 
+void OwncloudSettings::setupOwncloud(const QString& server, const QString& user, const QString& password)
+{
+    kDebug() << "setting up owncloud: " << server << user << password;
+    d->client->setupOwncloud(server, user, password);
+}
+
+
 // -- Folder handling
 
 void OwncloudSettings::setFolderList(const QVariantMap& m)
