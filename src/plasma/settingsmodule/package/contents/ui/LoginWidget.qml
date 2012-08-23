@@ -66,7 +66,7 @@ Column {
             Keys.onReturnPressed: userNameEdit.forceActiveFocus()
             Keys.onTabPressed: userNameEdit.forceActiveFocus()
         }
-        
+
 //         Column {
 //             id: radioCol
 //             PlasmaComponents.RadioButton {

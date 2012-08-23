@@ -1,6 +1,7 @@
 set(kcm_owncloud_PART_SRCS
     kcmowncloud.cpp
     owncloudconfig.cpp
+    ../lib/directorylister.cpp
     ../lib/owncloudsettings.cpp
     ../lib/owncloudfolder.cpp
 )

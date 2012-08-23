@@ -23,6 +23,7 @@
 // from lib/
 #include "owncloudsettings.h"
 #include "owncloudfolder.h"
+#include "directorylister.h"
 
 // Qt
 #include <QBoxLayout>
@@ -79,12 +80,13 @@ OwncloudConfig::OwncloudConfig(QWidget *parent, const QVariantList &)
     setQuickHelp( i18n("<h1>Owncloud</h1>\n"
     "This module allows you to configure ownCloud servers and folders you want to synchronize."));
 
+    qmlRegisterType<DirectoryLister>("org.kde.plasma.owncloud", 0, 1, "DirectoryLister");
     qmlRegisterType<OwncloudSettings>("org.kde.plasma.owncloud", 0, 1, "OwncloudSettings");
     qmlRegisterType<OwncloudFolder>("org.kde.plasma.owncloud", 0, 1, "OwncloudFolder");
 
     Plasma::PackageStructure::Ptr structure = Plasma::PackageStructure::load("Plasma/Generic");
     Plasma::Package *package = new Plasma::Package(QString(), "org.kde.active.settings.owncloud", structure);
-    const QString qmlFile = package->filePath("ui", "OwncloudPlasmoid.qml");
+    const QString qmlFile = package->filePath("ui", "OwncloudSettingsModule.qml");
     delete package;
     d->declarativeView->setSource(qmlFile);
 }
