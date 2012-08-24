@@ -351,6 +351,7 @@ void OwncloudSyncDaemon::slotAuthCheck( const QString& ,QNetworkReply *reply )
 void OwncloudSyncDaemon::setupOwncloud(const QString &server, const QString &user, const QString &password)
 {
     Mirall::MirallConfigFile cfgFile(d->configHandle);
+    cfgFile.setRemotePollIntval(60000);
 
     cfgFile.writeOwncloudConfig(QLatin1String("ownCloud"), server, user, password, false);
     qDebug() << "OC Setting up: " << server << user << password;

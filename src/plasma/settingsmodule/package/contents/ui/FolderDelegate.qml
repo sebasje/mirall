@@ -64,8 +64,14 @@ MouseArea {
         id: errorLabel
         font.pointSize: theme.smallestFont.pointSize
         anchors { left: aliasLabel.left; right: statusIcon.left; top: aliasLabel.bottom; }
-        text: errorMessage + " " + statusMessage(folderStatus)
-        opacity: (expanded && folderStatus == OwncloudFolder.Error) ? 1.0 : 0.0
+        text: {
+            if (false && folderStatus == OwncloudFolder.Error) {
+                return errorMessage + " " + statusMessage(folderStatus);
+            } else {
+                return "Synchronized " + friendlyDate(syncTime);
+            }
+        }
+        opacity: (expanded && folderStatus == OwncloudFolder.Error) ? 1.0 : 0.6
         Behavior on opacity {
             PropertyAnimation { easing.type: Easing.InOutQuart; duration: 400 }
         }
@@ -90,4 +96,22 @@ MouseArea {
             PropertyAnimation { easing.type: Easing.InOutQuart; duration: 400 }
         }
     }
+    function friendlyDate(date) {
+        var d = new Date(date);
+        var now = new Date();
+        var dout = Qt.formatDateTime(d, "hh:mm");
+        var ago = (now - d) / 1000;
+        var output = "";
+        if (ago < 60) {
+            output = i18np("%1 second ago", "%1 seconds ago", ago);
+        } else if (ago < 3600) {
+            output = i18np("%1 minute ago", "%1 minutes ago", Math.round(ago/60));
+        } else if (ago < 84600) {
+            output = i18np("%1 hour ago", "%1 hours ago", Math.round(ago/3600));
+        } else {
+            output = i18np("%1 day ago", "%1 days ago", Math.round(ago/86400));
+        }
+        return output;
+    }
+
 }

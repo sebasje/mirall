@@ -51,6 +51,7 @@ class OwncloudSettings : public QObject
     Q_PROPERTY(int globalStatus READ globalStatus NOTIFY globalStatusChanged)
     Q_PROPERTY(QString version READ version NOTIFY versionChanged)
     Q_PROPERTY(QString edition READ edition NOTIFY editionChanged)
+//     Q_PROPERTY(int pollInterval READ pollInterval NOTIFY pollInterval)
 
     public:
         OwncloudSettings(QObject* parent = 0);
