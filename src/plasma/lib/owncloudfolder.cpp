@@ -31,6 +31,7 @@ public:
     int error;
     QString errorMessage;
     int status;
+    QDateTime syncTime;
 };
 
 OwncloudFolder::OwncloudFolder(QObject* parent)
@@ -59,6 +60,11 @@ void OwncloudFolder::setFolderStatus(int i)
     if (d->status != i) {
         d->status = i;
         emit folderStatusChanged();
+        if (d->status == Idle) {
+            setSyncTime(QDateTime::currentDateTime());
+        } else {
+            //setSyncTime(QDateTime());
+        }
     }
 }
 
@@ -147,6 +153,20 @@ void OwncloudFolder::remove()
 {
     kDebug() << "Remove folder." << d->name;
 }
+
+QDateTime OwncloudFolder::syncTime() const
+{
+    return d->syncTime;
+}
+
+void OwncloudFolder::setSyncTime(const QDateTime& dt)
+{
+    if (dt != d->syncTime) {
+        d->syncTime = dt;
+        emit syncTimeChanged();
+    }
+}
+
 
 
 #include "owncloudfolder.moc"

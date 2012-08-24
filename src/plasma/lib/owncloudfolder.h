@@ -21,6 +21,7 @@
 #ifndef OWNCLOUDFOLDER_H
 #define OWNCLOUDFOLDER_H
 
+#include <QDateTime>
 #include <QObject>
 #include <QString>
 
@@ -39,6 +40,7 @@ class OwncloudFolder : public QObject
     Q_PROPERTY(QString localPath READ localPath WRITE setLocalPath NOTIFY localPathChanged)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
     Q_PROPERTY(QString displayName READ displayName WRITE setDisplayName NOTIFY displayNameChanged)
+    Q_PROPERTY(QDateTime syncTime READ syncTime WRITE setSyncTime NOTIFY syncTimeChanged)
 
     public:
         explicit OwncloudFolder(QObject *parent = 0);
@@ -53,6 +55,7 @@ class OwncloudFolder : public QObject
         QString name() const;
         QString displayName() const;
         QString localPath() const;
+        QDateTime syncTime() const;
 
     public Q_SLOTS:
         void setFolderStatus(int i);
@@ -60,6 +63,7 @@ class OwncloudFolder : public QObject
         void setErrorMessage(const QString &n);
         void setName(const QString &n);
         void setDisplayName(const QString &n);
+        void setSyncTime(const QDateTime &dt);
         void setLocalPath(const QString &p);
 
         Q_INVOKABLE void enable();
@@ -73,6 +77,7 @@ class OwncloudFolder : public QObject
         void nameChanged();
         void displayNameChanged();
         void localPathChanged();
+        void syncTimeChanged();
         void enableFolder(const QString &name, bool enabled = true);
 
     private:
