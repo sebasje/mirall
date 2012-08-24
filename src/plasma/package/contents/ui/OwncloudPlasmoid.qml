@@ -82,6 +82,10 @@ Item {
             anchors { bottom: parent.bottom; left: parent.left; rightMargin: 12 }
             onClicked: owncloudSettings.enableAllFolders(checked)
         }
+        AddSyncFolder {
+            id: addSyncFolder
+            anchors { bottom: parent.bottom; right: folderList.right; rightMargin: 12 }
+        }
     }
     Component.onCompleted: {
         print("Loaded OwncloudPlasmoid.qml successfully.");

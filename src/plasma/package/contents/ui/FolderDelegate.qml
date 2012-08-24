@@ -42,10 +42,65 @@ MouseArea {
         }
     }
 
+    QIconItem {
+        id: folderIcon
+        icon: "folder-green"
+        width: 48
+        height: width
+        anchors { top: parent.top; left: parent.left; }
+        opacity: (folderStatus == OwncloudFolder.Idle) ? 1.0 : 0.5
+        Behavior on opacity {
+            PropertyAnimation { easing.type: Easing.InOutQuart; duration: 200 }
+        }
+    }
+    QIconItem {
+        icon: statusIcon(folderStatus)
+        width: 16
+        height: 16
+        anchors { bottom: folderIcon.bottom; right: folderIcon.right; }
+        opacity: (folderStatus == OwncloudFolder.Running) ? 0.0 : 1.0
+        Behavior on opacity {
+            PropertyAnimation { easing.type: Easing.InOutQuart; duration: 200 }
+        }
+    }
+    PlasmaComponents.BusyIndicator {
+        width: parent.height/2
+        height: parent.height/2
+        anchors { bottom: folderIcon.bottom; right: folderIcon.right; }
+        opacity: (folderStatus == OwncloudFolder.Running) ? 1.0 : 0.0
+        running: folderStatus == OwncloudFolder.Running
+        Behavior on opacity {
+            PropertyAnimation { easing.type: Easing.InOutQuart; duration: 200 }
+        }
+    }
+    PlasmaExtras.Heading {
+        level: 4
+        id: aliasLabel
+        text: displayName
+        anchors { top: parent.top; left: folderIcon.right; right: enabledSwitch.left; leftMargin: 12; }
+    }
+    PlasmaComponents.Label {
+        id: errorLabel
+        font.pointSize: theme.smallestFont.pointSize
+        wrapMode: Text.Wrap
+        verticalAlignment: Text.AlignTop
+        anchors { left: aliasLabel.left; right: enabledSwitch.left; top: aliasLabel.bottom; bottom: parent.bottom; }
+        text: {
+            if (folderStatus == OwncloudFolder.Error) {
+                return errorMessage
+            } else {
+                return "synced " + friendlyDate(syncTime);
+            }
+        }
+        opacity: (expanded && folderStatus == OwncloudFolder.Error) ? 1.0 : 0.4
+        Behavior on opacity {
+            PropertyAnimation { easing.type: Easing.InOutQuart; duration: 400 }
+        }
+    }
     PlasmaComponents.Switch {
         id: enabledSwitch
         checked: OwncloudFolder.Disabled != folderStatus
-        anchors { top: parent.top; left: parent.left; rightMargin: 12 }
+        anchors { verticalCenter: folderIcon.verticalCenter; right: parent.right; rightMargin: 24; }
         onClicked: {
             if (checked) {
                 enable();
@@ -54,48 +109,7 @@ MouseArea {
             }
         }
     }
-    PlasmaExtras.Heading {
-        level: 4
-        id: aliasLabel
-        text: displayName
-        anchors { top: parent.top; left: enabledSwitch.right; leftMargin: 12; }
-    }
-    PlasmaComponents.Label {
-        id: errorLabel
-        font.pointSize: theme.smallestFont.pointSize
-        anchors { left: aliasLabel.left; right: statusIcon.left; top: aliasLabel.bottom; }
-        text: {
-            if (false && folderStatus == OwncloudFolder.Error) {
-                return errorMessage + " " + statusMessage(folderStatus);
-            } else {
-                return "Synchronized " + friendlyDate(syncTime);
-            }
-        }
-        opacity: (expanded && folderStatus == OwncloudFolder.Error) ? 1.0 : 0.6
-        Behavior on opacity {
-            PropertyAnimation { easing.type: Easing.InOutQuart; duration: 400 }
-        }
-    }
-    QIconItem {
-        icon: statusIcon(folderStatus)
-        width: parent.height/2
-        height: parent.height/2
-        anchors { top: parent.top; right: parent.right; }
-        opacity: (folderStatus == OwncloudFolder.Running) ? 0.0 : 1.0
-        Behavior on opacity {
-            PropertyAnimation { easing.type: Easing.InOutQuart; duration: 400 }
-        }
-    }
-    PlasmaComponents.BusyIndicator {
-        width: parent.height/2
-        height: parent.height/2
-        anchors { top: parent.top; right: parent.right; }
-        opacity: (folderStatus == OwncloudFolder.Running) ? 1.0 : 0.0
-        running: folderStatus == OwncloudFolder.Running
-        Behavior on opacity {
-            PropertyAnimation { easing.type: Easing.InOutQuart; duration: 400 }
-        }
-    }
+
     function friendlyDate(date) {
         var d = new Date(date);
         var now = new Date();

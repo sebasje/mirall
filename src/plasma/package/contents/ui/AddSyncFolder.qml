@@ -78,7 +78,7 @@ Item {
         id: addSyncFolderButton
         text: i18n("Add Folder")
         iconSource: "list-add"
-        anchors { top: parent.top; left: parent.left; }
+        anchors { top: parent.top; right: parent.right; rightMargin: 12; }
         onClicked: {
             addSyncFolder.state = "localFolder"
             directoryPickerDialog.open()

@@ -30,13 +30,10 @@ ListView {
     model: owncloudSettings.folders
     interactive: height < contentHeight
     currentIndex: -1
-
+    spacing: 24
     delegate: FolderDelegate { }
 
-    footer: AddSyncFolder {
-        id: addSyncFolder
-        width: parent.width
-    }
+//     footer:
 
     function statusIcon(e) {
         var icon = "task-complete";
