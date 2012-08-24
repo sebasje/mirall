@@ -61,7 +61,7 @@ Item {
 
     Item {
         id: owncloudItem
-        anchors { fill: parent; margins: 12; }
+        anchors { left: parent.left; right: parent.right; top: titleCol.bottom; bottom: parent.bottom; margins: 12; }
         PlasmaExtras.Heading {
             id: headingLabel
             level: 2
