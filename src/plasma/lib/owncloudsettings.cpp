@@ -45,8 +45,6 @@ public:
     int status; // OwncloudSettings::Status
     int globalStatus; // OwncloudFolder::Status
     int error;
-    QString errorMessage;
-    QString statusMessage;
 
     QList<OwncloudFolder*> folders;
     QVariantMap owncloudInfo;
@@ -135,21 +133,6 @@ void OwncloudSettings::setDisplay(const QString& n)
     kDebug() << "displayChanged" << n;
 }
 
-void OwncloudSettings::setStatusMessage(const QString& n)
-{
-    if (d->statusMessage != n) {
-        kDebug() << "Setting status message: " << n;
-        d->statusMessage = n;
-        emit statusMessageChanged();
-    }
-}
-
-QString OwncloudSettings::statusMessage() const
-{
-    return d->statusMessage;
-}
-
-
 // -- owncloud Info handling
 
 void OwncloudSettings::setOwncloud(const QVariantMap& m)
@@ -205,19 +188,6 @@ void OwncloudSettings::setError(int i)
     if (d->error != i) {
         d->error = i;
         emit errorChanged();
-    }
-}
-
-QString OwncloudSettings::errorMessage() const
-{
-    return d->errorMessage;
-}
-
-void OwncloudSettings::setErrorMessage(const QString& n)
-{
-    if (d->errorMessage != n) {
-        d->errorMessage = n;
-        emit errorMessageChanged();
     }
 }
 

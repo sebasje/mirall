@@ -229,23 +229,12 @@ void OwncloudSyncDaemon::addSyncFolder(const QString& localFolder, const QString
 
 void OwncloudSyncDaemon::checkRemoteFolder(const QString& f)
 {
-    qDebug() << "OC Querying folder " << f;
     d->ocInfo->getWebDAVPath(f);
-
 }
 
 void OwncloudSyncDaemon::slotDirCheckReply(const QString &url, QNetworkReply *reply)
 {
-    qDebug() << "OC Got reply from owncloud dir check: " << url << " :" << reply->error();
-    //_dirChecked = (reply->error() == QNetworkReply::NoError);
-    if(reply->error() == QNetworkReply::NoError) {
-        qDebug() << "OC " << "The folder is exists.";
-    } else {
-        qDebug() << "OC " << "The folder is not available on your ownCloud.";
-    }
     emit remoteFolderExists(url, reply->error() == QNetworkReply::NoError);
-
-    //emit completeChanged();
 }
 
 void OwncloudSyncDaemon::createRemoteFolder(const QString &f)
@@ -275,8 +264,9 @@ void OwncloudSyncDaemon::slotOwnCloudFound( const QString& url, const QString& v
 {
     qDebug() << "OCD ** Application: ownCloud found: " << url << " with version " << versionStr << "(" << version << ")";
     // now check the authentication
-    Mirall::MirallConfigFile cfgFile;
+    Mirall::MirallConfigFile cfgFile(d->configHandle);
     cfgFile.setOwnCloudVersion( version );
+    qDebug() << " OC polling interval: " << cfgFile.remotePollInterval();
 
     d->owncloudInfo["url"] = url;
     d->owncloudInfo["version"] = version;
@@ -296,16 +286,6 @@ void OwncloudSyncDaemon::slotOwnCloudFound( const QString& url, const QString& v
 void OwncloudSyncDaemon::slotNoOwnCloudFound( QNetworkReply* reply )
 {
     qDebug() << "OCD ** Application: NO ownCloud found!";
-    QString msg;
-    if( reply ) {
-        QString url( reply->url().toString() );
-        url.remove( "/status.php" );
-        msg = tr("<p>The ownCloud at %1 could not be reached.</p>").arg( url );
-        msg += tr("<p>The detailed error message is<br/><tt>%1</tt></p>").arg( reply->errorString() );
-    }
-    msg += tr("<p>Please check your configuration by clicking on the tray icon.</p>");
-
-    QString er = tr("ownCloud Connection Failed");
 
     d->ocStatus = OwncloudSettings::Error;
     d->ocError = OwncloudSettings::NoConfigurationError;
@@ -351,7 +331,7 @@ void OwncloudSyncDaemon::slotAuthCheck( const QString& ,QNetworkReply *reply )
 void OwncloudSyncDaemon::setupOwncloud(const QString &server, const QString &user, const QString &password)
 {
     Mirall::MirallConfigFile cfgFile(d->configHandle);
-    cfgFile.setRemotePollIntval(60000);
+    cfgFile.setRemotePollIntval(600000); // ten minutes for now
 
     cfgFile.writeOwncloudConfig(QLatin1String("ownCloud"), server, user, password, false);
     qDebug() << "OC Setting up: " << server << user << password;

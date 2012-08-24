@@ -45,13 +45,10 @@ class OwncloudSettings : public QObject
     Q_PROPERTY(int owncloudStatus READ owncloudStatus NOTIFY owncloudStatusChanged)
     Q_PROPERTY(int error READ error NOTIFY errorChanged)
     Q_PROPERTY(QDeclarativeListProperty<OwncloudFolder> folders READ folders NOTIFY foldersChanged)
-    Q_PROPERTY(QString statusMessage READ statusMessage WRITE setStatusMessage NOTIFY statusMessageChanged)
-    Q_PROPERTY(QString errorMessage READ errorMessage WRITE setErrorMessage NOTIFY errorMessageChanged)
     Q_PROPERTY(QString url READ url WRITE setUrl NOTIFY urlChanged)
     Q_PROPERTY(int globalStatus READ globalStatus NOTIFY globalStatusChanged)
     Q_PROPERTY(QString version READ version NOTIFY versionChanged)
     Q_PROPERTY(QString edition READ edition NOTIFY editionChanged)
-//     Q_PROPERTY(int pollInterval READ pollInterval NOTIFY pollInterval)
 
     public:
         OwncloudSettings(QObject* parent = 0);
@@ -89,12 +86,6 @@ class OwncloudSettings : public QObject
 
         int error() const;
         void setError(int i);
-
-        QString statusMessage() const;
-        void setStatusMessage(const QString &n);
-
-        QString errorMessage() const;
-        void setErrorMessage(const QString &n);
 
         void setFolderList(const QVariantMap &m);
         void setFolder(const QVariantMap &m);
