@@ -74,7 +74,7 @@ void OwncloudApplet::connectObjects()
 
 void OwncloudApplet::connectObjects(QDeclarativeComponent::Status s)
 {
-    kDebug() << "CONNNECT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+    kDebug() << "CONNECT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
     if (s != QDeclarativeComponent::Ready) {
         return;
     }

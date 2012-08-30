@@ -18,12 +18,13 @@ o start daemon machinery
 
 * fix up layout in add folder
 * Login.qml - generic log in form w/ title, user, pass, url (line edit or list)
-* kill owncloudsettings::statusmessage and ::errormessage
+o kill owncloudsettings::statusmessage and ::errormessage
+* swap names of owncloudsync and owncloudsyncdaemon
 
 
 Sync:
 * investigate polling with the goal to kill it
 * retrieve list of remote folders in Mirall::ownCloudInfo
-
+* Set and test KIO::NetworkAccessManager
 
 o == done; * == todo
