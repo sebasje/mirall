@@ -30,10 +30,6 @@ Column {
     property string status
     spacing: 24
 
-    Component.onCompleted: {
-        //serverUrl = plasmoid.readConfig("serviceUrl");
-    }
-
     Grid {
         id: formGrid
 
@@ -45,19 +41,11 @@ Column {
         //anchors.horizontalCenter: parent.horizontalCenter
         width: parent.width
 
-//         PlasmaExtras.Heading {
-//             text: i18n("Set up your ownCloud")
-//             level: 2
-//             horizontalAlignment: Text.AlignRight
-//             anchors.right: parent.horizontalCenter
-//             anchors.left: parent.left
-//             anchors.rightMargin: 24
-//         }
         PlasmaComponents.Label {
             text: i18n("Server address:")
             horizontalAlignment: Text.AlignRight
-            anchors.right: parent.horizontalCenter
-            anchors.rightMargin: 24
+            //anchors.right: parent.horizontalCenter
+            //anchors.rightMargin: 24
         }
         PlasmaComponents.TextField {
             id: serverEdit
@@ -67,46 +55,6 @@ Column {
             Keys.onTabPressed: userNameEdit.forceActiveFocus()
         }
 
-//         Column {
-//             id: radioCol
-//             PlasmaComponents.RadioButton {
-//                 id: twitterRadio
-//                 width: 140
-//                 height: 30
-//                 text: "Identi.ca"
-//                 property string apiUrl: "https://identi.ca/api/"
-//                 checked: (serverUrl == apiUrl)
-// 
-//                 onClicked: {
-//                     identicaRadio.checked = !checked;
-//                     if (checked) {
-//                         console.log(text + " selected" + serverUrl);
-//                         serverUrl = apiUrl;
-//                     } else {
-//                         console.log(text + " Unchecked" + serverUrl);
-//                     }
-//                 }
-//             }
-//             PlasmaComponents.RadioButton {
-//                 id: identicaRadio
-//                 width: 140
-//                 height: 30
-//                 text: "Twitter"
-//                 property string apiUrl: "https://api.twitter.com/1/"
-//                 //property string apiUrl: "https://twitter.com/"
-//                 checked: (serverUrl == apiUrl)
-// 
-//                 onCheckedChanged: {
-//                     twitterRadio.checked = !checked;
-//                     if (checked) {
-//                         console.log(text + " selected" + serverUrl);
-//                         serverUrl = apiUrl;
-//                     } else {
-//                         console.log(text + " Unchecked" + serverUrl);
-//                     }
-//                 }
-//             }
-//         }
 
         PlasmaComponents.Label {
             text: i18n("User name:")
@@ -139,8 +87,6 @@ Column {
         enabled: userNameEdit.text != "" && serverUrl != ""
         anchors {
             topMargin: 20
-            //left: parent.horizontalCenter
-//             leftMargin: 2
         }
         x: passwordEdit.x + 2
         onClicked: loginWidget.acceptConfig()

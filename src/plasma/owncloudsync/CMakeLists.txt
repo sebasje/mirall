@@ -17,8 +17,8 @@ set(owncloudsyncd_SRCS
 
 qt4_add_dbus_adaptor(owncloudsyncd_SRCS
   org.kde.owncloudsync.xml
-  owncloudsyncdaemon.h
-  OwncloudSyncDaemon)
+  owncloudsync.h
+  OwncloudSync)
 
 kde4_add_kdeinit_executable(owncloudsyncd ${owncloudsyncd_SRCS})
 

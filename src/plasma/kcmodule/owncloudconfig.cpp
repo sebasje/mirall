@@ -68,10 +68,10 @@ OwncloudConfig::OwncloudConfig(QWidget *parent, const QVariantList &)
     d->kdeclarative.setupBindings();
 
 //     // avoid flicker on show
-//     d->declarativeView->setAttribute(Qt::WA_OpaquePaintEvent);
-//     d->declarativeView->setAttribute(Qt::WA_NoSystemBackground);
-//     d->declarativeView->viewport()->setAttribute(Qt::WA_OpaquePaintEvent);
-//     d->declarativeView->viewport()->setAttribute(Qt::WA_NoSystemBackground);
+    //d->declarativeView->setAttribute(Qt::WA_OpaquePaintEvent);
+    //d->declarativeView->setAttribute(Qt::WA_NoSystemBackground);
+    //d->declarativeView->viewport()->setAttribute(Qt::WA_OpaquePaintEvent);
+    //d->declarativeView->viewport()->setAttribute(Qt::WA_NoSystemBackground);
 
     QBoxLayout *lay = new QBoxLayout(QBoxLayout::TopToBottom, this);
     lay->addWidget(d->declarativeView);

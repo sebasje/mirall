@@ -78,7 +78,7 @@ OwncloudSettings::OwncloudSettings(QObject* parent) :
 
 OwncloudSettings::~OwncloudSettings()
 {
-    kDebug() << "========================== owncloudsettings destroy";
+    kDebug() << "owncloudsettings destroy";
     delete d;
 }
 
@@ -96,11 +96,8 @@ void OwncloudSettings::init()
     } else if (d->client == 0) {
 
         d->client = new OrgKdeOwncloudsyncInterface("org.kde.owncloudsync", "/", QDBusConnection::sessionBus(), this);
-        QObject::connect(d->client, SIGNAL(displayChanged(QString)), this, SLOT(setStatusMessage(QString)));
-        QObject::connect(d->client, SIGNAL(statusMessageChanged(QString)), this, SLOT(setStatusMessage(QString)));
         QObject::connect(d->client, SIGNAL(statusChanged(int)), this, SLOT(setOwncloudStatus(int)));
         QObject::connect(d->client, SIGNAL(errorChanged(int)), this, SLOT(setError(int)));
-        QObject::connect(d->client, SIGNAL(errorMessageChanged(QString)), this, SLOT(setErrorMessage(QString)));
         QObject::connect(d->client, SIGNAL(folderListChanged(const QVariantMap&)), this, SLOT(setFolderList(const QVariantMap&)));
         QObject::connect(d->client, SIGNAL(folderChanged(const QVariantMap&)), this, SLOT(setFolder(const QVariantMap&)));
         QObject::connect(d->client, SIGNAL(owncloudChanged(const QVariantMap&)), this, SLOT(setOwncloud(const QVariantMap&)));

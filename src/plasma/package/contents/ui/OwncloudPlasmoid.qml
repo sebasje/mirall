@@ -84,7 +84,8 @@ Item {
         }
         AddSyncFolder {
             id: addSyncFolder
-            anchors { bottom: parent.bottom; right: folderList.right; rightMargin: 12 }
+            visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
+            anchors { verticalCenter: enabledSwitch.verticalCenter; right: folderList.right; rightMargin: 12 }
         }
     }
     Component.onCompleted: {

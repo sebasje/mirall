@@ -18,340 +18,54 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************/
 
-
 #include "owncloudsyncdaemon.h"
-#include "owncloudfolder.h"
-#include "owncloudsettings.h"
+#include "owncloudsync.h"
 
-#include <qdebug.h>
-//#include <QMessageBox>
-#include <QVariant>
-#include <QTimer>
+#include "owncloudsyncadaptor.h"
 
-#include "mirall/syncresult.h"
-#include "mirall/folder.h"
-#include "mirall/folderman.h"
-#include "mirall/logbrowser.h"
-#include "mirall/mirallconfigfile.h"
-#include "mirall/owncloudinfo.h"
+#include <KDebug>
+#include <KGlobal>
+#include <KStandardDirs>
 
-class OwncloudSyncDaemonPrivate {
-public:
-    OwncloudSyncDaemon *q;
-    QString name;
-    QString localPath;
-    QString remotePath;
-    QString display;
+#include <QtDBus/QDBusConnection>
 
-    QVariantMap folderList;
-    QVariantMap owncloudInfo;
-    QHash<QString, QVariantMap> folders;
 
-    Mirall::FolderMan* folderMan;
-    Mirall::ownCloudInfo* ocInfo;
-    QString configHandle;
+OwncloudSyncDaemon* OwncloudSyncDaemon::s_self = 0;
 
-    int ocStatus;
-    int ocError;
-
-    void loadFolders();
-
-    int c;
-};
-
-OwncloudSyncDaemon::OwncloudSyncDaemon(QObject *parent)
-    : QObject(parent)
+OwncloudSyncDaemon::OwncloudSyncDaemon( QObject* parent )
+    : QObject( parent ),
+      m_currentState(StateDisabled)
 {
-    d = new OwncloudSyncDaemonPrivate;
-    d->q = this;
-    d->display = "";
+    s_self = this;
 
-    d->ocStatus = OwncloudSettings::Disconnected;
-    d->ocError = OwncloudSettings::NoError;
+    OwncloudSync* syncdaemon = new OwncloudSync(this);
+    new OwncloudsyncAdaptor(syncdaemon);
 
-    d->folderMan = new Mirall::FolderMan();
-    connect( d->folderMan, SIGNAL(folderSyncStateChange(QString)),
-             this,SLOT(slotSyncStateChange(QString)));
-    connect( d->folderMan, SIGNAL(folderSyncStateChange(QNetworkReply*)),
-             this,SLOT(slotSyncStateChange(QNetworkReply)));
+    QDBusConnection::sessionBus().registerService( "org.kde.owncloudsync" );
 
-    d->ocInfo = Mirall::ownCloudInfo::instance();
-    //d->ocInfo->setCustomConfigHandle("mirall");
-    connect(d->ocInfo,SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
-             SLOT(slotOwnCloudFound(QString,QString,QString,QString)));
-
-    connect(d->ocInfo,SIGNAL(noOwncloudFound(QNetworkReply*)),
-             SLOT(slotNoOwnCloudFound(QNetworkReply*)));
-
-    connect(d->ocInfo,SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
-             this,SLOT(slotAuthCheck(QString,QNetworkReply*)));
-
-    connect(d->ocInfo, SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
-             SLOT(slotDirCheckReply(QString,QNetworkReply*)));
-
-    connect(d->ocInfo, SIGNAL(webdavColCreated(QNetworkReply::NetworkError)),
-             SLOT(slotCreateRemoteFolderFinished(QNetworkReply::NetworkError)));
-
-    //refresh();
-
-    if(d->ocInfo->isConfigured() ) {
-        d->ocInfo->checkInstallation();
-        d->loadFolders();
-    }
-    //qDebug() << "OwncloudSyncDaemon loaded.";
+    QDBusConnection::sessionBus().registerObject( "/", syncdaemon);
+    init();
 }
+
 
 OwncloudSyncDaemon::~OwncloudSyncDaemon()
 {
-    delete d;
+    QDBusConnection::sessionBus().unregisterService( "org.kde.owncloudsync" );
 }
 
-void OwncloudSyncDaemon::slotSyncStateChange(const QString &s )
+
+void OwncloudSyncDaemon::init()
 {
-//     qDebug() << "OC slotSyncStateChange : " << s;
-    updateFolder(d->folderMan->folder(s));
 }
 
-QString OwncloudSyncDaemon::display()
+void OwncloudSyncDaemon::quit()
 {
-    qDebug() << "OC display() " << d->display;
-    return d->display;
+    QCoreApplication::instance()->quit();
 }
 
-QVariantMap OwncloudSyncDaemon::folder(QString name)
+OwncloudSyncDaemon* OwncloudSyncDaemon::self()
 {
-    qDebug() << "OC folder()" << name;
-    return d->folders[name];
+    return s_self;
 }
 
-void OwncloudSyncDaemon::enableFolder(const QString &name, bool enabled)
-{
-    qDebug() << " OC enableFolder: " << name << enabled;
-    Mirall::Folder *f = d->folderMan->folder(name);
-    if (f) {
-        f->setSyncEnabled(enabled);
-        updateFolder(f);
-    } else {
-        qWarning() << "Folder \"" << name << "\" does not exist.";
-    }
-}
-
-QVariantMap OwncloudSyncDaemon::folderList()
-{
-    return d->folderList;
-}
-
-void OwncloudSyncDaemon::refresh()
-{
-    qDebug() << "OC Syncdaemon refresh()";
-    if (!d->ocInfo->isConfigured()) {
-        d->ocStatus = OwncloudSettings::Error;
-        d->ocError = OwncloudSettings::NoConfigurationError;
-    }
-    d->loadFolders();
-    emit statusChanged(d->ocStatus);
-    emit errorChanged(d->ocError);
-    emit owncloudChanged(d->owncloudInfo);
-}
-
-void OwncloudSyncDaemonPrivate::loadFolders()
-{
-    //kDebug() << "Loaded folders : " << folders.count();
-    QStringList fs;
-    qDebug() << "Loading folders";
-    foreach (Mirall::Folder* f, folderMan->map()) {
-        qDebug() << "New folder: " << f->alias() << f->path() << f->secondPath();
-        //fs << f->alias();
-        q->updateFolder(f);
-    }
-}
-
-QString errorMsg(int r) {
-    QString s;
-    if (r == Mirall::SyncResult::Success) s = "Mirall::SyncResult::Success -> OwncloudFolder::Idle";
-    if (r == Mirall::SyncResult::Error) s = "Mirall::SyncResult::Error -> OwncloudFolder::Error";
-    if (r == Mirall::SyncResult::NotYetStarted) s = "Mirall::SyncResult::NotYetStarted -> OwncloudFolder::Waiting";
-    if (r == Mirall::SyncResult::SyncRunning) s = "Mirall::SyncResult::SyncRunning -> OwncloudFolder::Running";
-    if (r == Mirall::SyncResult::SetupError) s = "Mirall::SyncResult::SetupError -> OwncloudFolder::Error";
-    if (r == Mirall::SyncResult::Undefined) s = "Mirall::SyncResult::Undefined -> OwncloudFolder::Error";
-    return s;
-}
-
-void OwncloudSyncDaemon::updateFolder(const Mirall::Folder* folder)
-{
-    QVariantMap m;
-    m["name"] = folder->alias();
-    m["localPath"] = folder->path();
-
-    int s = 999;
-    int r = folder->syncResult().status();
-    //qDebug() << " c" << c << " r" << r;
-    if (folder->syncEnabled()) {
-        if (r == Mirall::SyncResult::Success) s = OwncloudFolder::Idle;
-        if (r == Mirall::SyncResult::Error) s = OwncloudFolder::Error;
-        if (r == Mirall::SyncResult::NotYetStarted) s = OwncloudFolder::Waiting;
-        if (r == Mirall::SyncResult::SyncRunning) s = OwncloudFolder::Running;
-        if (r == Mirall::SyncResult::SetupError) s = OwncloudFolder::Error;
-        if (r == Mirall::SyncResult::Undefined) s = OwncloudFolder::Error;
-    } else {
-        s = OwncloudFolder::Disabled;
-        //qDebug() << "OC sync enabled? " << folder->alias() << folder->syncEnabled();
-    }
-//     qDebug() << "OC sync enabled? " << folder->alias() << folder->syncEnabled();
-    //qDebug() << "OC updateFolder: " << errorMsg(r);
-    if (r == 999) {
-        //qDebug() << "OC dunno what to do with " << r;
-        s = OwncloudFolder::Error;
-    }
-    m["status"] = s;
-
-    if (s == OwncloudFolder::Error) {
-        m["errorMessage"] = folder->syncResult().errorString();
-    } else {
-        m["errorMessage"] = QString();
-    }
-
-    //d->folderList[folder->alias()] = s;
-
-    d->folders[folder->alias()] = m;
-    emit folderChanged(m);
-}
-
-void OwncloudSyncDaemon::addSyncFolder(const QString& localFolder, const QString& remoteFolder, const QString& alias)
-{
-    d->folderMan->addFolderDefinition(QString("owncloud"), alias, localFolder, remoteFolder, false);
-
-    qDebug() << "OCD OwncloudSyncDaemon::addSyncFolder: " << localFolder << remoteFolder << alias;
-
-    d->folderMan->setupFolders();
-    refresh();
-}
-
-void OwncloudSyncDaemon::checkRemoteFolder(const QString& f)
-{
-    d->ocInfo->getWebDAVPath(f);
-}
-
-void OwncloudSyncDaemon::slotDirCheckReply(const QString &url, QNetworkReply *reply)
-{
-    emit remoteFolderExists(url, reply->error() == QNetworkReply::NoError);
-}
-
-void OwncloudSyncDaemon::createRemoteFolder(const QString &f)
-{
-    if(f.isEmpty()) return;
-
-    qDebug() << "OC creating folder on ownCloud: " << f;
-    d->ocInfo->mkdirRequest(f);
-}
-
-void OwncloudSyncDaemon::slotCreateRemoteFolderFinished(QNetworkReply::NetworkError error)
-{
-  qDebug() << "OC ** webdav mkdir request finished " << error;
-
-  //_ui.OCFolderLineEdit->setEnabled( true );
-  // the webDAV server seems to return a 202 even if mkdir was successful.
-  if (error == QNetworkReply::NoError || error == QNetworkReply::ContentOperationNotPermittedError) {
-    qDebug() << "OC " << "Folder on ownCloud was successfully created.";
-    //slotTimerFires();
-  } else {
-    //showWarn( tr("Failed to create the folder on ownCloud.<br/>Please check manually."), false );
-  }
-}
-
-
-void OwncloudSyncDaemon::slotOwnCloudFound( const QString& url, const QString& versionStr, const QString& version, const QString& edition)
-{
-    qDebug() << "OCD ** Application: ownCloud found: " << url << " with version " << versionStr << "(" << version << ")";
-    // now check the authentication
-    Mirall::MirallConfigFile cfgFile(d->configHandle);
-    cfgFile.setOwnCloudVersion( version );
-    qDebug() << " OC polling interval: " << cfgFile.remotePollInterval();
-
-    d->owncloudInfo["url"] = url;
-    d->owncloudInfo["version"] = version;
-    d->owncloudInfo["versionString"] = versionStr;
-    d->owncloudInfo["edition"] = edition;
-
-    d->ocStatus = OwncloudSettings::Disconnected;
-    d->ocError = OwncloudSettings::NoError;
-
-    emit owncloudChanged(d->owncloudInfo);
-    emit statusChanged(d->ocStatus);
-    emit errorChanged(d->ocError);
-
-    QTimer::singleShot( 0, this, SLOT( slotCheckAuthentication() ));
-}
-
-void OwncloudSyncDaemon::slotNoOwnCloudFound( QNetworkReply* reply )
-{
-    qDebug() << "OCD ** Application: NO ownCloud found!";
-
-    d->ocStatus = OwncloudSettings::Error;
-    d->ocError = OwncloudSettings::NoConfigurationError;
-    emit statusChanged(d->ocStatus);
-    emit errorChanged(d->ocError);
-}
-
-void OwncloudSyncDaemon::slotCheckAuthentication()
-{
-    qDebug() << "OC slotCheckAuthentication";
-    qDebug() << "# checking for authentication settings.";
-    d->ocInfo->getRequest("/", true ); // this call needs to be authenticated.
-}
-
-void OwncloudSyncDaemon::slotAuthCheck( const QString& ,QNetworkReply *reply )
-{
-    qDebug() << "OC slotAuthCheck";
-    if( reply->error() == QNetworkReply::AuthenticationRequiredError ) { // returned if the user is wrong.
-        qDebug() << "OC ******** Password is wrong!";
-        d->ocStatus = OwncloudSettings::Error;
-        d->ocError = OwncloudSettings::AuthenticationError;
-        emit statusChanged(d->ocStatus);
-        emit errorChanged(d->ocError);
-    } else if( reply->error() == QNetworkReply::OperationCanceledError ) {
-        // the username was wrong and ownCloudInfo was closing the request after a couple of auth tries.
-        qDebug() << "OC ******** Username or password is wrong!";
-        //emit statusMessageChanged(er);
-        d->ocStatus = OwncloudSettings::Error;
-        d->ocError = OwncloudSettings::AuthenticationError;
-        emit statusChanged(d->ocStatus);
-        emit errorChanged(d->ocError);
-    } else {
-        qDebug() << "OC ######## Credentials are ok!";
-        d->ocStatus = OwncloudSettings::Connected;
-        d->ocError = OwncloudSettings::NoError;
-        emit statusChanged(d->ocStatus);
-        emit errorChanged(d->ocError);
-        d->folderMan->setupFolders();
-        d->loadFolders();
-    }
-}
-
-void OwncloudSyncDaemon::setupOwncloud(const QString &server, const QString &user, const QString &password)
-{
-    Mirall::MirallConfigFile cfgFile(d->configHandle);
-    cfgFile.setRemotePollIntval(600000); // ten minutes for now
-
-    cfgFile.writeOwncloudConfig(QLatin1String("ownCloud"), server, user, password, false);
-    qDebug() << "OC Setting up: " << server << user << password;
-    cfgFile.acceptCustomConfig();
-
-    if( d->folderMan ) {
-        d->folderMan->removeAllFolderDefinitions();
-    }
-
-    d->configHandle.clear();
-    d->ocInfo->setCustomConfigHandle(QString());
-
-    d->ocInfo->setCustomConfigHandle(d->configHandle);
-    if (d->ocInfo->isConfigured()) {
-        // reset the SSL Untrust flag to let the SSL dialog appear again.
-        d->ocInfo->resetSSLUntrust();
-        d->ocInfo->checkInstallation();
-    } else {
-        qDebug() << " OC  ownCloud seems not configured.";
-    }
-}
-
-#include "owncloudsyncdaemon.moc"
+#include "owncloudsync.moc"

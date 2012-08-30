@@ -18,7 +18,7 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************/
 
-#include "owncloudsync.h"
+#include "owncloudsyncdaemon.h"
 
 #include <kcmdlineargs.h>
 #include <kaboutdata.h>
@@ -34,7 +34,7 @@
 
 
 namespace {
-    OwncloudSync* s_server = 0;
+    OwncloudSyncDaemon* s_server = 0;
 
 #ifndef Q_OS_WIN
     void signalHandler( int signal )
@@ -90,6 +90,6 @@ extern "C" KDE_EXPORT int kdemain( int argc, char** argv )
     installSignalHandler();
 #endif
 
-    s_server = new OwncloudSync(&app);
+    s_server = new OwncloudSyncDaemon(&app);
     return app.exec();
 }

@@ -9,12 +9,6 @@
     <signal name="displayChanged">
       <arg type="s" direction="out" />
     </signal>
-    <signal name="statusMessageChanged">
-      <arg type="s" direction="out" />
-    </signal>
-    <signal name="errorMessageChanged">
-      <arg type="s" direction="out" />
-    </signal>
     <signal name="statusChanged">
       <arg type="i" direction="out" />
     </signal>

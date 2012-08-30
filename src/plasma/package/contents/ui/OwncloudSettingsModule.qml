@@ -34,7 +34,8 @@ Item {
         id: owncloudSettings
     }
 
-    width: 800; height: 500
+    width: 400
+    height: 400
 
 //     MobileComponents.Package {
 //         id: owncloudPackage
@@ -47,12 +48,12 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         PlasmaExtras.Title {
-            text: settingsComponent.name
+            //text: owncloudSettings.name
             opacity: 1
         }
         PlasmaComponents.Label {
             id: descriptionLabel
-            text: settingsComponent.description
+            //text: owncloudSettings.description
             opacity: .4
             //anchors.bottomMargin: 20
         }

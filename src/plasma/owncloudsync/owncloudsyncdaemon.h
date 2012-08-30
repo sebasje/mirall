@@ -18,67 +18,37 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************/
 
-
 #ifndef OWNCLOUDSYNCDAEMON_H
 #define OWNCLOUDSYNCDAEMON_H
 
-
-#include <QObject>
-#include <QIcon>
-#include <QNetworkReply>
-#include <QVariant>
-#include <QStringListModel>
-
-class OwncloudSyncDaemonPrivate;
-namespace Mirall {
-    class Folder;
-}
+#include <QtCore/QObject>
+#include <QtCore/QCoreApplication>
 
 class OwncloudSyncDaemon : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QString display READ display NOTIFY displayChanged)
-
     public:
-        explicit OwncloudSyncDaemon(QObject *parent = 0);
+        OwncloudSyncDaemon( QObject* parent = 0 );
         virtual ~OwncloudSyncDaemon();
 
+        static OwncloudSyncDaemon* self();
+
     public Q_SLOTS:
-        QString display();
-        void refresh();
-        QVariantMap folder(QString name);
-        QVariantMap folderList();
-        void updateFolder(const Mirall::Folder *folder);
-        void enableFolder(const QString &name, bool enabled = true);
-        void addSyncFolder(const QString &localFolder, const QString &remoteFolder,
-                           const QString &alias = QString());
-        void createRemoteFolder(const QString &f);
-        void checkRemoteFolder(const QString &f);
-        void setupOwncloud(const QString &server, const QString &user, const QString &password);
-
-    Q_SIGNALS:
-        void displayChanged();
-        void folderListChanged(QVariantMap);
-        void folderChanged(QVariantMap);
-        void owncloudChanged(QVariantMap);
-        void errorChanged(int);
-        void errorMessageChanged(QString);
-        void statusChanged(int);
-        void statusMessageChanged(QString);
-        void remoteFolderExists(QString, bool);
-
-    protected Q_SLOTS:
-        void slotSyncStateChange(const QString&);
-        void slotOwnCloudFound( const QString&, const QString&, const QString&, const QString& );
-        void slotNoOwnCloudFound( QNetworkReply* );
-        void slotCheckAuthentication();
-        void slotAuthCheck( const QString& ,QNetworkReply* );
-        void slotCreateRemoteFolderFinished(QNetworkReply::NetworkError);
-        void slotDirCheckReply( const QString&, QNetworkReply* );
+        void quit();
 
     private:
-        OwncloudSyncDaemonPrivate* d;
+        void init();
+
+        enum State {
+            StateDisabled,
+            StateEnabled,
+            StateDisabling,
+            StateEnabling
+        };
+        State m_currentState;
+
+        static OwncloudSyncDaemon* s_self;
 };
 
-#endif // OWNCLOUDSYNCDAEMON_H
+#endif
