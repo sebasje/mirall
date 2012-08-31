@@ -262,7 +262,7 @@ void OwncloudSync::slotCreateRemoteFolderFinished(QNetworkReply::NetworkError er
 
 void OwncloudSync::slotOwnCloudFound( const QString& url, const QString& versionStr, const QString& version, const QString& edition)
 {
-    qDebug() << "OCD ** Application: ownCloud found: " << url << " with version " << versionStr << "(" << version << ")";
+    qDebug() << "OCD : ownCloud found: " << url << " with version " << versionStr << "(" << version << ")";
     // now check the authentication
     Mirall::MirallConfigFile cfgFile(d->configHandle);
     cfgFile.setOwnCloudVersion( version );
@@ -280,12 +280,12 @@ void OwncloudSync::slotOwnCloudFound( const QString& url, const QString& version
     emit statusChanged(d->ocStatus);
     emit errorChanged(d->ocError);
 
-    QTimer::singleShot( 0, this, SLOT( slotCheckAuthentication() ));
+    QTimer::singleShot(0, this, SLOT(slotCheckAuthentication()));
 }
 
-void OwncloudSync::slotNoOwnCloudFound( QNetworkReply* reply )
+void OwncloudSync::slotNoOwnCloudFound(QNetworkReply* reply)
 {
-    qDebug() << "OCD ** Application: NO ownCloud found!";
+    qDebug() << "OCD : NO ownCloud found!";
 
     d->ocStatus = OwncloudSettings::Error;
     d->ocError = OwncloudSettings::NoConfigurationError;
@@ -296,7 +296,6 @@ void OwncloudSync::slotNoOwnCloudFound( QNetworkReply* reply )
 void OwncloudSync::slotCheckAuthentication()
 {
     qDebug() << "OC slotCheckAuthentication";
-    qDebug() << "# checking for authentication settings.";
     d->ocInfo->getRequest("/", true ); // this call needs to be authenticated.
 }
 

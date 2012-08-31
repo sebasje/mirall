@@ -41,6 +41,7 @@ Item {
     PlasmaComponents.ToolButton {
         id: startDaemonButton
         text: i18n("Start Sync Daemon")
+        iconSource: "system-run"
         visible: owncloudSettings.error == OwncloudSettings.NoDaemonError
         anchors { top: errorLabel.bottom; right: parent.right; }
 

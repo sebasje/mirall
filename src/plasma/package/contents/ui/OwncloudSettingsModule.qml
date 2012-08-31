@@ -104,6 +104,11 @@ Item {
             anchors { bottom: parent.bottom; left: parent.left; rightMargin: 12 }
             onClicked: owncloudSettings.enableAllFolders(checked)
         }
+        AddSyncFolder {
+            id: addSyncFolder
+            visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
+            anchors { verticalCenter: enabledSwitch.verticalCenter; right: folderList.right; rightMargin: 12 }
+        }
     }
 
     Component.onCompleted: {
