@@ -17,9 +17,9 @@ o keep an eye on dbus service, update state accordingly
 o start daemon machinery
 
 * fix up layout in add folder
-* Login.qml - generic log in form w/ title, user, pass, url (line edit or list)
+o Login.qml - generic log in form w/ title, user, pass, url (line edit or list)
 o kill owncloudsettings::statusmessage and ::errormessage
-* swap names of owncloudsync and owncloudsyncdaemon
+o swap names of owncloudsync and owncloudsyncdaemon
 
 
 Sync:

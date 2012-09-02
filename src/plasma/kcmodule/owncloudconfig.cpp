@@ -66,6 +66,7 @@ OwncloudConfig::OwncloudConfig(QWidget *parent, const QVariantList &)
     d->kdeclarative.initialize();
     //binds things like kconfig and icons
     d->kdeclarative.setupBindings();
+    d->declarativeView->setResizeMode(QDeclarativeView::SizeRootObjectToView);
 
 //     // avoid flicker on show
     //d->declarativeView->setAttribute(Qt::WA_OpaquePaintEvent);
