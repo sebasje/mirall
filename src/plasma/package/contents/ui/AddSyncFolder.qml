@@ -31,6 +31,7 @@ Item {
     property string aliasName: ""
     height: collapsedHeight
 
+    property Item pageStack
     property int cnt: 0
     property int expandedHeight: 200
     property int collapsedHeight: 32
@@ -74,6 +75,23 @@ Item {
         }
     ]
 
+    onStateChanged: {
+        if (state == "defaults__") {
+
+        } else if (state == "localFolder") {
+            pageStack.replace(Qt.createComponent("DirectoryPicker.qml"));
+        } else if (state == "remoteFolder") {
+            pageStack.replace(Qt.createComponent("RemoteFolderPicker.qml"));
+        } else if (state == "feedback") {
+            pageStack.replace(feedbackItem);
+            print("Starting timer");
+            feedbackTimer.start();
+        } else {
+            pageStack.replace(owncloudItem);
+
+        }
+    }
+
     PlasmaComponents.ToolButton {
         id: addSyncFolderButton
         text: i18n("Add Folder")
@@ -81,7 +99,7 @@ Item {
         anchors { top: parent.top; right: parent.right; rightMargin: 12; }
         onClicked: {
             addSyncFolder.state = "localFolder"
-            directoryPickerDialog.open()
+            addFolder();
             //return;
         }
         Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
@@ -174,13 +192,13 @@ Item {
             onTriggered: addSyncFolder.state = "default"
         }
     }
-    onStateChanged: {
-        print("State changed to: " + state);
-        if (state == "feedback") {
-            print("Starting timer");
-            feedbackTimer.start();
-        }
-    }
+//     onStateChanged: {
+//         print("State changed to: " + state);
+//         if (state == "feedback") {
+//             print("Starting timer");
+//             feedbackTimer.start();
+//         }
+//     }
 
     Component.onCompleted: state = "default";
 }

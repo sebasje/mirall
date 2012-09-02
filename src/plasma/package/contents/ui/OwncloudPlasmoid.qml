@@ -88,6 +88,10 @@ Item {
             anchors { verticalCenter: enabledSwitch.verticalCenter; right: folderList.right; rightMargin: 12 }
         }
     }
+
+    function addFolder() {
+        directoryPickerDialog.open()
+    }
     Component.onCompleted: {
         print("Loaded OwncloudPlasmoid.qml successfully.");
     }

@@ -26,7 +26,7 @@ import org.kde.plasma.mobilecomponents 0.1 as MobileComponents
 import org.kde.active.settings 0.1
 import org.kde.plasma.owncloud 0.1
 
-Item {
+PlasmaComponents.PageStack {
     id: owncloudModule
     objectName: "owncloudModule"
 
@@ -36,11 +36,6 @@ Item {
 
     width: 400
     height: 400
-
-//     MobileComponents.Package {
-//         id: owncloudPackage
-//         name: "org.kde.active.settings.owncloud"
-//     }
 
     Column {
         id: titleCol
@@ -57,7 +52,6 @@ Item {
             opacity: .4
             //anchors.bottomMargin: 20
         }
-
     }
 
     Item {
@@ -106,9 +100,13 @@ Item {
         }
         AddSyncFolder {
             id: addSyncFolder
+            pageStack: owncloudModule
             visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
             anchors { verticalCenter: enabledSwitch.verticalCenter; right: folderList.right; rightMargin: 12 }
         }
+    }
+    function addFolder() {
+        owncloudModule.replace();
     }
 
     Component.onCompleted: {
