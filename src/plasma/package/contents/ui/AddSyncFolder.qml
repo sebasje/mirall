@@ -29,12 +29,12 @@ Item {
     property string localFolder: ""
     property string remoteFolder: ""
     property string aliasName: ""
-    height: collapsedHeight
+    //height: collapsedHeight
 
     property Item pageStack
     property int cnt: 0
-    property int expandedHeight: 200
-    property int collapsedHeight: 32
+    //property int expandedHeight: 200
+    //property int collapsedHeight: 32
     property int fadingDuration: 400
 
 
@@ -43,73 +43,66 @@ Item {
     states: [
         State {
             name: "default"
-            PropertyChanges { target: addSyncFolder; height: collapsedHeight; }
+            //PropertyChanges { target: addSyncFolder; height: collapsedHeight; }
             PropertyChanges { target: addSyncFolderButton; opacity: 1; }
             PropertyChanges { target: localFolderItem; opacity: 0; }
             PropertyChanges { target: remoteFolderItem; opacity: 0; }
             PropertyChanges { target: feedbackItem; opacity: 0; }
+            PropertyChanges { target: folderList; opacity: 1; }
         },
         State {
             name: "localFolder"
-            PropertyChanges { target: addSyncFolder; height: expandedHeight; }
+            //PropertyChanges { target: addSyncFolder; height: expandedHeight; }
             PropertyChanges { target: addSyncFolderButton; opacity: 0; }
             PropertyChanges { target: localFolderItem; opacity: 1; }
             PropertyChanges { target: remoteFolderItem; opacity: 0; }
             PropertyChanges { target: feedbackItem; opacity: 0; }
+            PropertyChanges { target: folderList; opacity: 0; }
         },
         State {
             name: "remoteFolder"
-            PropertyChanges { target: addSyncFolder; height: expandedHeight; }
+            //PropertyChanges { target: addSyncFolder; height: expandedHeight; }
             PropertyChanges { target: addSyncFolderButton; opacity: 0; }
             PropertyChanges { target: localFolderItem; opacity: 0; }
             PropertyChanges { target: remoteFolderItem; opacity: 1; }
             PropertyChanges { target: feedbackItem; opacity: 0; }
+            PropertyChanges { target: folderList; opacity: 0; }
         },
         State {
             name: "feedback"
-            PropertyChanges { target: addSyncFolder; height: expandedHeight; }
+            //PropertyChanges { target: addSyncFolder; height: expandedHeight; }
             PropertyChanges { target: addSyncFolderButton; opacity: 0; }
             PropertyChanges { target: localFolderItem; opacity: 0; }
             PropertyChanges { target: remoteFolderItem; opacity: 0; }
-            PropertyChanges { target: feedbackItem; opacity: 1; }
+            PropertyChanges { target: feedbackItem; opacity: 0.8; }
         }
     ]
 
     onStateChanged: {
+//         return;
         if (state == "defaults__") {
 
         } else if (state == "localFolder") {
-            pageStack.replace(Qt.createComponent("DirectoryPicker.qml"));
+            //pageStack.replace(Qt.createComponent("DirectoryPicker.qml"));
         } else if (state == "remoteFolder") {
-            pageStack.replace(Qt.createComponent("RemoteFolderPicker.qml"));
+
+            //pageStack.replace(Qt.createComponent("RemoteFolderPicker.qml"));
         } else if (state == "feedback") {
-            pageStack.replace(feedbackItem);
+            //pageStack.replace(feedbackItem);
             print("Starting timer");
             feedbackTimer.start();
         } else {
-            pageStack.replace(owncloudItem);
+            //pageStack.replace(owncloudItem);
 
         }
     }
 
-    PlasmaComponents.ToolButton {
-        id: addSyncFolderButton
-        text: i18n("Add Folder")
-        iconSource: "list-add"
-        anchors { top: parent.top; right: parent.right; rightMargin: 12; }
-        onClicked: {
-            addSyncFolder.state = "localFolder"
-            addFolder();
-            //return;
-        }
-        Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
-    }
 
     function nextPage() {
         print("Next page" + addSyncFolder.state);
         if (addSyncFolder.state == "localFolder") {
             addSyncFolder.state = "remoteFolder";
-            directoryPickerLoader.source = "RemoteFolderPicker.qml";
+            //directoryPickerLoader.source = "RemoteFolderPicker.qml";
         } else if (addSyncFolder.state == "remoteFolder") {
             addSyncFolder.cnt = addSyncFolder.cnt + 1
             var localFolder = addSyncFolder.localFolder;
@@ -118,53 +111,66 @@ Item {
             print("Adding folder " + localFolder + " " + remoteFolder + " " + aliasName );
             owncloudSettings.addSyncFolder(localFolder, remoteFolder, aliasName);
             addSyncFolder.state = "feedback";
-            directoryPickerDialog.close();
+            //directoryPickerDialog.close();
         }
     }
-    Item {
+
+    PlasmaComponents.Button {
+        id: closeButton
+        width: 24
+        height: width
+        anchors { top: parent.top; right: parent.right; margins: 4; }
+        iconSource: "dialog-close"
+        opacity: addSyncFolder.state != "default" ? 1 : 0
+        onClicked: addSyncFolder.state = "default"
+        Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
+    }
+
+    DirectoryPicker {
         id: localFolderItem
         anchors.fill: parent
         clip: true
         Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
-        PlasmaComponents.ToolButton {
-            id: localFolderButton
-            text: i18n("Pick Local Folder")
-            iconSource: "folder-green"
-            height: collapsedHeight
-            anchors { top: parent.top; left: parent.left; }
-            onClicked: nextPage();
-        }
-        PlasmaComponents.CommonDialog {
-            id: directoryPickerDialog
-            titleText: i18n("Pick Local Folder")
-            buttonTexts: [i18n("Cancel")]
-//             onButtonClicked: {
-//                 //close();
+//         PlasmaComponents.ToolButton {
+//             id: localFolderButton
+//             text: i18n("Pick Local Folder")
+//             iconSource: "folder-green"
+//             height: collapsedHeight
+//             anchors { top: parent.top; left: parent.left; }
+//             onClicked: nextPage();
+//         }
+//         PlasmaComponents.CommonDialog {
+//             id: directoryPickerDialog
+//             titleText: i18n("Pick Local Folder")
+//             buttonTexts: [i18n("Cancel")]
+// //             onButtonClicked: {
+// //                 //close();
+// //             }
+//             content: Loader {
+//                 id: directoryPickerLoader
+//                 width: theme.defaultFont.mSize.width*22
+//                 height: theme.defaultFont.mSize.height*25
 //             }
-            content: Loader {
-                id: directoryPickerLoader
-                width: theme.defaultFont.mSize.width*22
-                height: theme.defaultFont.mSize.height*25
-            }
-            onStatusChanged: {
-                if (status == PlasmaComponents.DialogStatus.Open) {
-                    print("Opening dialog...");
-                    directoryPickerLoader.source = "DirectoryPicker.qml"
-                    //directoryPickerLoader.item.focusTextInput();
-                }
-            }
-        }
+//             onStatusChanged: {
+//                 if (status == PlasmaComponents.DialogStatus.Open) {
+//                     print("Opening dialog...");
+//                     directoryPickerLoader.source = "DirectoryPicker.qml"
+//                     //directoryPickerLoader.item.focusTextInput();
+//                 }
+//             }
+//         }
     }
-    PlasmaComponents.ToolButton {
+    RemoteFolderPicker {
         id: remoteFolderItem
 
-        text: i18n("Pick Remote Folder")
-        iconSource: "folder-sync"
-        anchors { top: parent.top; left: parent.left; }
-        onClicked: {
+        //text: i18n("Pick Remote Folder")
+        //iconSource: "folder-sync"
+        anchors.fill: parent
+        onFolderPicked: {
+            print("remote Folder picked ... " + folder);
             addSyncFolder.cnt = addSyncFolder.cnt + 1
             var localFolder = addSyncFolder.localFolder;
-            var remoteFolder = "test" + cnt;
+            var remoteFolder = folder;
             var l = addSyncFolder.localFolder.split('/');
             var aliasName = l[l.length];
             print("Adding folder " + localFolder + " " + remoteFolder + " " + aliasName );

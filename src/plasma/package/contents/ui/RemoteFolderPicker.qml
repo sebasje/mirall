@@ -25,24 +25,31 @@ import org.kde.plasma.owncloud 0.1
 import org.kde.qtextracomponents 0.1 as QtExtras
 
 Item {
-    property alias currentPath: filterText.text
+    property alias currentPath: remoteFolderName.text
     property bool folderExists: false
     property string checkedFolder: ""
 
     signal folderPicked(string folder)
 
-    anchors.margins: 24
+    //anchors.margins: 24
+//     Rectangle { anchors.fill: parent; color: "green"; opacity: 0.2 }
 
     PlasmaExtras.Heading {
         id: headingItem
-        level: 2
-        text: i18n("Choose a remote folder...");
+        level: 3
+        text: i18n("Pick a remote folder...");
         anchors { left: parent.left; right: parent.right; top: parent.top; }
     }
+    PlasmaExtras.Paragraph {
+        id: explanation
+        anchors { left: parent.left; right: parent.right; top: headingItem.bottom; topMargin: 12; }
+        text: i18n("Pick a folder on the remote machine which you would like to synchronize with your device. If you would like to create a new folder on <a href=\"%1\">your ownCloud server</a>, just enter its name and hit \"Create Folder\".", owncloudSettings.url)
+        onLinkActivated: Qt.openUrlExternally(link)
+    }
     PlasmaComponents.TextField {
-        id: filterText
-        text: addSyncFolder.remoteFolder
-        anchors { left: parent.left; right: parent.right; top: headingItem.bottom; }
+        id: remoteFolderName
+        //text: addSyncFolder.remoteFolder
+        anchors { left: parent.left; right: parent.right; top: explanation.bottom; topMargin: 12; }
         onTextChanged: {
             //lister.filter = text
             folderExists = false;
@@ -53,11 +60,11 @@ Item {
         }
     }
     Item {
-        anchors { left: parent.left; right: parent.right; top: filterText.bottom; }
+        anchors { left: parent.left; right: parent.right; top: remoteFolderName.bottom; }
         PlasmaComponents.Label {
             id: createLabel
             wrapMode: Text.WordWrap
-            visible: currentPath != "" && checkedFolder != ""
+            //visible: currentPath != "" && checkedFolder != ""
             anchors { left: parent.left; right: parent.right; top: parent.top; }
             text: {
                 if (checkedFolder == "") return "";
@@ -73,7 +80,7 @@ Item {
             id: createRemoteFolderButton
             anchors { right: parent.right; top: createLabel.bottom; rightMargin: 24; }
             iconSource: "folder-new"
-            visible: !folderExists && filterText != "" && checkedFolder != ""
+            visible: !folderExists && remoteFolderName != "" && checkedFolder != ""
             text: i18n("Create it")
             onClicked: owncloudSettings.createRemoteFolder(currentPath);
 
@@ -82,7 +89,7 @@ Item {
             id: aliasText
             text: addSyncFolder.remoteFolder
             anchors { left: parent.left; top: createLabel.bottom; rightMargin: 24; }
-            visible: folderExists && filterText != "" && checkedFolder != ""
+            visible: folderExists && remoteFolderName != "" && checkedFolder != ""
             onTextChanged: {
                 owncloudSettings.verifyFolder(addSyncFolder.localFolder, checkedFolder, text);
             }
@@ -90,7 +97,7 @@ Item {
         PlasmaComponents.ToolButton {
             id: finishedButton
             anchors { right: parent.right; top: createLabel.bottom; rightMargin: 24; }
-            visible: folderExists && filterText != "" && checkedFolder != ""
+            visible: folderExists && remoteFolderName != "" && checkedFolder != ""
             iconSource: "dialog-ok"
             text: i18n("Finished")
             onClicked: {
@@ -131,7 +138,9 @@ Item {
             owncloudSettings.checkRemoteFolder(currentPath);
         }
     }
-    Rectangle { anchors.fill: parent; color: "blue"; opacity: 0.05 }
 
-    Component.onCompleted: print(" REMOTEPICKER DONE.");
+    Component.onCompleted: {
+//         remoteFolderName.forceActiveFocus();
+        print("RemoteFolderPicker.qml completed.");
+    }
 }

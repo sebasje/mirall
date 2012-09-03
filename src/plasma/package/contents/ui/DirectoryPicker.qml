@@ -27,7 +27,6 @@ import org.kde.qtextracomponents 0.1 as QtExtras
 Item {
     property alias currentPath: lister.currentPath
     signal directoryPicked(string folder)
-    anchors.margins: 24
 
     DirectoryLister {
         id: lister
@@ -35,24 +34,23 @@ Item {
     }
     PlasmaExtras.Heading {
         id: headingItem
-        level: 2
-        text: i18n("Choose a local folder...");
-        anchors { left: parent.left; right: parent.right; top: parent.top; leftMargin: 12; }
+        level: 3
+        text: i18n("Pick a local folder...");
+        anchors { left: parent.left; right: parent.right; top: parent.top; }
     }
     PlasmaComponents.TextField {
         id: filterText
-        anchors { left: parent.left; right: parent.right; top: headingItem.bottom; leftMargin: 12; }
+        text: "test"
+        anchors { left: parent.left; right: parent.right; top: headingItem.bottom; }
         onTextChanged: {
-            lister.filter = text
+            lister.filter = text;
             forceActiveFocus();
         }
     }
     ListView {
         id: directoryPicker
-        //height: 300
 
-
-        anchors { left: parent.left; right: parent.right; top: filterText.bottom; bottom: parent.bottom; leftMargin: 12; }
+        anchors { left: parent.left; right: parent.right; top: filterText.bottom; bottom: parent.bottom; }
         model: lister.directories
 
         delegate: PlasmaComponents.ListItem {
@@ -90,14 +88,14 @@ Item {
         }
     }
     onCurrentPathChanged: {
-        localFolderButton.text = currentPath
+        //localFolderButton.text = currentPath
         addSyncFolder.localFolder = currentPath;
     }
     onDirectoryPicked: {
         //addSyncFolder.state = "remoteFolder";
         nextPage();
     }
-    Rectangle { anchors.fill: parent; color: "blue"; opacity: 0.05 }
+    //Rectangle { anchors.fill: parent; color: "blue"; opacity: 0.05 }
 
     Component.onCompleted: lister.enterDirectory(currentPath)
 }

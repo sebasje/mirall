@@ -81,6 +81,7 @@ PlasmaComponents.PageStack {
             height: 500
             visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
             anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: enabledSwitch.top; }
+            Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
         }
 
         ErrorHandler {
@@ -90,25 +91,40 @@ PlasmaComponents.PageStack {
             visible: owncloudSettings.owncloudStatus != OwncloudSettings.Connected
             //Rectangle { color: "green"; anchors.fill: parent; opacity: .4; }
         }
-        MiniJobItem {
-            anchors { left: folderList.left; right: folderList.right; bottom: folderList.bottom; }
-            height: 64
-        }
-        
+//         MiniJobItem {
+//             anchors { left: folderList.left; right: folderList.right; bottom: folderList.bottom; }
+//             height: 64
+//         }
+
         PlasmaComponents.Switch {
             id: enabledSwitch
             text: i18n("All Folders")
             visible: folderList.count > 0
+            opacity: folderList.opacity
             checked: owncloudSettings.globalStatus != OwncloudFolder.Disabled
             anchors { bottom: parent.bottom; left: parent.left; rightMargin: 12 }
             onClicked: owncloudSettings.enableAllFolders(checked)
         }
         AddSyncFolder {
             id: addSyncFolder
-            pageStack: owncloudModule
-            visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
-            anchors { verticalCenter: enabledSwitch.verticalCenter; right: folderList.right; rightMargin: 12 }
+            //z: 900
+            //pageStack: owncloudModule
+            anchors { top: folderList.top; left: parent.left; right: parent.right; bottom: parent.bottom; }
         }
+        PlasmaComponents.ToolButton {
+            id: addSyncFolderButton
+            text: i18n("Add Folder")
+            iconSource: "list-add"
+            visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
+            anchors { bottom: parent.bottom; right: parent.right; rightMargin: 12; }
+            onClicked: {
+                addSyncFolder.state = "localFolder"
+                //addFolder();
+                //return;
+            }
+            Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
+        }
+
     }
     function addFolder() {
         owncloudModule.replace();

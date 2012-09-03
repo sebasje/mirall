@@ -74,14 +74,14 @@ QString DirectoryLister::currentPath()
 
 void DirectoryLister::enterDirectory(const QString &directory)
 {
-    kDebug() << "entering dir: " << directory;
+    //kDebug() << "entering dir: " << directory;
     QString dir = directory;
     if (!dir.startsWith("/")) {
         dir = d->dir.absolutePath() + "/" + directory;
     }
     d->dir.setPath(dir);
     d->directories = d->dir.entryList(QDir::AllDirs);
-    kDebug() << "Dirs: " << d->directories;
+    //kDebug() << "Dirs: " << d->directories;
     //d->directories.removeAll(QString('.'));
     currentPathChanged();
     emit directoriesChanged();
@@ -94,7 +94,7 @@ QString DirectoryLister::filter()
 
 void DirectoryLister::setFilter(const QString &f)
 {
-    kDebug() << "Setting filter to : " << f;
+    //kDebug() << "Setting filter to : " << f;
     if (f != d->filter) {
         d->filter = f;
         emit directoriesChanged();
