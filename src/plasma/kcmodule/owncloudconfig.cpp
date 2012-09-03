@@ -24,6 +24,7 @@
 #include "owncloudsettings.h"
 #include "owncloudfolder.h"
 #include "directorylister.h"
+#include "minijob.h"
 
 // Qt
 #include <QBoxLayout>
@@ -84,6 +85,7 @@ OwncloudConfig::OwncloudConfig(QWidget *parent, const QVariantList &)
     qmlRegisterType<DirectoryLister>("org.kde.plasma.owncloud", 0, 1, "DirectoryLister");
     qmlRegisterType<OwncloudSettings>("org.kde.plasma.owncloud", 0, 1, "OwncloudSettings");
     qmlRegisterType<OwncloudFolder>("org.kde.plasma.owncloud", 0, 1, "OwncloudFolder");
+    qmlRegisterType<MiniJob>("org.kde.plasma.owncloud", 0, 1, "MiniJob");
 
     Plasma::PackageStructure::Ptr structure = Plasma::PackageStructure::load("Plasma/Generic");
     Plasma::Package *package = new Plasma::Package(QString(), "org.kde.active.settings.owncloud", structure);
