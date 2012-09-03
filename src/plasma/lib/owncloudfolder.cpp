@@ -161,7 +161,7 @@ void OwncloudFolder::setSyncTime(const QDateTime& dt)
 {
     if (dt != d->syncTime) {
         d->syncTime = dt;
-        qDebug() << " OC OwncloudFolder::sync time updated: " << dt;
+        //qDebug() << " OC OwncloudFolder::sync time updated: " << dt;
         emit syncTimeChanged();
     }
 }

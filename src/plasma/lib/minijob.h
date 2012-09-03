@@ -40,6 +40,7 @@ class MiniJob : public Job
         void init();
 
         Q_INVOKABLE virtual void start();
+        Q_INVOKABLE virtual void stop();
 
     private Q_SLOTS:
         void timeout();

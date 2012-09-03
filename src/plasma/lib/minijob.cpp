@@ -35,36 +35,63 @@ public:
 MiniJob::MiniJob(QObject* parent) :
     Job(parent)
 {
+    kDebug() << "Creating Minijob";
+    d = new MiniJobPrivate;
+    d->t = 0;
     init();
 }
 
 MiniJob::~MiniJob()
 {
+    kDebug() << "doei!";
     delete d;
 }
 
 void MiniJob::init()
 {
-    d->t = new QTimer(this);
+    d->c = 0;
+    if (!d->t) {
+        d->t = new QTimer(this);
+    }
+    connect(d->t, SIGNAL(timeout()), SLOT(timeout()));
     d->t->setInterval(100);
 }
 
 void MiniJob::timeout()
 {
-    kDebug() << "Timeout";
+    //kDebug() << "Timeout";
     d->c = d->c + 4;
     setAdvance(d->c);
     if (d->c >= 100) {
         d->t->stop();
         emit finished(true);
+        delete d->t;
+        d->c = 100;
+        deleteLater();
     }
 }
 
 void MiniJob::start()
 {
+    kDebug() << "Starting Minijob";
     d->t->start();
     Job::start();
+    if (d->c >= 100) {
+        d->c = 0;
+        setAdvance(0);
+    }
 }
 
+void MiniJob::stop()
+{
+    if (d->t) {
+        d->t->stop();
+    }
+    kDebug();
+    Job::stop();
+    delete(d->t);
+    d->t = 0;
+    deleteLater();
+}
 
 #include "minijob.moc"

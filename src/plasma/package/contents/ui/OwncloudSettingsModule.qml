@@ -90,6 +90,11 @@ PlasmaComponents.PageStack {
             visible: owncloudSettings.owncloudStatus != OwncloudSettings.Connected
             //Rectangle { color: "green"; anchors.fill: parent; opacity: .4; }
         }
+        MiniJobItem {
+            anchors { left: folderList.left; right: folderList.right; bottom: folderList.bottom; }
+            height: 64
+        }
+        
         PlasmaComponents.Switch {
             id: enabledSwitch
             text: i18n("All Folders")
