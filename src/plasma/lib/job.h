@@ -44,9 +44,10 @@ class Job : public QObject
         void setAdvance(const int advance);
 
         Q_INVOKABLE virtual void start();
+        Q_INVOKABLE virtual void stop();
 
     Q_SIGNALS:
-        void finished();
+        void finished(bool success);
         void advanceChanged();
 
     private:

@@ -41,6 +41,9 @@ class MiniJob : public Job
 
         Q_INVOKABLE virtual void start();
 
+    private Q_SLOTS:
+        void timeout();
+
     private:
         MiniJobPrivate* d;
 };

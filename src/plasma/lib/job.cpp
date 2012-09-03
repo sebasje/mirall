@@ -52,6 +52,10 @@ void Job::start()
     setAdvance(0);
 }
 
+void Job::stop()
+{
+}
+
 int Job::advance()
 {
     return d->advance;

@@ -401,4 +401,10 @@ void OwncloudSettings::refresh()
     }
 }
 
+MiniJob* OwncloudSettings::createMiniJob()
+{
+    MiniJob* mj = new MiniJob(this);
+    return mj;
+}
+
 #include "owncloudsettings.moc"

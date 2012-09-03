@@ -21,11 +21,15 @@
 
 #include "minijob.h"
 
+#include <QTimer>
+
 #include <kdebug.h>
 
 class MiniJobPrivate {
 public:
     MiniJob *q;
+    QTimer *t;
+    int c;
 };
 
 MiniJob::MiniJob(QObject* parent) :
@@ -39,14 +43,27 @@ MiniJob::~MiniJob()
     delete d;
 }
 
-
 void MiniJob::init()
 {
+    d->t = new QTimer(this);
+    d->t->setInterval(100);
+}
+
+void MiniJob::timeout()
+{
+    kDebug() << "Timeout";
+    d->c = d->c + 4;
+    setAdvance(d->c);
+    if (d->c >= 100) {
+        d->t->stop();
+        emit finished(true);
+    }
 }
 
 void MiniJob::start()
 {
-    setAdvance(0);
+    d->t->start();
+    Job::start();
 }
 
 

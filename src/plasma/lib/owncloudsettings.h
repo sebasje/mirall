@@ -25,6 +25,7 @@
 #include <KIconLoader>
 
 #include "owncloudfolder.h"
+#include "minijob.h"
 
 #include <QDeclarativeComponent>
 #include <QObject>
@@ -107,6 +108,7 @@ class OwncloudSettings : public QObject
                                        const QString &alias);
         Q_INVOKABLE void setupOwncloud(const QString &server, const QString &user,
                                        const QString &password);
+        Q_INVOKABLE MiniJob* createMiniJob();
 
     Q_SIGNALS:
         void dataChanged();
