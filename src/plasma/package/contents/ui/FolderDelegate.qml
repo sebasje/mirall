@@ -95,7 +95,8 @@ MouseArea {
             } else {
                 out = i18n("last synchronizeded %1", friendlyDate(syncTime));
                 if (expanded) {
-                    out = out + "<br /> More output!!!<br />and even more....";
+                    out = out + i18n("<br />Local folder: %1", localPath);
+                    out = out + i18n("<br />Remote folder: %1", remotePath);
                 }
             }
             return out;
@@ -124,7 +125,8 @@ MouseArea {
         iconSource: "list-remove"
         opacity: expanded ? 1 : 0
         anchors { right: parent.right; leftMargin: 12; bottom: parent.bottom; bottomMargin: 12; }
-        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.InOutExpo; } }        onClicked: {
+        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.InOutExpo; } }
+        onClicked: {
             print("Remove folder " + displayName);
             // ...
             owncloudSettings.removeSyncFolder(displayName);
