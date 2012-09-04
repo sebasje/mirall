@@ -52,9 +52,7 @@ MouseArea {
         height: width
         anchors { top: parent.top; left: parent.left; }
         opacity: (folderStatus == OwncloudFolder.Idle) ? 1.0 : 0.5
-        Behavior on opacity {
-            PropertyAnimation { easing.type: Easing.InOutQuart; duration: 200 }
-        }
+        Behavior on opacity { FadeAnimation { } }
     }
     QIconItem {
         icon: statusIcon(folderStatus)
@@ -62,9 +60,7 @@ MouseArea {
         height: 16
         anchors { bottom: folderIcon.bottom; right: folderIcon.right; }
         opacity: (folderStatus == OwncloudFolder.Running) ? 0.0 : 1.0
-        Behavior on opacity {
-            PropertyAnimation { easing.type: Easing.InOutQuart; duration: 200 }
-        }
+        Behavior on opacity { FadeAnimation { } }
     }
     PlasmaComponents.BusyIndicator {
         width: parent.height/2
@@ -72,9 +68,7 @@ MouseArea {
         anchors { bottom: folderIcon.bottom; right: folderIcon.right; }
         opacity: (folderStatus == OwncloudFolder.Running) ? 1.0 : 0.0
         running: folderStatus == OwncloudFolder.Running
-        Behavior on opacity {
-            PropertyAnimation { easing.type: Easing.InOutQuart; duration: 200 }
-        }
+        Behavior on opacity { FadeAnimation { } }
     }
     PlasmaExtras.Heading {
         level: 4
@@ -102,9 +96,7 @@ MouseArea {
             return out;
         }
         opacity: (expanded && folderStatus == OwncloudFolder.Error) ? 1.0 : 0.4
-        Behavior on opacity {
-            PropertyAnimation { easing.type: Easing.InOutQuart; duration: 400 }
-        }
+        Behavior on opacity { FadeAnimation { } }
     }
     PlasmaComponents.Switch {
         id: enabledSwitch
@@ -125,7 +117,7 @@ MouseArea {
         iconSource: "list-remove"
         opacity: expanded ? 1 : 0
         anchors { right: parent.right; leftMargin: 12; bottom: parent.bottom; bottomMargin: 12; }
-        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.InOutExpo; } }
+        Behavior on opacity { FadeAnimation { } }
         onClicked: {
             print("Remove folder " + displayName);
             // ...

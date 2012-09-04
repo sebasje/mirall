@@ -116,14 +116,14 @@ Item {
         iconSource: "dialog-close"
         opacity: addSyncFolder.state != "default" ? 1 : 0
         onClicked: addSyncFolder.state = "default"
-        Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
+        Behavior on opacity { FadeAnimation { } }
     }
 
     DirectoryPicker {
         id: localFolderItem
         anchors.fill: parent
         clip: true
-        Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
+        Behavior on opacity { FadeAnimation { } }
     }
     RemoteFolderPicker {
         id: remoteFolderItem
@@ -139,7 +139,7 @@ Item {
             owncloudSettings.addSyncFolder(localFolder, remoteFolder, aliasName);
             addSyncFolder.state = "feedback";
         }
-        Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
+        Behavior on opacity { FadeAnimation { } }
     }
 
     Item {
@@ -150,7 +150,7 @@ Item {
             text: "The folder has been set up."
             anchors { top: parent.top; left: parent.left; bottom: parent.bottom; }
 
-            Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
+            Behavior on opacity { FadeAnimation { } }
         }
         Timer {
             id: feedbackTimer

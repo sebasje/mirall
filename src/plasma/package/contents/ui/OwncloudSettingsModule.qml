@@ -54,6 +54,30 @@ PlasmaComponents.PageStack {
         }
     }
 
+    states: [
+        State {
+            name: "default"
+            PropertyChanges { target: folderList; opacity: 1; }
+            PropertyChanges { target: addSyncFolder; opacity: 0; }
+            PropertyChanges { target: setupWizard; opacity: 0; }
+        },
+        State {
+            name: "welcome"
+            PropertyChanges { target: folderList; opacity: 0; }
+            PropertyChanges { target: addSyncFolder; opacity: 0; }
+            PropertyChanges { target: setupWizard; opacity: 1; }
+        },
+        State {
+            name: "addFolder"
+            PropertyChanges { target: folderList; opacity: 0; }
+            PropertyChanges { target: addSyncFolder; opacity: 1; }
+            PropertyChanges { target: setupWizard; opacity: 0; }
+        },
+        State {
+            name: "settings"
+        }
+    ]
+
     Item {
         id: owncloudItem
         anchors { left: parent.left; right: parent.right; top: titleCol.bottom; bottom: parent.bottom; margins: 12; }
@@ -81,16 +105,9 @@ PlasmaComponents.PageStack {
             height: 500
             visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
             anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: enabledSwitch.top; }
-            Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
+            Behavior on opacity { FadeAnimation { } }
         }
 
-        ErrorHandler {
-            id: ocStatus
-            //height: 400
-            anchors { top: folderList.top; left: folderList.left; right: folderList.right; }
-            visible: owncloudSettings.owncloudStatus != OwncloudSettings.Connected
-            //Rectangle { color: "green"; anchors.fill: parent; opacity: .4; }
-        }
 //         MiniJobItem {
 //             anchors { left: folderList.left; right: folderList.right; bottom: folderList.bottom; }
 //             height: 64
@@ -105,16 +122,26 @@ PlasmaComponents.PageStack {
             anchors { bottom: parent.bottom; left: parent.left; rightMargin: 12 }
             onClicked: owncloudSettings.enableAllFolders(checked)
         }
+        SetupWizard {
+            id: setupWizard
+            //height: 400
+            anchors { top: folderList.top; left: parent.left; right: parent.right; bottom: parent.bottom; }
+            visible: owncloudSettings.owncloudStatus != OwncloudSettings.Connected
+            //Rectangle { color: "green"; anchors.fill: parent; opacity: .4; }
+            Behavior on opacity { FadeAnimation { } }
+        }
         AddSyncFolder {
             id: addSyncFolder
             //z: 900
             //pageStack: owncloudModule
             anchors { top: folderList.top; left: parent.left; right: parent.right; bottom: parent.bottom; }
+            Behavior on opacity { FadeAnimation { } }
         }
         PlasmaComponents.ToolButton {
             id: addSyncFolderButton
             text: i18n("Add Folder")
             iconSource: "list-add"
+            opacity: folderList.opacity
             visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
             anchors { bottom: parent.bottom; right: parent.right; rightMargin: 12; }
             onClicked: {
@@ -122,7 +149,7 @@ PlasmaComponents.PageStack {
                 //addFolder();
                 //return;
             }
-            Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
+            Behavior on opacity { FadeAnimation { } }
         }
 
     }

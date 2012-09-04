@@ -25,8 +25,8 @@ import org.kde.plasma.owncloud 0.1
 import org.kde.qtextracomponents 0.1
 
 Item {
-    id: errorHandler
-    objectName: "errorHandler"
+    id: setupWizard
+    objectName: "setupWizard"
 
     PlasmaComponents.Label {
 
