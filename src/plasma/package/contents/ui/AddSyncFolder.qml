@@ -89,6 +89,9 @@ Item {
             //pageStack.replace(Qt.createComponent("RemoteFolderPicker.qml"));
         } else if (state == "feedback") {
             //pageStack.replace(feedbackItem);
+            if (typeof(addFolderDialog) != "undefined") {
+                addFolderDialog.close();
+            }
             print("Starting timer");
             feedbackTimer.start();
         } else {
