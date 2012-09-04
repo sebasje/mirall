@@ -43,69 +43,60 @@ Item {
     states: [
         State {
             name: "default"
-            //PropertyChanges { target: addSyncFolder; height: collapsedHeight; }
             PropertyChanges { target: addSyncFolderButton; opacity: 1; }
             PropertyChanges { target: localFolderItem; opacity: 0; }
             PropertyChanges { target: remoteFolderItem; opacity: 0; }
             PropertyChanges { target: feedbackItem; opacity: 0; }
-            PropertyChanges { target: folderList; opacity: 1; }
         },
         State {
             name: "localFolder"
-            //PropertyChanges { target: addSyncFolder; height: expandedHeight; }
             PropertyChanges { target: addSyncFolderButton; opacity: 0; }
             PropertyChanges { target: localFolderItem; opacity: 1; }
             PropertyChanges { target: remoteFolderItem; opacity: 0; }
             PropertyChanges { target: feedbackItem; opacity: 0; }
-            PropertyChanges { target: folderList; opacity: 0; }
         },
         State {
             name: "remoteFolder"
-            //PropertyChanges { target: addSyncFolder; height: expandedHeight; }
             PropertyChanges { target: addSyncFolderButton; opacity: 0; }
             PropertyChanges { target: localFolderItem; opacity: 0; }
             PropertyChanges { target: remoteFolderItem; opacity: 1; }
             PropertyChanges { target: feedbackItem; opacity: 0; }
-            PropertyChanges { target: folderList; opacity: 0; }
         },
         State {
             name: "feedback"
-            //PropertyChanges { target: addSyncFolder; height: expandedHeight; }
             PropertyChanges { target: addSyncFolderButton; opacity: 0; }
             PropertyChanges { target: localFolderItem; opacity: 0; }
             PropertyChanges { target: remoteFolderItem; opacity: 0; }
-            PropertyChanges { target: feedbackItem; opacity: 0.8; }
         }
     ]
 
     onStateChanged: {
-//         return;
+        // a bit tricky: if we open the sync thing in a dialog, don't fade out
+        // our folderList. If we use the overlay, fade it out.
+        var o = (typeof(addFolderDialog) != "undefined") ? 1 : 0;
         if (state == "defaults__") {
-
+            folderList.opacity = 1;
         } else if (state == "localFolder") {
-            //pageStack.replace(Qt.createComponent("DirectoryPicker.qml"));
+            folderList.opacity = o;
         } else if (state == "remoteFolder") {
-
-            //pageStack.replace(Qt.createComponent("RemoteFolderPicker.qml"));
+            folderList.opacity = o;
         } else if (state == "feedback") {
-            //pageStack.replace(feedbackItem);
             if (typeof(addFolderDialog) != "undefined") {
                 addFolderDialog.close();
             }
+            folderList.opacity = 1;
             print("Starting timer");
             feedbackTimer.start();
         } else {
-            //pageStack.replace(owncloudItem);
-
+            folderList.opacity = 1;
         }
     }
 
 
     function nextPage() {
-        print("Next page" + addSyncFolder.state);
+        //print("Next page" + addSyncFolder.state);
         if (addSyncFolder.state == "localFolder") {
             addSyncFolder.state = "remoteFolder";
-            //directoryPickerLoader.source = "RemoteFolderPicker.qml";
         } else if (addSyncFolder.state == "remoteFolder") {
             addSyncFolder.cnt = addSyncFolder.cnt + 1
             var localFolder = addSyncFolder.localFolder;
@@ -114,7 +105,6 @@ Item {
             print("Adding folder " + localFolder + " " + remoteFolder + " " + aliasName );
             owncloudSettings.addSyncFolder(localFolder, remoteFolder, aliasName);
             addSyncFolder.state = "feedback";
-            //directoryPickerDialog.close();
         }
     }
 
@@ -134,40 +124,9 @@ Item {
         anchors.fill: parent
         clip: true
         Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
-//         PlasmaComponents.ToolButton {
-//             id: localFolderButton
-//             text: i18n("Pick Local Folder")
-//             iconSource: "folder-green"
-//             height: collapsedHeight
-//             anchors { top: parent.top; left: parent.left; }
-//             onClicked: nextPage();
-//         }
-//         PlasmaComponents.CommonDialog {
-//             id: directoryPickerDialog
-//             titleText: i18n("Pick Local Folder")
-//             buttonTexts: [i18n("Cancel")]
-// //             onButtonClicked: {
-// //                 //close();
-// //             }
-//             content: Loader {
-//                 id: directoryPickerLoader
-//                 width: theme.defaultFont.mSize.width*22
-//                 height: theme.defaultFont.mSize.height*25
-//             }
-//             onStatusChanged: {
-//                 if (status == PlasmaComponents.DialogStatus.Open) {
-//                     print("Opening dialog...");
-//                     directoryPickerLoader.source = "DirectoryPicker.qml"
-//                     //directoryPickerLoader.item.focusTextInput();
-//                 }
-//             }
-//         }
     }
     RemoteFolderPicker {
         id: remoteFolderItem
-
-        //text: i18n("Pick Remote Folder")
-        //iconSource: "folder-sync"
         anchors.fill: parent
         onFolderPicked: {
             print("remote Folder picked ... " + folder);
@@ -178,9 +137,7 @@ Item {
             var aliasName = l[l.length];
             print("Adding folder " + localFolder + " " + remoteFolder + " " + aliasName );
             owncloudSettings.addSyncFolder(localFolder, remoteFolder, aliasName);
-
             addSyncFolder.state = "feedback";
-            return;
         }
         Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
     }
@@ -201,13 +158,6 @@ Item {
             onTriggered: addSyncFolder.state = "default"
         }
     }
-//     onStateChanged: {
-//         print("State changed to: " + state);
-//         if (state == "feedback") {
-//             print("Starting timer");
-//             feedbackTimer.start();
-//         }
-//     }
 
     Component.onCompleted: state = "default";
 }
