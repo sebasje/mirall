@@ -248,6 +248,7 @@ void OwncloudSettings::setFolder(const QVariantMap& m)
     }
     folder->setDisplayName(alias);
     folder->setLocalPath(m["localPath"].toString());
+    folder->setRemotePath(m["remotePath"].toString());
     folder->setFolderStatus(m["status"].toInt());
     folder->setErrorMessage(m["errorMessage"].toString());
     //kDebug() << "OC Updating" << alias << folder->folderStatus() << folder->errorMessage();
@@ -294,6 +295,23 @@ void OwncloudSettings::addSyncFolder(const QString &localFolder, const QString &
     if (d->client) {
         kDebug() << "addSyncFolder: " << localFolder << remoteFolder << alias;
         d->client->addSyncFolder(localFolder, remoteFolder, alias);
+    }
+}
+
+void OwncloudSettings::removeSyncFolder(const QString& alias)
+{
+    if (d->client) {
+        kDebug() << "removeSyncFolder: " << alias;
+        d->client->removeSyncFolder(alias);
+        foreach (OwncloudFolder *f, d->folders) {
+
+            if (f->displayName() == alias) {
+                delete f;
+                d->folders.removeAll(f);
+                emit foldersChanged();
+            }
+        }
+
     }
 }
 

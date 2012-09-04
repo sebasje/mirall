@@ -106,7 +106,7 @@ Item {
         } else if (addSyncFolder.state == "remoteFolder") {
             addSyncFolder.cnt = addSyncFolder.cnt + 1
             var localFolder = addSyncFolder.localFolder;
-            var remoteFolder = "test" + cnt;
+            var remoteFolder = addSyncFolder.remoteFolder;
             var aliasName = addSyncFolder.aliasName;
             print("Adding folder " + localFolder + " " + remoteFolder + " " + aliasName );
             owncloudSettings.addSyncFolder(localFolder, remoteFolder, aliasName);

@@ -44,6 +44,10 @@
       <arg name="alias" type="s" direction="in" />
     </method>
 
+    <method name="removeSyncFolder">
+      <arg name="alias" type="s" direction="in" />
+    </method>
+
     <method name="createRemoteFolder">
       <arg name="name" type="s" direction="in" />
     </method>

@@ -27,7 +27,7 @@ import org.kde.qtextracomponents 0.1
 MouseArea {
     width: parent.width
     clip: true
-    height:  expanded ? 96 : 48;
+    height:  expanded ? 128 : 48;
     property bool expanded: folderList.currentIndex == index
 
     Behavior on height {
@@ -35,10 +35,13 @@ MouseArea {
     }
 
     onClicked: {
+        print("clicked" + index);
         if (!expanded) {
             folderList.currentIndex = index;
+            expanded = true;
         } else {
             folderList.currentIndex = -1;
+            expanded = false;
         }
     }
 
@@ -86,11 +89,16 @@ MouseArea {
         verticalAlignment: Text.AlignTop
         anchors { left: aliasLabel.left; right: enabledSwitch.left; top: aliasLabel.bottom; bottom: parent.bottom; }
         text: {
+            var out;
             if (folderStatus == OwncloudFolder.Error) {
-                return errorMessage
+                out = errorMessage;
             } else {
-                return "synced " + friendlyDate(syncTime);
+                out = i18n("last synchronizeded %1", friendlyDate(syncTime));
+                if (expanded) {
+                    out = out + "<br /> More output!!!<br />and even more....";
+                }
             }
+            return out;
         }
         opacity: (expanded && folderStatus == OwncloudFolder.Error) ? 1.0 : 0.4
         Behavior on opacity {
@@ -107,6 +115,19 @@ MouseArea {
             } else {
                 disable();
             }
+        }
+    }
+
+    PlasmaComponents.ToolButton {
+        id: removeFolderButton
+        text: i18n("Remove")
+        iconSource: "list-remove"
+        opacity: expanded ? 1 : 0
+        anchors { right: parent.right; leftMargin: 12; bottom: parent.bottom; bottomMargin: 12; }
+        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.InOutExpo; } }        onClicked: {
+            print("Remove folder " + displayName);
+            // ...
+            owncloudSettings.removeSyncFolder(displayName);
         }
     }
 

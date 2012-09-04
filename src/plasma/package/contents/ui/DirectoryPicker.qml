@@ -40,7 +40,7 @@ Item {
     }
     PlasmaComponents.TextField {
         id: filterText
-        text: "test"
+        text: "test" // FIXME : remove
         anchors { left: parent.left; right: parent.right; top: headingItem.bottom; }
         onTextChanged: {
             lister.filter = text;
@@ -67,7 +67,7 @@ Item {
                         iconItem.icon = "dialog-ok-apply"
                         return i18n("Pick " + currentPath);
                     } else if (modelData == "..") {
-                            iconItem.icon = "go-up"
+                        iconItem.icon = "go-up"
                         return i18n("Up");
                     } else {
                         iconItem.icon = "folder"

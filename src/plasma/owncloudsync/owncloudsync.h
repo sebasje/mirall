@@ -53,6 +53,7 @@ class OwncloudSync : public QObject
         void enableFolder(const QString &name, bool enabled = true);
         void addSyncFolder(const QString &localFolder, const QString &remoteFolder,
                            const QString &alias = QString());
+        void removeSyncFolder(const QString &alias);
         void createRemoteFolder(const QString &f);
         void checkRemoteFolder(const QString &f);
         void setupOwncloud(const QString &server, const QString &user, const QString &password);
@@ -77,8 +78,13 @@ class OwncloudSync : public QObject
         void slotCreateRemoteFolderFinished(QNetworkReply::NetworkError);
         void slotDirCheckReply( const QString&, QNetworkReply* );
 
+    private Q_SLOTS:
+        void delayedReadConfig();
+
     private:
         OwncloudSyncPrivate* d;
+        void loadFolders();
+
 };
 
 #endif // OWNCLOUDSYNCDAEMON_H

@@ -28,6 +28,7 @@ public:
     OwncloudFolder *q;
     QString name;
     QString localPath;
+    QString remotePath;
     int error;
     QString errorMessage;
     int status;
@@ -128,6 +129,19 @@ void OwncloudFolder::setLocalPath(const QString& p)
     if (d->localPath != p) {
         d->localPath = p;
         emit localPathChanged();
+    }
+}
+
+QString OwncloudFolder::remotePath() const
+{
+    return d->remotePath;
+}
+
+void OwncloudFolder::setRemotePath(const QString& p)
+{
+    if (d->remotePath != p) {
+        d->remotePath = p;
+        emit remotePathChanged();
     }
 }
 

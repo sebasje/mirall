@@ -50,11 +50,9 @@ public:
     Mirall::FolderMan* folderMan;
     Mirall::ownCloudInfo* ocInfo;
     QString configHandle;
-
+    QTimer *delay;
     int ocStatus;
     int ocError;
-
-    void loadFolders();
 
     int c;
 };
@@ -65,7 +63,7 @@ OwncloudSync::OwncloudSync(QObject *parent)
     d = new OwncloudSyncPrivate;
     d->q = this;
     d->display = "";
-
+    d->delay = 0;
     d->ocStatus = OwncloudSettings::Disconnected;
     d->ocError = OwncloudSettings::NoError;
 
@@ -96,7 +94,7 @@ OwncloudSync::OwncloudSync(QObject *parent)
 
     if(d->ocInfo->isConfigured() ) {
         d->ocInfo->checkInstallation();
-        d->loadFolders();
+        loadFolders();
     }
     //qDebug() << "OwncloudSyncDaemon loaded.";
 }
@@ -148,21 +146,21 @@ void OwncloudSync::refresh()
         d->ocStatus = OwncloudSettings::Error;
         d->ocError = OwncloudSettings::NoConfigurationError;
     }
-    d->loadFolders();
+    loadFolders();
     emit statusChanged(d->ocStatus);
     emit errorChanged(d->ocError);
     emit owncloudChanged(d->owncloudInfo);
 }
 
-void OwncloudSyncPrivate::loadFolders()
+void OwncloudSync::loadFolders()
 {
     //kDebug() << "Loaded folders : " << folders.count();
     QStringList fs;
-    qDebug() << "Loading folders";
-    foreach (Mirall::Folder* f, folderMan->map()) {
-        qDebug() << "New folder: " << f->alias() << f->path() << f->secondPath();
+    qDebug() << "OC Loading folders";
+    foreach (Mirall::Folder* f, d->folderMan->map()) {
+        qDebug() << "OC New folder: " << f->alias() << f->path() << f->secondPath();
         //fs << f->alias();
-        q->updateFolder(f);
+        updateFolder(f);
     }
 }
 
@@ -182,6 +180,8 @@ void OwncloudSync::updateFolder(const Mirall::Folder* folder)
     QVariantMap m;
     m["name"] = folder->alias();
     m["localPath"] = folder->path();
+    m["remotePath"] = folder->secondPath();
+    //qDebug() << "OC updateFolder:: path, secondPath: " << folder->path() << ", " << folder->secondPath();
 
     int s = 999;
     int r = folder->syncResult().status();
@@ -214,6 +214,7 @@ void OwncloudSync::updateFolder(const Mirall::Folder* folder)
     //d->folderList[folder->alias()] = s;
 
     d->folders[folder->alias()] = m;
+    qDebug() << " OC FOLdERs: " << d->folders.keys();
     emit folderChanged(m);
 }
 
@@ -223,6 +224,31 @@ void OwncloudSync::addSyncFolder(const QString& localFolder, const QString& remo
 
     qDebug() << "OCD OwncloudSyncDaemon::addSyncFolder: " << localFolder << remoteFolder << alias;
 
+    d->folderMan->setupFolders();
+    refresh();
+}
+
+void OwncloudSync::removeSyncFolder(const QString& alias)
+{
+    d->folderMan->slotRemoveFolder(alias);
+
+    qDebug() << "OCD OwncloudSyncDaemon::removeSyncFolder: " << alias;
+
+    if (!d->delay) {
+        d->delay = new QTimer(this);
+        d->delay->setSingleShot(true);
+        d->delay->setInterval(2000);
+        connect(d->delay, SIGNAL(timeout()), SLOT(delayedReadConfig()));
+    }
+    d->delay->start();
+    d->folders.remove(alias);
+    d->folderMan->setupFolders();
+    refresh();
+}
+
+void OwncloudSync::delayedReadConfig()
+{
+    qDebug() << "OC delayedReadConfig...";
     d->folderMan->setupFolders();
     refresh();
 }
@@ -323,7 +349,7 @@ void OwncloudSync::slotAuthCheck( const QString& ,QNetworkReply *reply )
         emit statusChanged(d->ocStatus);
         emit errorChanged(d->ocError);
         d->folderMan->setupFolders();
-        d->loadFolders();
+        loadFolders();
     }
 }
 
@@ -352,5 +378,6 @@ void OwncloudSync::setupOwncloud(const QString &server, const QString &user, con
         qDebug() << " OC  ownCloud seems not configured.";
     }
 }
+
 
 #include "owncloudsyncdaemon.moc"

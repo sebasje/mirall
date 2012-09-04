@@ -69,8 +69,6 @@ class OwncloudSettings : public QObject
             CustomError // Anything else
         };
 
-
-
     public Q_SLOTS:
         void init();
 
@@ -94,14 +92,13 @@ class OwncloudSettings : public QObject
         void setUrl(const QString &u);
         void serviceUnregistered();
 
-        //bool allFoldersEnabled();
-
         Q_INVOKABLE void refresh();
         Q_INVOKABLE void enableAllFolders(bool enabled);
         Q_INVOKABLE void startDaemon();
         Q_INVOKABLE void enableFolder(const QString &name, bool enabled = true);
         Q_INVOKABLE void addSyncFolder(const QString &localFolder, const QString &remoteFolder,
                                        const QString &alias);
+        Q_INVOKABLE void removeSyncFolder(const QString &alias);
         Q_INVOKABLE void checkRemoteFolder(const QString &folder);
         Q_INVOKABLE void createRemoteFolder(const QString &folder);
         Q_INVOKABLE void verifyFolder(const QString &localFolder, const QString &remoteFolder,
