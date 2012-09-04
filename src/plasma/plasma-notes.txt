@@ -8,22 +8,57 @@ o enum Error: TimeSync, Connection, Disk, Other
 o enable()
 o disable()
 
-remove()
+* remove() (OwncloudFolder::removeSyncFolder)
 
 OwncloudSettings:
 o folders()
 o add()
+o remove()
 o keep an eye on dbus service, update state accordingly
 o start daemon machinery
 
-* fix up layout in add folder
+o fix up layout in add folder
 o Login.qml - generic log in form w/ title, user, pass, url (line edit or list)
 o kill owncloudsettings::statusmessage and ::errormessage
 o swap names of owncloudsync and owncloudsyncdaemon
 
+* Get two patches on gitorious upstreamed, ping Klaas
+* add folder: check for both, local and remote folder if exists
+* Rename everything in the UI to Synchronization instead of owncloud
+* Fix Grid layout warning in Login.qml (-> Item)
+*
+* preprend "Favorites" page with Pictures, Videos, Documents, Music pathes and checkboxen
+  -> shortcut to same-named remote folders
+
+* Settings page, with
+  * slider-ish widget for polling interval
+  * remote version information
+
+* "Special" ownCloud folder, with metadata config therein, hidden in UI or
+  shown with special cased delegate in folder list
+
+* try switching to KIO::NAM, setter for owncloudInfo needed, testing
+  needed (will csync go through NAM as well, does it matter to csync?)
+
+* Investigate switching to KConfig & KWallet, ditching MirallConfigFile more or less
+
+* Mechanism for adding Akonadi agents (from webaccounts?)
+  * Calendar setup
+  * Contacts setup
+  * Monitoring akonadi sync
+
+* VCS plugin
+
+* Bookmarks
+  * Rekonq
+  * Firefox
+  * Chrome
+
+
+
 
 Sync:
-* investigate polling with the goal to kill it
+* investigate polling with the goal to kill it for local folders
 * retrieve list of remote folders in Mirall::ownCloudInfo
 * Set and test KIO::NetworkAccessManager
 
