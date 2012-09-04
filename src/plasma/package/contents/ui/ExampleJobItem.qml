@@ -53,7 +53,7 @@ Item {
     }
 
 //     ExampleJob {
-// 
+//
 //         onAdvanceChanged: {
 //             print("pc: " + advance);
 //             progressBar.value = advance;

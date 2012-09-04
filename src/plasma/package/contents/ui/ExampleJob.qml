@@ -35,7 +35,7 @@ Item {
 //     QtObject {
 //         id: d
 //         property int cnt: 0
-// 
+//
     function run() {
         // do the actual work
         print("Run, Forest, run!");

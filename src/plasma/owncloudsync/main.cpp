@@ -74,7 +74,7 @@ extern "C" KDE_EXPORT int kdemain( int argc, char** argv )
 //                           KLocalizedString(),
 //                           "http://owncloud.org" );
 //     aboutData.addAuthor(ki18n("Sebastian Kügler"),ki18n("Maintainer"), "sebas@kde.org");
-// 
+//
 //     KCmdLineArgs::init( argc, argv, &aboutData );
 //     KComponentData componentData( &aboutData );
     QCoreApplication app(argc, argv);
