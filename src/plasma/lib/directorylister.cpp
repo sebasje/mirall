@@ -21,9 +21,11 @@
 
 #include "directorylister.h"
 
+#include <KGlobalSettings>
+#include <kdebug.h>
+
 #include "../applet/owncloud_interface.h"
 
-#include <kdebug.h>
 
 class DirectoryListerPrivate {
 public:
@@ -40,9 +42,6 @@ DirectoryLister::DirectoryLister(QObject* parent) :
     d = new DirectoryListerPrivate;
     d->q = this;
     d->dir = QDir::home();
-
-    //d->directories = QStringList() << "/home/sebas/tmp/test1/" << "/home/sebas/tmp/test2/" << "/home/sebas/tmp/test3/" << "/home/sebas/tmp/test4/" << "/home/sebas/tmp/test5/";
-
     init();
 }
 
@@ -51,23 +50,30 @@ DirectoryLister::~DirectoryLister()
     delete d;
 }
 
-
 void DirectoryLister::init()
 {
 }
 
 void DirectoryLister::up()
 {
-
     emit directoriesChanged();
 }
 
-QStringList DirectoryLister::directories()
+bool DirectoryLister::exists(const QString &f) const
+{
+    if (f.isEmpty()) {
+        return d->dir.exists();
+    } else {
+        return QDir(f).exists();
+    }
+}
+
+QStringList DirectoryLister::directories() const
 {
     return d->directories.filter(d->filter);
 }
 
-QString DirectoryLister::currentPath()
+QString DirectoryLister::currentPath() const
 {
     return d->dir.absolutePath();
 }
@@ -87,7 +93,7 @@ void DirectoryLister::enterDirectory(const QString &directory)
     emit directoriesChanged();
 }
 
-QString DirectoryLister::filter()
+QString DirectoryLister::filter() const
 {
     return d->filter;
 }
@@ -102,5 +108,34 @@ void DirectoryLister::setFilter(const QString &f)
     }
 }
 
+QString DirectoryLister::homePath() const
+{
+    return QDir::homePath();
+}
+
+QString DirectoryLister::documentPath() const
+{
+    return KGlobalSettings::documentPath();
+}
+
+QString DirectoryLister::downloadPath() const
+{
+    return KGlobalSettings::downloadPath();
+}
+
+QString DirectoryLister::musicPath() const
+{
+    return KGlobalSettings::musicPath();
+}
+
+QString DirectoryLister::picturesPath() const
+{
+    return KGlobalSettings::picturesPath();
+}
+
+QString DirectoryLister::videosPath() const
+{
+    return KGlobalSettings::videosPath();
+}
 
 #include "directorylister.moc"

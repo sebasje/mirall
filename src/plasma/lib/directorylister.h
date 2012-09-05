@@ -35,6 +35,13 @@ class DirectoryLister : public QObject
     Q_PROPERTY(QString currentPath READ currentPath NOTIFY currentPathChanged)
     Q_PROPERTY(QString filter READ filter WRITE setFilter NOTIFY filterChanged)
 
+    Q_PROPERTY(QString homePath READ homePath NOTIFY homePathChanged)
+    Q_PROPERTY(QString documentPath READ documentPath NOTIFY documentPathChanged)
+    Q_PROPERTY(QString downloadPath READ downloadPath NOTIFY downloadPathChanged)
+    Q_PROPERTY(QString musicPath READ musicPath NOTIFY musicPathChanged)
+    Q_PROPERTY(QString picturesPath READ picturesPath NOTIFY picturesPathChanged)
+    Q_PROPERTY(QString videosPath READ videosPath NOTIFY videosPathChanged)
+
     public:
         DirectoryLister(QObject* parent = 0);
         ~DirectoryLister();
@@ -43,19 +50,34 @@ class DirectoryLister : public QObject
     public Q_SLOTS:
         void init();
 
-        QStringList directories();
-        QString currentPath();
-        QString filter();
+        QStringList directories() const;
+        QString currentPath() const;
+        QString filter() const;
+
+        QString homePath() const;
+        QString documentPath() const;
+        QString downloadPath() const;
+        QString musicPath() const;
+        QString picturesPath() const;
+        QString videosPath() const;
 
         void setFilter(const QString &f);
 
         Q_INVOKABLE void up();
         Q_INVOKABLE void enterDirectory(const QString &directory);
+        Q_INVOKABLE bool exists(const QString &f = QString()) const;
 
     Q_SIGNALS:
         void directoriesChanged();
         void currentPathChanged();
         void filterChanged();
+
+        void homePathChanged();
+        void documentPathChanged();
+        void downloadPathChanged();
+        void musicPathChanged();
+        void picturesPathChanged();
+        void videosPathChanged();
 
     private:
         DirectoryListerPrivate* d;
