@@ -26,9 +26,14 @@ o swap names of owncloudsync and owncloudsyncdaemon
 * add folder: check for both, local and remote folder if exists
 * Rename everything in the UI to Synchronization instead of owncloud
 * Fix Grid layout warning in Login.qml (-> Item)
-*
+* "Sync Now!" button in folder delegates
+
 * preprend "Favorites" page with Pictures, Videos, Documents, Music pathes and checkboxen
   -> shortcut to same-named remote folders
+  * check if folder (local + remote) exist, create if necessary
+  * use errorMessage() in login widget
+  * pop up login widget automatically when NoConfiguration Error or Auth error occurs
+  * pre-fill user name from settings, password?
 
 * Settings page, with
   * slider-ish widget for polling interval
@@ -61,5 +66,8 @@ Sync:
 * investigate polling with the goal to kill it for local folders
 * retrieve list of remote folders in Mirall::ownCloudInfo
 * Set and test KIO::NetworkAccessManager
+
+Ideas
+* loadable profiles, essentially folder configs with enabled / disabled, polling interval
 
 o == done; * == todo
