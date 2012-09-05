@@ -83,6 +83,7 @@ PlasmaComponents.PageStack {
     PlasmaComponents.Button {
         checkable: true
         iconSource: "kolf"
+        checked: owncloudModule.state == "setup"
         onCheckedChanged: checked ? owncloudModule.state = "setup" : owncloudModule.state = "default"
         anchors { top: parent.top; right: parent.right; }
     }

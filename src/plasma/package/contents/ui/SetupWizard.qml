@@ -28,6 +28,7 @@ Item {
     id: setupWizard
     objectName: "setupWizard"
     state: "login"
+    property int maxWidth: 400
     states: [
         State {
             name: "login"
@@ -87,7 +88,7 @@ Item {
     Item {
         id: setupNavigation
         anchors { left: parent.left; bottom: parent.bottom; bottomMargin: 24; }
-        width: parent.width > 400 ? 400 : parent.width
+        width: parent.width > maxWidth ? maxWidth : parent.width
 
         PlasmaComponents.ToolButton {
             id: navLogin
@@ -102,7 +103,8 @@ Item {
             id: navFavs
             text: i18n("Setup folders")
             iconSource: "folder-sync"
-            opacity: ((setupWizard.state == "favorites") || (owncloudSettings.owncloudStatus != OwncloudSettings.Connected)) ? 0 : 1
+            opacity: ((setupWizard.state == "favorites") ||
+                      (owncloudSettings.owncloudStatus != OwncloudSettings.Connected)) ? 0 : 1
             Behavior on opacity { FadeAnimation { } }
             onClicked: setupWizard.state = "favorites"
             anchors { verticalCenter: parent.verticalCenter; right: parent.right; }
@@ -121,23 +123,29 @@ Item {
     LoginWidget {
         id: loginWidget
         anchors { top: parent.top; left: parent.left; bottom: parent.bottom; }
-        width: parent.width > 400 ? 400 : parent.width
+        width: parent.width > maxWidth ? maxWidth : parent.width
     }
 
     FavoritesWidget {
         id: favoritesWidget
         anchors { top: parent.top; left: parent.left; bottom: parent.bottom; }
-        width: parent.width > 400 ? 400 : parent.width
+        width: parent.width > maxWidth ? maxWidth : parent.width
 
     }
 
     function errorMessage(e) {
-        if (e == OwncloudSettings.NoError) return i18n("You are logged in.");
-        if (e == OwncloudSettings.AuthenticationError) return i18n("The supplied username or password is wrong.");
-        if (e == OwncloudSettings.NetworkError) return i18n("Cannot connect to ownCloud server.");
-        if (e == OwncloudSettings.NoConfigurationError) return i18n("No ownCloud server configured.");
-        if (e == OwncloudSettings.NoDaemonError) return i18n("The synchronization daemon is not running.");
-        if (e == OwncloudSettings.CustomError) return i18n("Something unexpected happened.");
+        if (e == OwncloudSettings.NoError)
+            return i18n("You are logged in.");
+        if (e == OwncloudSettings.AuthenticationError)
+            return i18n("The supplied username or password is wrong.");
+        if (e == OwncloudSettings.NetworkError)
+            return i18n("Cannot connect to ownCloud server.");
+        if (e == OwncloudSettings.NoConfigurationError)
+            return i18n("No ownCloud server configured.");
+        if (e == OwncloudSettings.NoDaemonError)
+            return i18n("The synchronization daemon is not running.");
+        if (e == OwncloudSettings.CustomError)
+            return i18n("Something unexpected happened.");
     }
 
     Behavior on opacity { FadeAnimation { } }

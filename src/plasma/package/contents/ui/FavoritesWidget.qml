@@ -33,27 +33,27 @@ Item {
         // Pictures, Documents, Music, Videos, InstantUpload
         ListElement {
             iconSource: "folder-image"
-            localPath: "/home/sebas/owncloud/Pictures"
+            localPath: "/home/sebas/ownCloud/Pictures"
             remotePath: "Pictures"
         }
         ListElement {
             iconSource: "folder-documents"
-            localPath: "/home/sebas/owncloud/Documents"
+            localPath: "/home/sebas/ownCloud/Documents"
             remotePath: "Documents"
         }
         ListElement {
             iconSource: "folder-sound"
-            localPath: "/home/sebas/owncloud/Pictures/"
+            localPath: "/home/sebas/ownCloud/Music/"
             remotePath: "Music"
         }
         ListElement {
             iconSource: "folder-video"
-            localPath: "/home/sebas/owncloud/Pictures/"
+            localPath: "/home/sebas/ownCloud/Videos/"
             remotePath: "Videos"
         }
         ListElement {
             iconSource: "folder-download"
-            localPath: "/home/sebas/owncloud/InstantUpload"
+            localPath: "/home/sebas/ownCloud/InstantUpload"
             remotePath: "InstantUpload"
         }
     }
@@ -129,6 +129,7 @@ Item {
                     if (checked) {
                         print(" --> Adding Syncfolder: " + a + " L: " + localPath + " R: " + remotePath);
                         owncloudSettings.addSyncFolder(localPath, remotePath, a);
+                        //owncloudModule.state = "default";
                     } else {
                         print(" --> Removing Syncfolder: " + aliasName(remotePath) + " L: " + localPath + " R: " + remotePath);
                         owncloudSettings.removeSyncFolder(a);
