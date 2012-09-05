@@ -22,7 +22,7 @@ o Login.qml - generic log in form w/ title, user, pass, url (line edit or list)
 o kill owncloudsettings::statusmessage and ::errormessage
 o swap names of owncloudsync and owncloudsyncdaemon
 
-* Get two patches on gitorious upstreamed, ping Klaas
+* Get two patches on gitorious upstreamed, ping Klaas, move patches to github merge requests?
 * add folder: check for both, local and remote folder if exists
 * Rename everything in the UI to Synchronization instead of owncloud
 * Fix Grid layout warning in Login.qml (-> Item)

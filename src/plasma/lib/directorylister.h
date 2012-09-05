@@ -48,8 +48,6 @@ class DirectoryLister : public QObject
 
 
     public Q_SLOTS:
-        void init();
-
         QStringList directories() const;
         QString currentPath() const;
         QString filter() const;

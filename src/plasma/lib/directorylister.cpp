@@ -31,7 +31,6 @@ class DirectoryListerPrivate {
 public:
     DirectoryLister *q;
     QDir dir;
-    QString path;
     QStringList directories;
     QString filter;
 };
@@ -41,17 +40,12 @@ DirectoryLister::DirectoryLister(QObject* parent) :
 {
     d = new DirectoryListerPrivate;
     d->q = this;
-    d->dir = QDir::home();
-    init();
+    d->dir = homePath();
 }
 
 DirectoryLister::~DirectoryLister()
 {
     delete d;
-}
-
-void DirectoryLister::init()
-{
 }
 
 void DirectoryLister::up()

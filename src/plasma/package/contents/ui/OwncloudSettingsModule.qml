@@ -152,11 +152,22 @@ PlasmaComponents.PageStack {
         }
 
     }
-    function addFolder() {
-        owncloudModule.replace();
+
+    Connections {
+        target: owncloudSettings
+        onErrorChanged: {
+            if (owncloudSettings.error == OwncloudSettings.NoDaemonError) {
+                owncloudModule.state = "setup";
+                setupWizard.state = "error";
+            }
+        }
     }
 
     Component.onCompleted: {
+        if (owncloudSettings.error == OwncloudSettings.NoDaemonError) {
+            owncloudModule.state = "setup";
+            setupWizard.state = "error";
+        }
         print("Loaded OwncloudSettingsModule.qml successfully.");
     }
 

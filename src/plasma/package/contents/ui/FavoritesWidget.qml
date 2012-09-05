@@ -28,32 +28,29 @@ import org.kde.plasma.owncloud 0.1
 Item {
     id: favoritesWidget
 
+    DirectoryLister { id: dir }
+
     ListModel {
         id: favoritesModel
         // Pictures, Documents, Music, Videos, InstantUpload
         ListElement {
             iconSource: "folder-image"
-            localPath: "/home/sebas/ownCloud/Pictures"
             remotePath: "Pictures"
         }
         ListElement {
             iconSource: "folder-documents"
-            localPath: "/home/sebas/ownCloud/Documents"
             remotePath: "Documents"
         }
         ListElement {
             iconSource: "folder-sound"
-            localPath: "/home/sebas/ownCloud/Music/"
             remotePath: "Music"
         }
         ListElement {
             iconSource: "folder-video"
-            localPath: "/home/sebas/ownCloud/Videos/"
             remotePath: "Videos"
         }
         ListElement {
-            iconSource: "folder-download"
-            localPath: "/home/sebas/ownCloud/InstantUpload"
+            iconSource: "folder-downloads"
             remotePath: "InstantUpload"
         }
     }
@@ -74,6 +71,15 @@ Item {
         if (folder == "Music") o = "";
         if (folder == "Videos") o = i18n("Movies and films");
         if (folder == "InstantUpload") o = i18n("Photos uploaded from camera");
+        return o;
+    }
+    function aliasLocalPath(folder) {
+        var o;
+        if (folder == "Pictures") o = dir.picturesPath;
+        if (folder == "Documents") o = dir.documentPath;
+        if (folder == "Music") o = dir.musicPath;
+        if (folder == "Videos") o = dir.videosPath;
+        if (folder == "InstantUpload") o = dir.homePath + "/InstantUpload";
         return o;
     }
 
@@ -126,19 +132,26 @@ Item {
                 anchors { verticalCenter: folderIcon.verticalCenter; right: parent.right; rightMargin: 24; }
                 onClicked: {
                     var a = aliasName(remotePath);
+                    var localPath = aliasLocalPath(remotePath);
                     if (checked) {
                         print(" --> Adding Syncfolder: " + a + " L: " + localPath + " R: " + remotePath);
-                        owncloudSettings.addSyncFolder(localPath, remotePath, a);
+                        //owncloudSettings.addSyncFolder(localPath, remotePath, a);
                         //owncloudModule.state = "default";
                     } else {
                         print(" --> Removing Syncfolder: " + aliasName(remotePath) + " L: " + localPath + " R: " + remotePath);
-                        owncloudSettings.removeSyncFolder(a);
+                        //owncloudSettings.removeSyncFolder(a);
                     }
                 }
             }
 
         }
     }
+
+
+//     function apply() {
+//
+//         return;
+//     }
 
     Item {
         id: footerItem
