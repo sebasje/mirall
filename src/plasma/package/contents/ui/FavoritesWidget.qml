@@ -89,6 +89,7 @@ Item {
         model: favoritesModel
         anchors { left: parent.left; right: parent.right; top: favHeading.bottom; topMargin: 12; bottom: footerItem.top; }
         interactive: contentHeight > height
+        clip: true
 
         delegate: Item {
             id: favDelegate
@@ -98,40 +99,41 @@ Item {
             QtExtraComponents.QIconItem {
                 id: folderIcon
                 icon: iconSource
-                width: 48
+                width: parent.height*0.8
                 height: width
                 anchors { top: parent.top; left: parent.left; }
-//                 opacity: (folderStatus == OwncloudFolder.Idle) ? 1.0 : 0.5
-//                 Behavior on opacity { FadeAnimation { } }
             }
             PlasmaExtras.Heading {
                 level: 4
                 id: aliasLabel
                 text: aliasName(remotePath)
-                anchors { top: parent.top; left: folderIcon.right; right: enabledSwitch.left; leftMargin: 12; }
+                anchors { top: parent.top; left: folderIcon.right; right: addFav.left; leftMargin: 12; }
             }
             PlasmaComponents.Label {
                 id: errorLabel
                 font.pointSize: theme.smallestFont.pointSize
                 wrapMode: Text.Wrap
                 verticalAlignment: Text.AlignTop
-                anchors { left: aliasLabel.left; right: enabledSwitch.left; top: aliasLabel.bottom; bottom: parent.bottom; }
+                anchors { left: aliasLabel.left; right: addFav.left; top: aliasLabel.bottom; bottom: parent.bottom; }
                 text: aliasDescription(remotePath)
                 opacity: 0.4
                 //opacity: (expanded && folderStatus == OwncloudFolder.Error) ? 1.0 : 0.4
                 //Behavior on opacity { FadeAnimation { } }
             }
-            PlasmaComponents.Switch {
-                id: enabledSwitch
-                //checked: OwncloudFolder.Disabled != folderStatus
+            PlasmaComponents.CheckBox {
+                id: addFav
+                //iconSource: "folder-add"
                 anchors { verticalCenter: folderIcon.verticalCenter; right: parent.right; rightMargin: 24; }
-//                 onClicked: {
-//                     if (checked) {
-//                         enable();
-//                     } else {
-//                         disable();
-//                     }
-//                 }
+                onClicked: {
+                    var a = aliasName(remotePath);
+                    if (checked) {
+                        print(" --> Adding Syncfolder: " + a + " L: " + localPath + " R: " + remotePath);
+                        owncloudSettings.addSyncFolder(localPath, remotePath, a);
+                    } else {
+                        print(" --> Removing Syncfolder: " + aliasName(remotePath) + " L: " + localPath + " R: " + remotePath);
+                        owncloudSettings.removeSyncFolder(a);
+                    }
+                }
             }
 
         }

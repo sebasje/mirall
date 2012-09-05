@@ -86,7 +86,7 @@ Item {
 
     Item {
         id: setupNavigation
-        anchors { left: parent.left; bottom: parent.bottom; }
+        anchors { left: parent.left; bottom: parent.bottom; bottomMargin: 24; }
         width: parent.width > 400 ? 400 : parent.width
 
         PlasmaComponents.ToolButton {
@@ -105,6 +105,15 @@ Item {
             opacity: ((setupWizard.state == "favorites") || (owncloudSettings.owncloudStatus != OwncloudSettings.Connected)) ? 0 : 1
             Behavior on opacity { FadeAnimation { } }
             onClicked: setupWizard.state = "favorites"
+            anchors { verticalCenter: parent.verticalCenter; right: parent.right; }
+        }
+        PlasmaComponents.ToolButton {
+            id: done
+            text: i18n("Done")
+            iconSource: "dialog-ok-apply"
+            opacity: (setupWizard.state == "favorites") ? 1 : 0
+            Behavior on opacity { FadeAnimation { } }
+            onClicked: owncloudModule.state = "default"
             anchors { verticalCenter: parent.verticalCenter; right: parent.right; }
         }
     }
