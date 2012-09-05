@@ -27,7 +27,7 @@ NumberAnimation {
 
     //property Item targetItem
     //property int duration: Animations.normalDuration
-    duration: 250
+    duration: 400
 
     easing.type: Easing.InOutExpo
 }

@@ -27,30 +27,99 @@ import org.kde.qtextracomponents 0.1
 Item {
     id: setupWizard
     objectName: "setupWizard"
+    state: "login"
+    states: [
+        State {
+            name: "login"
+            PropertyChanges { target: loginWidget; opacity: 1; }
+            PropertyChanges { target: favoritesWidget; opacity: 0; }
+            PropertyChanges { target: errorWidget; opacity: 0; }
+        },
+        State {
+            name: "favorites"
+            PropertyChanges { target: loginWidget; opacity: 0; }
+            PropertyChanges { target: favoritesWidget; opacity: 1; }
+            PropertyChanges { target: errorWidget; opacity: 0; }
+        },
+        State {
+            name: "error"
+            PropertyChanges { target: loginWidget; opacity: 0; }
+            PropertyChanges { target: favoritesWidget; opacity: 0; }
+            PropertyChanges { target: errorWidget; opacity: 1; }
+        }
+    ]
 
-    PlasmaComponents.Label {
-
-        id: errorLabel
-        anchors { top: parent.top; left: parent.left; right: parent.right; }
-
-        text: errorMessage(owncloudSettings.error)
-        visible: OwncloudSettings.NoConfigurationError != owncloudSettings.error && OwncloudSettings.AuthenticationError != owncloudSettings.error
-
+    Connections {
+        target: owncloudSettings
+        onOwncloudStatusChanged: {
+            if (owncloudSettings.owncloudStatus != OwncloudSettings.Connected &&
+                owncloudSettings.error == OwncloudSettings.NoDaemonError) {
+                setupWizard.state = "error";
+            } else if (owncloudSettings.owncloudStatus != OwncloudSettings.Connected) {
+                setupWizard.state = "login";
+            } else {
+                setupWizard.state = "favorites";
+            }
+            print(" @@@@@@@@@@@ state changed to ..." + setupWizard.state);
+        }
     }
 
-    PlasmaComponents.ToolButton {
-        id: startDaemonButton
-        text: i18n("Start Sync Daemon")
-        iconSource: "system-run"
-        visible: owncloudSettings.error == OwncloudSettings.NoDaemonError
-        anchors { top: errorLabel.bottom; left: parent.horizontalCenter; }
+    Item {
+        id: errorWidget
+        anchors.fill: parent
+        PlasmaComponents.Label {
+            id: errorLabel
+            anchors { top: parent.top; left: parent.left; right: parent.right; }
+            text: errorMessage(owncloudSettings.error)
 
-        onClicked: owncloudSettings.startDaemon()
+        }
+        PlasmaComponents.ToolButton {
+            id: startDaemonButton
+            text: i18n("Start Sync Daemon")
+            iconSource: "system-run"
+            visible: owncloudSettings.error == OwncloudSettings.NoDaemonError
+            anchors { top: errorLabel.bottom; left: parent.horizontalCenter; }
+
+            onClicked: owncloudSettings.startDaemon()
+        }
+    }
+
+    Item {
+        id: setupNavigation
+        anchors { left: parent.left; bottom: parent.bottom; }
+        width: parent.width > 400 ? 400 : parent.width
+
+        PlasmaComponents.ToolButton {
+            id: navLogin
+            text: i18n("Sign in")
+            iconSource: "dialog-password"
+            opacity: setupWizard.state == "login" ? 0 : 1
+            Behavior on opacity { FadeAnimation { } }
+            onClicked: setupWizard.state = "login"
+            anchors { verticalCenter: parent.verticalCenter; left: parent.left; }
+        }
+        PlasmaComponents.ToolButton {
+            id: navFavs
+            text: i18n("Setup folders")
+            iconSource: "folder-sync"
+            opacity: ((setupWizard.state == "favorites") || (owncloudSettings.owncloudStatus != OwncloudSettings.Connected)) ? 0 : 1
+            Behavior on opacity { FadeAnimation { } }
+            onClicked: setupWizard.state = "favorites"
+            anchors { verticalCenter: parent.verticalCenter; right: parent.right; }
+        }
     }
 
     LoginWidget {
-        visible: owncloudSettings.error == OwncloudSettings.NoConfigurationError || owncloudSettings.error == OwncloudSettings.AuthenticationError
-        anchors.fill: parent
+        id: loginWidget
+        anchors { top: parent.top; left: parent.left; bottom: parent.bottom; }
+        width: parent.width > 400 ? 400 : parent.width
+    }
+
+    FavoritesWidget {
+        id: favoritesWidget
+        anchors { top: parent.top; left: parent.left; bottom: parent.bottom; }
+        width: parent.width > 400 ? 400 : parent.width
+
     }
 
     function errorMessage(e) {
@@ -61,6 +130,8 @@ Item {
         if (e == OwncloudSettings.NoDaemonError) return i18n("The synchronization daemon is not running.");
         if (e == OwncloudSettings.CustomError) return i18n("Something unexpected happened.");
     }
+
+    Behavior on opacity { FadeAnimation { } }
 
     Component.onCompleted: print("Errorhandler loaded.");
 }

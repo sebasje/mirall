@@ -35,36 +35,32 @@ Item {
     property int cnt: 0
     //property int expandedHeight: 200
     //property int collapsedHeight: 32
-    property int fadingDuration: 400
+    property int fadingDuration: 250
 
 
-    Behavior on height { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
+    Behavior on height { FadeAnimation { } }
 
     states: [
         State {
             name: "default"
-            PropertyChanges { target: addSyncFolderButton; opacity: 1; }
             PropertyChanges { target: localFolderItem; opacity: 0; }
             PropertyChanges { target: remoteFolderItem; opacity: 0; }
             PropertyChanges { target: feedbackItem; opacity: 0; }
         },
         State {
             name: "localFolder"
-            PropertyChanges { target: addSyncFolderButton; opacity: 0; }
             PropertyChanges { target: localFolderItem; opacity: 1; }
             PropertyChanges { target: remoteFolderItem; opacity: 0; }
             PropertyChanges { target: feedbackItem; opacity: 0; }
         },
         State {
             name: "remoteFolder"
-            PropertyChanges { target: addSyncFolderButton; opacity: 0; }
             PropertyChanges { target: localFolderItem; opacity: 0; }
             PropertyChanges { target: remoteFolderItem; opacity: 1; }
             PropertyChanges { target: feedbackItem; opacity: 0; }
         },
         State {
             name: "feedback"
-            PropertyChanges { target: addSyncFolderButton; opacity: 0; }
             PropertyChanges { target: localFolderItem; opacity: 0; }
             PropertyChanges { target: remoteFolderItem; opacity: 0; }
         }
@@ -74,21 +70,21 @@ Item {
         // a bit tricky: if we open the sync thing in a dialog, don't fade out
         // our folderList. If we use the overlay, fade it out.
         var o = (typeof(addFolderDialog) != "undefined") ? 1 : 0;
-        if (state == "defaults__") {
-            folderList.opacity = 1;
+        if (state == "default") {
+            if (typeof(owncloudModule) != "undefined") owncloudModule.state = "default";
         } else if (state == "localFolder") {
-            folderList.opacity = o;
+            //folderList.opacity = o;
         } else if (state == "remoteFolder") {
-            folderList.opacity = o;
+            //folderList.opacity = o;
         } else if (state == "feedback") {
             if (typeof(addFolderDialog) != "undefined") {
                 addFolderDialog.close();
             }
-            folderList.opacity = 1;
+            //folderList.opacity = 1;
             print("Starting timer");
             feedbackTimer.start();
         } else {
-            folderList.opacity = 1;
+            //folderList.opacity = 1;
         }
     }
 
@@ -158,6 +154,8 @@ Item {
             onTriggered: addSyncFolder.state = "default"
         }
     }
+
+    Behavior on opacity { FadeAnimation { } }
 
     Component.onCompleted: state = "default";
 }

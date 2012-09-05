@@ -54,5 +54,7 @@ ListView {
         if (e == OwncloudFolder.Error) return i18n("Error");
     }
 
+    Behavior on opacity { FadeAnimation { } }
+
     Component.onCompleted: owncloudSettings.refresh()
 }

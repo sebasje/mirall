@@ -24,75 +24,71 @@ import org.kde.plasma.extras 0.1 as PlasmaExtras
 import org.kde.qtextracomponents 0.1 as QtExtraComponents
 import org.kde.plasma.owncloud 0.1
 
-Column {
+
+Item {
     id: loginWidget
     property alias serverUrl: serverEdit.text
     property string user
     property string status
-    spacing: 12
 
     Item {
-        id: formGrid
+        id: aligner
+        property int maxWidth: 300
+        anchors { top: parent.top; }
+        x: parent.width / 3
+        width: (parent.width-x) > maxWidth ? maxWidth : parent.width-x
+        height: 400
+    }
+    width: parent.width
 
+    PlasmaComponents.Label {
+        text: i18n("Server address:")
+        horizontalAlignment: Text.AlignRight
+        anchors { right: aligner.left; rightMargin: 12; verticalCenter: serverEdit.verticalCenter; left: parent.left; }
+    }
+    PlasmaComponents.TextField {
+        id: serverEdit
+        text: "http://localhost/owncloud"
+        anchors { left: aligner.left; leftMargin: 12; top: parent.top; right: aligner.right; }
+        Keys.onReturnPressed: userNameEdit.forceActiveFocus()
+        Keys.onTabPressed: userNameEdit.forceActiveFocus()
+    }
 
-//         columns: 2
-//         rows: 3
-//         spacing: 12
-        //width: 200
-        //anchors.horizontalCenter: parent.horizontalCenter
-        width: parent.width
-        //height: childrenRect.height
+    PlasmaComponents.Label {
+        text: i18n("User name:")
+        horizontalAlignment: Text.AlignRight
+        anchors { right: aligner.left; rightMargin: 12; verticalCenter: userNameEdit.verticalCenter; left: parent.left; }
+    }
+    PlasmaComponents.TextField {
+        id: userNameEdit
+        anchors { left: aligner.left; leftMargin: 12; top: serverEdit.bottom; right: aligner.right; topMargin: 12; }
+        Keys.onTabPressed: passwordEdit.forceActiveFocus()
+    }
 
-        PlasmaComponents.Label {
-            text: i18n("Server address:")
-            horizontalAlignment: Text.AlignRight
-            anchors { right: parent.horizontalCenter; rightMargin: 12; verticalCenter: serverEdit.verticalCenter; left: parent.left; }
-        }
-        PlasmaComponents.TextField {
-            id: serverEdit
-            text: "http://localhost/owncloud"
-            anchors { left: parent.horizontalCenter; leftMargin: 12; top: parent.top; right: parent.right; }
-            Keys.onReturnPressed: userNameEdit.forceActiveFocus()
-            Keys.onTabPressed: userNameEdit.forceActiveFocus()
-        }
-
-
-        PlasmaComponents.Label {
-            text: i18n("User name:")
-            horizontalAlignment: Text.AlignRight
-            anchors { right: parent.horizontalCenter; rightMargin: 12; verticalCenter: userNameEdit.verticalCenter; left: parent.left; }
-        }
-        PlasmaComponents.TextField {
-            id: userNameEdit
-            anchors { left: parent.horizontalCenter; leftMargin: 12; top: serverEdit.bottom; right: parent.right; topMargin: 12; }
-            Keys.onTabPressed: passwordEdit.forceActiveFocus()
-        }
-
-        PlasmaComponents.Label {
-            text: i18n("Password:")
-            horizontalAlignment: Text.AlignRight
-            anchors { right: parent.horizontalCenter; rightMargin: 12; verticalCenter: passwordEdit.verticalCenter; left: parent.left; }
-        }
-        PlasmaComponents.TextField {
-            id: passwordEdit
-            echoMode: TextInput.Password
-            anchors { left: parent.horizontalCenter; leftMargin: 12; top: userNameEdit.bottom; right: parent.right; topMargin: 12; }
-            Keys.onReturnPressed: loginWidget.acceptConfig()
-            Keys.onTabPressed: buttonsRow.forceActiveFocus()
-        }
-        PlasmaComponents.Button {
-            id: buttonsRow
-            text: i18n("Sign in")
-            //width: 80
-            enabled: userNameEdit.text != "" && serverUrl != ""
-            anchors { left: parent.horizontalCenter; leftMargin: 12; top: passwordEdit.bottom; right: parent.right; topMargin: 12; }
-            onClicked: loginWidget.acceptConfig()
-        }
-        PlasmaComponents.Label {
-            text: i18n("Wrong username or password.")
-            visible: owncloudSettings.error == OwncloudSettings.AuthenticationError
-            anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; }
-        }
+    PlasmaComponents.Label {
+        text: i18n("Password:")
+        horizontalAlignment: Text.AlignRight
+        anchors { right: aligner.left; rightMargin: 12; verticalCenter: passwordEdit.verticalCenter; left: parent.left; }
+    }
+    PlasmaComponents.TextField {
+        id: passwordEdit
+        echoMode: TextInput.Password
+        anchors { left: aligner.left; leftMargin: 12; top: userNameEdit.bottom; right: aligner.right; topMargin: 12; }
+        Keys.onReturnPressed: loginWidget.acceptConfig()
+        Keys.onTabPressed: buttonsRow.forceActiveFocus()
+    }
+    PlasmaComponents.Button {
+        id: buttonsRow
+        text: i18n("Sign in")
+        //width: 80
+        enabled: userNameEdit.text != "" && serverUrl != ""
+        anchors { left: aligner.left; leftMargin: 12; top: passwordEdit.bottom; right: aligner.right; topMargin: 12; }
+        onClicked: loginWidget.acceptConfig()
+    }
+    PlasmaComponents.Label {
+        text: i18n("Wrong username or password.")
+        visible: owncloudSettings.error == OwncloudSettings.AuthenticationError
+        anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; }
     }
     function acceptConfig() {
         var s = serverUrl;
@@ -101,8 +97,9 @@ Column {
         print(" Writing config: ------------------- " );
         print("     user: " + u);
         print("     surl: " + s);
-        print("     pass: " + p);
+        //print("     pass: " + p);
         owncloudSettings.setupOwncloud(s, u, p);
     }
 
+    Behavior on opacity { FadeAnimation { } }
 }

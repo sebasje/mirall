@@ -54,6 +54,8 @@ PlasmaComponents.PageStack {
         }
     }
 
+    state: "setup"
+
     states: [
         State {
             name: "default"
@@ -62,7 +64,7 @@ PlasmaComponents.PageStack {
             PropertyChanges { target: setupWizard; opacity: 0; }
         },
         State {
-            name: "welcome"
+            name: "setup"
             PropertyChanges { target: folderList; opacity: 0; }
             PropertyChanges { target: addSyncFolder; opacity: 0; }
             PropertyChanges { target: setupWizard; opacity: 1; }
@@ -78,6 +80,12 @@ PlasmaComponents.PageStack {
         }
     ]
 
+    PlasmaComponents.Button {
+        checkable: true
+        iconSource: "kolf"
+        onCheckedChanged: checked ? owncloudModule.state = "setup" : owncloudModule.state = "default"
+        anchors { top: parent.top; right: parent.right; }
+    }
     Item {
         id: owncloudItem
         anchors { left: parent.left; right: parent.right; top: titleCol.bottom; bottom: parent.bottom; margins: 12; }
@@ -87,12 +95,12 @@ PlasmaComponents.PageStack {
             height: 48
             text: {
                 if (owncloudSettings.owncloudStatus != OwncloudSettings.Connected) {
-                    return i18n("ownCloud Sync");
+                    return i18n("Synchronization");
                 } else {
                     var u = owncloudSettings.url;
                     u = u.replace("https://", "");
                     u = u.replace("http://", "");
-                    return u;
+                    return i18n("Connected to %1", u);
                 }
             }
             anchors { top: parent.top; left: parent.left; right: parent.right; }
@@ -107,12 +115,10 @@ PlasmaComponents.PageStack {
             anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: enabledSwitch.top; }
             Behavior on opacity { FadeAnimation { } }
         }
-
 //         MiniJobItem {
 //             anchors { left: folderList.left; right: folderList.right; bottom: folderList.bottom; }
 //             height: 64
 //         }
-
         PlasmaComponents.Switch {
             id: enabledSwitch
             text: i18n("All Folders")
@@ -122,34 +128,26 @@ PlasmaComponents.PageStack {
             anchors { bottom: parent.bottom; left: parent.left; rightMargin: 12 }
             onClicked: owncloudSettings.enableAllFolders(checked)
         }
-        SetupWizard {
-            id: setupWizard
-            //height: 400
-            anchors { top: folderList.top; left: parent.left; right: parent.right; bottom: parent.bottom; }
-            visible: owncloudSettings.owncloudStatus != OwncloudSettings.Connected
-            //Rectangle { color: "green"; anchors.fill: parent; opacity: .4; }
-            Behavior on opacity { FadeAnimation { } }
-        }
-        AddSyncFolder {
-            id: addSyncFolder
-            //z: 900
-            //pageStack: owncloudModule
-            anchors { top: folderList.top; left: parent.left; right: parent.right; bottom: parent.bottom; }
-            Behavior on opacity { FadeAnimation { } }
-        }
         PlasmaComponents.ToolButton {
             id: addSyncFolderButton
             text: i18n("Add Folder")
             iconSource: "list-add"
             opacity: folderList.opacity
-            visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
+            //visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
             anchors { bottom: parent.bottom; right: parent.right; rightMargin: 12; }
             onClicked: {
-                addSyncFolder.state = "localFolder"
-                //addFolder();
-                //return;
+                addSyncFolder.state = "localFolder";
+                owncloudModule.state = "addFolder";
             }
-            Behavior on opacity { FadeAnimation { } }
+        }
+
+        SetupWizard {
+            id: setupWizard
+            anchors { top: folderList.top; left: parent.left; right: parent.right; bottom: parent.bottom; }
+        }
+        AddSyncFolder {
+            id: addSyncFolder
+            anchors { top: folderList.top; left: parent.left; right: parent.right; bottom: parent.bottom; }
         }
 
     }
