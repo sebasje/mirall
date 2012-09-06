@@ -277,8 +277,10 @@ void OwncloudSync::slotCreateRemoteFolderFinished(QNetworkReply::NetworkError er
 
   //_ui.OCFolderLineEdit->setEnabled( true );
   // the webDAV server seems to return a 202 even if mkdir was successful.
-  if (error == QNetworkReply::NoError || error == QNetworkReply::ContentOperationNotPermittedError) {
+  bool ok = error == QNetworkReply::NoError || error == QNetworkReply::ContentOperationNotPermittedError;
+  if (ok) {
     qDebug() << "OC " << "Folder on ownCloud was successfully created.";
+    emit remoteFolderExists("Music", ok);
     //slotTimerFires();
   } else {
     //showWarn( tr("Failed to create the folder on ownCloud.<br/>Please check manually."), false );

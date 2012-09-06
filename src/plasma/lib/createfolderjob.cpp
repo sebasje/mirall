@@ -18,51 +18,26 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************/
 
-#include "owncloudsettingsplugin.h"
-#include "owncloudsettings.h"
-#include "owncloudfolder.h"
-#include "directorylister.h"
-#include "minijob.h"
+
 #include "createfolderjob.h"
 
+
 #include <kdebug.h>
-#include <KIcon>
 
-#include <QVariant>
-
-#include <kdemacros.h>
-#include <KPluginFactory>
-#include <KPluginLoader>
-#include <KSharedConfig>
-#include <KStandardDirs>
-#include <KConfigGroup>
-#include <KGlobalSettings>
-
-#include <QtDeclarative/qdeclarative.h>
-#include <QtDeclarative/QDeclarativeItem>
-#include <QtCore/QDate>
-
-K_PLUGIN_FACTORY(OwncloudSettingsFactory, registerPlugin<OwncloudSettingsPlugin>();)
-K_EXPORT_PLUGIN(OwncloudSettingsFactory("active_settings_owncloud"))
-
-OwncloudSettingsPlugin::OwncloudSettingsPlugin(QObject *parent, const QVariantList &list)
-    : QObject(parent)
+CreateFolderJob::CreateFolderJob(const QString &folder, QObject* parent) :
+    Job(parent)
 {
-    Q_UNUSED(list)
-
-    kDebug() << "OwncloudSettingsPlugin created:)";
-    //qmlRegisterType<OwncloudSettings>();
-    qmlRegisterType<DirectoryLister>("org.kde.plasma.owncloud", 0, 1, "DirectoryLister");
-    qmlRegisterType<OwncloudSettings>("org.kde.plasma.owncloud", 0, 1, "OwncloudSettings");
-    qmlRegisterType<OwncloudFolder>("org.kde.plasma.owncloud", 0, 1, "OwncloudFolder");
-    qmlRegisterType<MiniJob>("org.kde.plasma.owncloud", 0, 1, "MiniJob");
-    qmlRegisterType<CreateFolderJob>("org.kde.plasma.owncloud", 0, 1, "CreateFolderJob");
 }
 
-OwncloudSettingsPlugin::~OwncloudSettingsPlugin()
+void CreateFolderJob::setResult(bool result)
 {
-    kDebug() << "oc plugin del'ed";
+    emit finished(result);
+    deleteLater();
 }
 
+CreateFolderJob::~CreateFolderJob()
+{
+    kDebug() << "deleting job";
+}
 
-#include "owncloudsettingsplugin.moc"
+#include "createfolderjob.moc"

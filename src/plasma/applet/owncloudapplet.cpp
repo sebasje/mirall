@@ -21,6 +21,7 @@
 #include "owncloudsettings.h"
 #include "owncloudfolder.h"
 #include "directorylister.h"
+#include "createfolderjob.h"
 
 #include <QtDeclarative>
 //#include <QDeclarativeItem>
@@ -61,6 +62,7 @@ void OwncloudApplet::init()
     qmlRegisterType<DirectoryLister>("org.kde.plasma.owncloud", 0, 1, "DirectoryLister");
     qmlRegisterType<OwncloudSettings>("org.kde.plasma.owncloud", 0, 1, "OwncloudSettings");
     qmlRegisterType<OwncloudFolder>("org.kde.plasma.owncloud", 0, 1, "OwncloudFolder");
+    qmlRegisterType<CreateFolderJob>("org.kde.plasma.owncloud", 0, 1, "CreateFolderJob");
 
     m_declarativeWidget->setQmlPath(qmlFile);
     m_declarativeWidget->setMinimumSize(220, 250);

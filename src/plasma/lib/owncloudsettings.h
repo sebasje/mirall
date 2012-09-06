@@ -25,7 +25,7 @@
 #include <KIconLoader>
 
 #include "owncloudfolder.h"
-#include "minijob.h"
+//#include "minijob.h"
 
 #include <QDeclarativeComponent>
 #include <QObject>
@@ -33,6 +33,8 @@
 #include <QVariant>
 #include <QStringListModel>
 
+class MiniJob;
+class CreateFolderJob;
 
 class OwncloudSettingsPrivate;
 
@@ -100,8 +102,9 @@ class OwncloudSettings : public QObject
                                        const QString &alias);
         Q_INVOKABLE void removeSyncFolder(const QString &alias);
         Q_INVOKABLE void checkRemoteFolder(const QString &folder);
-        Q_INVOKABLE void createRemoteFolder(const QString &folder);
-        Q_INVOKABLE void verifyFolder(const QString &localFolder, const QString &remoteFolder,
+        Q_INVOKABLE CreateFolderJob* createRemoteFolder(const QString &folder);
+        Q_INVOKABLE bool createLocalFolder(const QString &folder);
+        Q_INVOKABLE QString verifyFolder(const QString &localFolder, const QString &remoteFolder,
                                        const QString &alias);
         Q_INVOKABLE void setupOwncloud(const QString &server, const QString &user,
                                        const QString &password);
@@ -119,10 +122,11 @@ class OwncloudSettings : public QObject
         void versionChanged();
         void urlChanged();
         void remoteFolderExists(const QString &folder, bool exists);
-        void folderVerified(const QString &error);
+        //void folderVerified(const QString &folder, const QString &error);
 
     private Q_SLOTS:
         void updateGlobalStatus();
+        void slotRemoteFolderExists(const QString &folder, bool exists);
 
     private:
         OwncloudSettingsPrivate* d;

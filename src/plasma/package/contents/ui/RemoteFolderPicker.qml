@@ -116,16 +116,13 @@ Item {
                 folderExists = exists;
                 checkedFolder = folder;
                 if (exists) {
-                    owncloudSettings.verifyFolder(addSyncFolder.localFolder, checkedFolder, addSyncFolder.aliasName);
+                    var error = owncloudSettings.verifyFolder(addSyncFolder.localFolder, checkedFolder, addSyncFolder.aliasName);
+                    if (error == "") {
+                        finishedButton.visible = true;
+                    } else {
+                        createLabel.text = error;
+                    }
                 }
-            }
-        }
-        onFolderVerified: {
-            print( "folder verified : " + error);
-            if (error == "") {
-                finishedButton.visible = true;
-            } else {
-                createLabel.text = error;
             }
         }
     }

@@ -30,28 +30,45 @@ Item {
 
     DirectoryLister { id: dir }
 
+    property QtObject favorites
+
     ListModel {
         id: favoritesModel
         // Pictures, Documents, Music, Videos, InstantUpload
         ListElement {
             iconSource: "folder-image"
             remotePath: "Pictures"
+            remotePathExists: false
+            folderVerified: false
+            syncEnabled: false
         }
         ListElement {
             iconSource: "folder-documents"
             remotePath: "Documents"
+            remotePathExists: false
+            folderVerified: false
+            syncEnabled: false
         }
         ListElement {
             iconSource: "folder-sound"
             remotePath: "Music"
+            remotePathExists: false
+            folderVerified: false
+            syncEnabled: false
         }
         ListElement {
             iconSource: "folder-video"
             remotePath: "Videos"
+            remotePathExists: false
+            folderVerified: false
+            syncEnabled: false
         }
         ListElement {
             iconSource: "folder-downloads"
             remotePath: "InstantUpload"
+            remotePathExists: false
+            folderVerified: false
+            syncEnabled: false
         }
     }
 
@@ -68,10 +85,13 @@ Item {
         var o;
         if (folder == "Pictures") o = i18n("Photos and images");
         if (folder == "Documents") o = i18n("My files");
-        if (folder == "Music") o = "";
+        if (folder == "Music") o = i18n("Songs on my device");
         if (folder == "Videos") o = i18n("Movies and films");
         if (folder == "InstantUpload") o = i18n("Photos uploaded from camera");
         return o;
+    }
+    function aliasCheckedDescription(folder) {
+        return i18n("Will synchronize <b>%1</b> with the remote folder <b>%2</b>.", aliasLocalPath(folder), folder);
     }
     function aliasLocalPath(folder) {
         var o;
@@ -79,7 +99,7 @@ Item {
         if (folder == "Documents") o = dir.documentPath;
         if (folder == "Music") o = dir.musicPath;
         if (folder == "Videos") o = dir.videosPath;
-        if (folder == "InstantUpload") o = dir.homePath + "/InstantUpload";
+        if (folder == "InstantUpload") o = dir.homePath + "InstantUpload";
         return o;
     }
 
@@ -87,76 +107,62 @@ Item {
         id: favHeading
         text: i18n("What would you like to synchronize?")
         level: 3
-        anchors { left: parent.left; top: parent.top; }
+        anchors { left: parent.left; right: parent.right; top: parent.top; }
+    }
+    PlasmaExtras.Paragraph {
+        id: favInfo
+        text: i18n("Choose the local directories you would like to synchronize. \
+        Click \"Finish\" to set up your folders and start the initial synchronization.")
+        anchors { left: parent.left; right: parent.right; top: favHeading.bottom; rightMargin: 12; topMargin: 12 }
     }
 
     ListView {
         id: favoritesList
         model: favoritesModel
-        anchors { left: parent.left; right: parent.right; top: favHeading.bottom; topMargin: 12; bottom: footerItem.top; }
+        spacing: 12
+        anchors { left: parent.left; right: parent.right; top: favInfo.bottom; topMargin: 12; bottom: footerItem.top; }
         interactive: contentHeight > height
         clip: true
 
-        delegate: Item {
-            id: favDelegate
-            height: 64
-            width: parent.width
-
-            QtExtraComponents.QIconItem {
-                id: folderIcon
-                icon: iconSource
-                width: parent.height*0.8
-                height: width
-                anchors { top: parent.top; left: parent.left; }
-            }
-            PlasmaExtras.Heading {
-                level: 4
-                id: aliasLabel
-                text: aliasName(remotePath)
-                anchors { top: parent.top; left: folderIcon.right; right: addFav.left; leftMargin: 12; }
-            }
-            PlasmaComponents.Label {
-                id: errorLabel
-                font.pointSize: theme.smallestFont.pointSize
-                wrapMode: Text.Wrap
-                verticalAlignment: Text.AlignTop
-                anchors { left: aliasLabel.left; right: addFav.left; top: aliasLabel.bottom; bottom: parent.bottom; }
-                text: aliasDescription(remotePath)
-                opacity: 0.4
-                //opacity: (expanded && folderStatus == OwncloudFolder.Error) ? 1.0 : 0.4
-                //Behavior on opacity { FadeAnimation { } }
-            }
-            PlasmaComponents.CheckBox {
-                id: addFav
-                //iconSource: "folder-add"
-                anchors { verticalCenter: folderIcon.verticalCenter; right: parent.right; rightMargin: 24; }
-                onClicked: {
-                    var a = aliasName(remotePath);
-                    var localPath = aliasLocalPath(remotePath);
-                    if (checked) {
-                        print(" --> Adding Syncfolder: " + a + " L: " + localPath + " R: " + remotePath);
-                        //owncloudSettings.addSyncFolder(localPath, remotePath, a);
-                        //owncloudModule.state = "default";
-                    } else {
-                        print(" --> Removing Syncfolder: " + aliasName(remotePath) + " L: " + localPath + " R: " + remotePath);
-                        //owncloudSettings.removeSyncFolder(a);
-                    }
-                }
-            }
-
-        }
+        delegate: FavoriteDelegate {}
     }
 
 
-//     function apply() {
-//
-//         return;
-//     }
+    function apply() {
+        print(" apply! ");
+
+        for (i=0; i < favoritesModel.count; i++) {
+            var fav = favoritesModel.get(i);
+            var s = fav.syncEnabled;
+
+            if (s) {
+                var ok = true;
+                var e = "";
+                var r = fav.remotePath;
+                var l = aliasLocalPath(r);
+                var a = aliasName(r);
+                if (!fav.folderVerified) {
+                    print("Folder not verified: " + l + " " + r);
+                    ok = false;
+                }
+                if (!dir.exists(l)) {
+                    print("Local path does not exist: " + l);
+                    ok = false;
+                }
+                if (ok) {
+                    print("   * " + r + " " + l + "sync? " + s);
+                    owncloudSettings.addSyncFolder(l, r, a);
+                }
+            }
+        }
+
+        return;
+    }
 
     Item {
         id: footerItem
         height: 48
-        anchors { left: parent.left; right: parent.right; bottom: parent.bottom; topMargin: 12; }
+        anchors { left: parent.left; right: parent.right; bottom: parent.bottom; topMargin: 12; rightMargin: 12; }
 
     }
     Behavior on opacity { FadeAnimation { } }

@@ -28,7 +28,7 @@ Item {
     id: setupWizard
     objectName: "setupWizard"
     state: "login"
-    property int maxWidth: 400
+    property int maxWidth: 600
     states: [
         State {
             name: "login"
@@ -61,7 +61,7 @@ Item {
             } else {
                 setupWizard.state = "favorites";
             }
-            print(" @@@@@@@@@@@ state changed to ..." + setupWizard.state);
+            print(" owncloudSettings state changed to ..." + setupWizard.state);
         }
     }
 
@@ -111,11 +111,14 @@ Item {
         }
         PlasmaComponents.ToolButton {
             id: done
-            text: i18n("Done")
+            text: i18n("Finish")
             iconSource: "dialog-ok-apply"
             opacity: (setupWizard.state == "favorites") ? 1 : 0
             Behavior on opacity { FadeAnimation { } }
-            onClicked: owncloudModule.state = "default"
+            onClicked: {
+                favoritesWidget.apply();
+                owncloudModule.state = "default";
+            }
             anchors { verticalCenter: parent.verticalCenter; right: parent.right; }
         }
     }
@@ -128,7 +131,7 @@ Item {
 
     FavoritesWidget {
         id: favoritesWidget
-        anchors { top: parent.top; left: parent.left; bottom: parent.bottom; }
+        anchors { top: parent.top; left: parent.left; bottom: parent.bottom; rightMargin: 12; }
         width: parent.width > maxWidth ? maxWidth : parent.width
 
     }

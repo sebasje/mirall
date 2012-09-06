@@ -21,6 +21,8 @@
 
 #include "owncloudsettings.h"
 #include "owncloudfolder.h"
+#include "minijob.h"
+#include "createfolderjob.h"
 
 #include "../applet/owncloud_interface.h"
 
@@ -45,6 +47,7 @@ public:
     int status; // OwncloudSettings::Status
     int globalStatus; // OwncloudFolder::Status
     int error;
+    QHash<QString, CreateFolderJob*> createFolderJobs;
 
     QList<OwncloudFolder*> folders;
     QVariantMap owncloudInfo;
@@ -102,6 +105,7 @@ void OwncloudSettings::init()
         QObject::connect(d->client, SIGNAL(folderChanged(const QVariantMap&)), this, SLOT(setFolder(const QVariantMap&)));
         QObject::connect(d->client, SIGNAL(owncloudChanged(const QVariantMap&)), this, SLOT(setOwncloud(const QVariantMap&)));
         QObject::connect(d->client, SIGNAL(remoteFolderExists(const QString&, bool)), this, SIGNAL(remoteFolderExists(const QString&, bool)));
+        QObject::connect(d->client, SIGNAL(remoteFolderExists(const QString&, bool)), this, SLOT(slotRemoteFolderExists(const QString&, bool)));
 
         refresh();
     }
@@ -271,12 +275,23 @@ void OwncloudSettings::checkRemoteFolder(const QString &folder)
     }
 }
 
-void OwncloudSettings::createRemoteFolder(const QString &folder)
+CreateFolderJob* OwncloudSettings::createRemoteFolder(const QString &folder)
 {
     if (d->client && !folder.isEmpty()) {
         kDebug() << "creating remote folder" << folder;
+        CreateFolderJob* j = new CreateFolderJob(folder, this);
+        d->createFolderJobs[folder] = j;
         d->client->createRemoteFolder(folder);
+        return j;
     }
+    return 0;
+}
+
+bool OwncloudSettings::createLocalFolder(const QString& folder)
+{
+    QDir f = QDir();
+    kDebug() << "mkdir : " << folder;
+    return f.mkpath(folder);
 }
 
 void OwncloudSettings::enableAllFolders(bool enabled)
@@ -315,7 +330,7 @@ void OwncloudSettings::removeSyncFolder(const QString& alias)
     }
 }
 
-void OwncloudSettings::verifyFolder(const QString &localFolder, const QString &remoteFolder, const QString &alias)
+QString OwncloudSettings::verifyFolder(const QString &localFolder, const QString &remoteFolder, const QString &alias)
 {
     bool aError = false;
     bool rError = false;
@@ -325,8 +340,8 @@ void OwncloudSettings::verifyFolder(const QString &localFolder, const QString &r
     }
     kDebug() << "Checking " << alias << localFolder;
     foreach (const OwncloudFolder *folder, d->folders) {
-        kDebug() << "    ?? " << folder->displayName();
-        kDebug() << "    ?? " << folder->localPath();
+//         kDebug() << "    ?? " << folder->displayName();
+//         kDebug() << "    ?? " << folder->localPath();
         if (folder->displayName() == alias) aError = true;
         if (folder->localPath() == localFolder) lError = true;
         //if (folder.remotePath() == alias) aError = true;
@@ -342,10 +357,11 @@ void OwncloudSettings::verifyFolder(const QString &localFolder, const QString &r
     if (aError) {
         err = i18n("The display name \"%1\" is already in use. ", alias);
     }
-    if (rError) {
-        err.append(i18n("The remote folder \"%1\" does not exist.", remoteFolder));
-    }
-    emit folderVerified(err);
+//     if (rError) {
+//         err.append(i18n("The remote folder \"%1\" does not exist.", remoteFolder));
+//     }
+    //emit folderVerified(err);
+    return err;
 }
 
 void OwncloudSettings::updateGlobalStatus()
@@ -423,6 +439,16 @@ MiniJob* OwncloudSettings::createMiniJob()
 {
     MiniJob* mj = new MiniJob(this);
     return mj;
+}
+
+void OwncloudSettings::slotRemoteFolderExists(const QString &folder, bool exists)
+{
+    if (d->createFolderJobs.keys().contains(folder)) {
+        kDebug() << " job and folder exists" << exists;
+        d->createFolderJobs[folder]->setResult(exists);
+    } else {
+        kDebug() << "!createjob not found for folder : " << folder;
+    }
 }
 
 #include "owncloudsettings.moc"

@@ -150,7 +150,6 @@ PlasmaComponents.PageStack {
             id: addSyncFolder
             anchors { top: folderList.top; left: parent.left; right: parent.right; bottom: parent.bottom; }
         }
-
     }
 
     Connections {
@@ -167,6 +166,10 @@ PlasmaComponents.PageStack {
         if (owncloudSettings.error == OwncloudSettings.NoDaemonError) {
             owncloudModule.state = "setup";
             setupWizard.state = "error";
+        } else {
+            // FIXME: remove
+            owncloudModule.state = "setup";
+            setupWizard.state = "favorites";
         }
         print("Loaded OwncloudSettingsModule.qml successfully.");
     }

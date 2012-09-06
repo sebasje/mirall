@@ -104,11 +104,13 @@ void DirectoryLister::setFilter(const QString &f)
 
 QString DirectoryLister::homePath() const
 {
+    return "/home/sebas/ownCloud/";
     return QDir::homePath();
 }
 
 QString DirectoryLister::documentPath() const
 {
+    return homePath() + "Documents";
     return KGlobalSettings::documentPath();
 }
 
@@ -119,16 +121,19 @@ QString DirectoryLister::downloadPath() const
 
 QString DirectoryLister::musicPath() const
 {
+    return homePath() + "Music";
     return KGlobalSettings::musicPath();
 }
 
 QString DirectoryLister::picturesPath() const
 {
+    return homePath() + "Pictures";
     return KGlobalSettings::picturesPath();
 }
 
 QString DirectoryLister::videosPath() const
 {
+    return homePath() + "Videos";
     return KGlobalSettings::videosPath();
 }
 
