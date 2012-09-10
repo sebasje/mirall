@@ -21,11 +21,12 @@ o fix up layout in add folder
 o Login.qml - generic log in form w/ title, user, pass, url (line edit or list)
 o kill owncloudsettings::statusmessage and ::errormessage
 o swap names of owncloudsync and owncloudsyncdaemon
+o Fix Grid layout warning in Login.qml (-> Item)
+o move patches to github merge requests?
 
-* Get two patches on gitorious upstreamed, ping Klaas, move patches to github merge requests?
+* Get two patches on github upstreamed, ping Klaas,
 * add folder: check for both, local and remote folder if exists
 * Rename everything in the UI to Synchronization instead of owncloud
-o Fix Grid layout warning in Login.qml (-> Item)
 * "Sync Now!" button in folder delegates
 
 * preprend "Favorites" page with Pictures, Videos, Documents, Music pathes and checkboxen
@@ -38,6 +39,7 @@ o Fix Grid layout warning in Login.qml (-> Item)
 * Settings page, with
   * slider-ish widget for polling interval
   * remote version information
+* fix last sync time
 
 * "Special" ownCloud folder, with metadata config therein, hidden in UI or
   shown with special cased delegate in folder list
