@@ -360,8 +360,10 @@ void OwncloudSync::setupOwncloud(const QString &server, const QString &user, con
     Mirall::MirallConfigFile cfgFile(d->configHandle);
     cfgFile.setRemotePollIntval(600000); // ten minutes for now
 
-    cfgFile.writeOwncloudConfig(QLatin1String("ownCloud"), server, user, password, false);
-    qDebug() << "OC Setting up: " << server << user << password;
+    bool https = server.startsWith("https");
+
+    cfgFile.writeOwncloudConfig(QLatin1String("ownCloud"), server, user, password, https, false);
+    qDebug() << "OC Setting up: " << server << user << password << https;
     cfgFile.acceptCustomConfig();
 
     if( d->folderMan ) {
