@@ -86,6 +86,7 @@ class OwncloudFolder : public QObject
 
     private:
         OwncloudFolderPrivate* d;
+        QString statusString(int s);
 };
 
 #endif // OWNCLOUDFOLDER_H

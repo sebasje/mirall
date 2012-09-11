@@ -334,11 +334,11 @@ void OwncloudSettings::removeSyncFolder(const QString& alias)
 QString OwncloudSettings::verifyFolder(const QString &localFolder, const QString &remoteFolder, const QString &alias)
 {
     bool aError = false;
-    bool rError = false;
     bool lError = false;
-    if (remoteFolder.isEmpty()) {
-        rError = true;
-    }
+//     bool rError = false;
+//     if (remoteFolder.isEmpty()) {
+//         rError = true;
+//     }
     kDebug() << "Checking " << alias << localFolder;
     foreach (const OwncloudFolder *folder, d->folders) {
 //         kDebug() << "    ?? " << folder->displayName();

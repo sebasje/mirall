@@ -59,12 +59,31 @@ int OwncloudFolder::folderStatus() const
 void OwncloudFolder::setFolderStatus(int i)
 {
     if (d->status != i) {
+        kDebug() << "folderStatusChanged(" << displayName() << ", " << statusString(i) << ")";
         if (d->status == Running && i == Idle) {
+            kDebug() << "updating sync time" << displayName() << QDateTime::currentDateTime();
             setSyncTime(QDateTime::currentDateTime());
         }
         d->status = i;
         emit folderStatusChanged();
+
     }
+}
+
+QString OwncloudFolder::statusString(int s) {
+    QString o;
+    if (s == OwncloudFolder::Disabled) {
+        o = "Disabled";
+    } else if (s == OwncloudFolder::Waiting) {
+        o = "Waiting";
+    } else if (s == OwncloudFolder::Running) {
+        o = "Running";
+    } else if (s == OwncloudFolder::Idle) {
+        o = "Idle";
+    } else if (s == OwncloudFolder::Error) {
+        o = "Error";
+    }
+    return o;
 }
 
 int OwncloudFolder::error() const

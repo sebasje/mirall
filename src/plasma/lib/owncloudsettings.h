@@ -127,6 +127,7 @@ class OwncloudSettings : public QObject
     private Q_SLOTS:
         void updateGlobalStatus();
         void slotRemoteFolderExists(const QString &folder, bool exists);
+        //void slotCreateRemoteFolderFinished();
 
     private:
         OwncloudSettingsPrivate* d;

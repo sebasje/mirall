@@ -22,6 +22,7 @@
 #ifndef OWNCLOUDSYNC_H
 #define OWNCLOUDSYNC_H
 
+#include "mirall/syncresult.h"
 
 #include <QObject>
 #include <QIcon>
@@ -75,12 +76,13 @@ class OwncloudSync : public QObject
         void slotNoOwnCloudFound( QNetworkReply* );
         void slotCheckAuthentication();
         void slotAuthCheck( const QString& ,QNetworkReply* );
-        void slotCreateRemoteFolderFinished(QNetworkReply::NetworkError);
+        void slotCreateRemoteFolderFinished();
         void slotDirCheckReply( const QString&, QNetworkReply* );
         void slotCheckRemoteFolderFinished();
 
     private Q_SLOTS:
         void delayedReadConfig();
+        void folderSyncFinished(Mirall::SyncResult r);
 
     private:
         OwncloudSyncPrivate* d;
