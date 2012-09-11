@@ -133,7 +133,6 @@ Item {
         id: favoritesWidget
         anchors { top: parent.top; left: parent.left; bottom: parent.bottom; rightMargin: 12; }
         width: parent.width > maxWidth ? maxWidth : parent.width
-
     }
 
     function errorMessage(e) {

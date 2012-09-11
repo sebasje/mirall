@@ -58,12 +58,12 @@ class OwncloudSettings : public QObject
         virtual ~OwncloudSettings();
 
         enum Status {
-            Disconnected,
+            Disconnected = 0,
             Connected,
             Error
         };
         enum Error {
-            NoError, // We're fine
+            NoError = 0, // We're fine
             AuthenticationError, // owncloud server doesn't accept credentials
             NetworkError, // server is unreachable
             NoConfigurationError, // no configuration found
@@ -130,6 +130,9 @@ class OwncloudSettings : public QObject
 
     private:
         OwncloudSettingsPrivate* d;
+        QString errorString(int e);
+        QString statusString(int s);
+
 };
 
 #endif // OWNCLOUDSETTINGS_H

@@ -22,7 +22,6 @@ import QtQuick 1.1
 import org.kde.plasma.core 0.1 as PlasmaCore
 import org.kde.plasma.components 0.1 as PlasmaComponents
 import org.kde.plasma.extras 0.1 as PlasmaExtras
-import org.kde.plasma.mobilecomponents 0.1 as MobileComponents
 import org.kde.active.settings 0.1
 import org.kde.plasma.owncloud 0.1
 
@@ -154,24 +153,48 @@ PlasmaComponents.PageStack {
 
     Connections {
         target: owncloudSettings
-        onErrorChanged: {
+        onErrorChanged: updateState()
+        onOwncloudStatusChanged: updateState()
+    }
+
+    function updateState() {
+        if (owncloudSettings.owncloudStatus == OwncloudSettings.Disconnected) {
+            owncloudModule.state = "setup";
+            setupWizard.state = "login";
+            print(" disconnected");
+        }
+        if (owncloudSettings.owncloudStatus == OwncloudSettings.Error) {
             if (owncloudSettings.error == OwncloudSettings.NoDaemonError) {
                 owncloudModule.state = "setup";
                 setupWizard.state = "error";
+                print(" error daemon ");
+            } else if (owncloudSettings.error == OwncloudSettings.NoConfigurationError ||
+                owncloudSettings.error == OwncloudSettings.AuthenticationError) {
+                owncloudModule.state = "setup";
+                setupWizard.state = "login";
+                print(" error to login ");
+            } else {
+                print(" all good ");
+                // FIXME: remove
+                owncloudModule.state = "default";
+                setupWizard.state = "default";
             }
         }
     }
 
     Component.onCompleted: {
-        if (owncloudSettings.error == OwncloudSettings.NoDaemonError) {
-            owncloudModule.state = "setup";
-            setupWizard.state = "error";
-        } else {
-            // FIXME: remove
-            owncloudModule.state = "setup";
-            setupWizard.state = "favorites";
-        }
+//         if (owncloudSettings.error == OwncloudSettings.NoDaemonError) {
+//             owncloudModule.state = "setup";
+//             setupWizard.state = "error";
+//         if (owncloudSettings.error == OwncloudSettings.NoConfigurationError ||
+//             owncloudSettings.error == OwncloudSettings.AuthenticationError) {
+//             owncloudModule.state = "setup";
+//             setupWizard.state = "login";
+//         } else {
+//             // FIXME: remove
+//             //owncloudModule.state = "setup";
+//             //setupWizard.state = "favorites";
+//         }
         print("Loaded OwncloudSettingsModule.qml successfully.");
     }
-
 }

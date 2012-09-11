@@ -143,6 +143,7 @@ void OwncloudSync::refresh()
 {
     qDebug() << "OC Syncdaemon refresh()";
     if (!d->ocInfo->isConfigured()) {
+        qDebug() << "OC not configured";
         d->ocStatus = OwncloudSettings::Error;
         d->ocError = OwncloudSettings::NoConfigurationError;
     }
@@ -154,13 +155,20 @@ void OwncloudSync::refresh()
 
 void OwncloudSync::loadFolders()
 {
-    //kDebug() << "Loaded folders : " << folders.count();
-    QStringList fs;
-    qDebug() << "OC Loading folders";
-    foreach (Mirall::Folder* f, d->folderMan->map()) {
-        qDebug() << "OC New folder: " << f->alias() << f->path() << f->secondPath();
-        //fs << f->alias();
-        updateFolder(f);
+    if (d->ocStatus == OwncloudSettings::Connected) {
+        //kDebug() << "Loaded folders : " << folders.count();
+        QStringList fs;
+        qDebug() << "OC Loading folders";
+        foreach (Mirall::Folder* f, d->folderMan->map()) {
+            qDebug() << "OC New folder: " << f->alias() << f->path() << f->secondPath();
+            //fs << f->alias();
+            updateFolder(f);
+        }
+    } else {
+        d->folderList.clear();
+        d->folders.clear();
+        emit folderListChanged(d->folderList);
+
     }
 }
 
@@ -255,11 +263,24 @@ void OwncloudSync::delayedReadConfig()
 
 void OwncloudSync::checkRemoteFolder(const QString& f)
 {
-    d->ocInfo->getWebDAVPath(f);
+    if (d->ocStatus == OwncloudSettings::Connected) {
+        QNetworkReply* reply = d->ocInfo->getWebDAVPath(f);
+        connect(reply, SIGNAL(finished()), SLOT(slotCheckRemoteFolderFinished()));
+    }
+}
+
+void OwncloudSync::slotCheckRemoteFolderFinished()
+{
+    QNetworkReply* reply = static_cast<QNetworkReply*>(sender());
+    bool exists = reply->error() == QNetworkReply::NoError;
+    QString p = reply->url().toString().split("remote.php/webdav/")[1];
+    qDebug() << " === OC slotCheckRemoteFolderFinished() : " << reply->url() << reply->error() << p << exists;
+    emit remoteFolderExists(p, exists);
 }
 
 void OwncloudSync::slotDirCheckReply(const QString &url, QNetworkReply *reply)
 {
+    qDebug() << " OC slotDirCheckReply" << url <<  (reply->error() == QNetworkReply::NoError) << (int)(reply->error());
     emit remoteFolderExists(url, reply->error() == QNetworkReply::NoError);
 }
 
@@ -280,7 +301,7 @@ void OwncloudSync::slotCreateRemoteFolderFinished(QNetworkReply::NetworkError er
   bool ok = error == QNetworkReply::NoError || error == QNetworkReply::ContentOperationNotPermittedError;
   if (ok) {
     qDebug() << "OC " << "Folder on ownCloud was successfully created.";
-    emit remoteFolderExists("Music", ok);
+    emit remoteFolderExists("Music", ok); // FIXME: breaks creating folders, needs path from QNetwork*
     //slotTimerFires();
   } else {
     //showWarn( tr("Failed to create the folder on ownCloud.<br/>Please check manually."), false );
@@ -329,7 +350,7 @@ void OwncloudSync::slotCheckAuthentication()
 
 void OwncloudSync::slotAuthCheck( const QString& ,QNetworkReply *reply )
 {
-    qDebug() << "OC slotAuthCheck";
+    //qDebug() << "OC slotAuthCheck :: error code: " << reply->error();
     if( reply->error() == QNetworkReply::AuthenticationRequiredError ) { // returned if the user is wrong.
         qDebug() << "OC ******** Password is wrong!";
         d->ocStatus = OwncloudSettings::Error;
@@ -345,7 +366,7 @@ void OwncloudSync::slotAuthCheck( const QString& ,QNetworkReply *reply )
         emit statusChanged(d->ocStatus);
         emit errorChanged(d->ocError);
     } else {
-        qDebug() << "OC ######## Credentials are ok!";
+        //qDebug() << "OC ######## Credentials are ok!";
         d->ocStatus = OwncloudSettings::Connected;
         d->ocError = OwncloudSettings::NoError;
         emit statusChanged(d->ocStatus);

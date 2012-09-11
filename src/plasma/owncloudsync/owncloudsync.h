@@ -77,6 +77,7 @@ class OwncloudSync : public QObject
         void slotAuthCheck( const QString& ,QNetworkReply* );
         void slotCreateRemoteFolderFinished(QNetworkReply::NetworkError);
         void slotDirCheckReply( const QString&, QNetworkReply* );
+        void slotCheckRemoteFolderFinished();
 
     private Q_SLOTS:
         void delayedReadConfig();

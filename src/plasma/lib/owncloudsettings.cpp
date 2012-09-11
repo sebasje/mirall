@@ -105,7 +105,7 @@ void OwncloudSettings::init()
         QObject::connect(d->client, SIGNAL(folderChanged(const QVariantMap&)), this, SLOT(setFolder(const QVariantMap&)));
         QObject::connect(d->client, SIGNAL(owncloudChanged(const QVariantMap&)), this, SLOT(setOwncloud(const QVariantMap&)));
         QObject::connect(d->client, SIGNAL(remoteFolderExists(const QString&, bool)), this, SIGNAL(remoteFolderExists(const QString&, bool)));
-        QObject::connect(d->client, SIGNAL(remoteFolderExists(const QString&, bool)), this, SLOT(slotRemoteFolderExists(const QString&, bool)));
+        //QObject::connect(d->client, SIGNAL(remoteFolderExists(const QString&, bool)), this, SLOT(slotRemoteFolderExists(const QString&, bool)));
 
         refresh();
     }
@@ -175,6 +175,7 @@ void OwncloudSettings::setOwncloudStatus(int i)
 {
     if (d->status != i) {
         d->status = i;
+        qDebug() << " setOwncloudStatus " << statusString(i);
         emit owncloudStatusChanged();
     }
 }
@@ -187,6 +188,7 @@ int OwncloudSettings::error() const
 void OwncloudSettings::setError(int i)
 {
     if (d->error != i) {
+        kDebug() << "Error is now " << errorString(i);
         d->error = i;
         emit errorChanged();
     }
@@ -228,7 +230,7 @@ void OwncloudSettings::setFolderList(const QVariantMap& m)
 
 void OwncloudSettings::setFolder(const QVariantMap& m)
 {
-    //kDebug() << " Fodler updated: " << m;
+    //kDebug() << " Folder updated: " << m;
     QString alias = m["name"].toString();
     OwncloudFolder *folder = 0;
 
@@ -326,7 +328,6 @@ void OwncloudSettings::removeSyncFolder(const QString& alias)
                 emit foldersChanged();
             }
         }
-
     }
 }
 
@@ -361,6 +362,7 @@ QString OwncloudSettings::verifyFolder(const QString &localFolder, const QString
 //         err.append(i18n("The remote folder \"%1\" does not exist.", remoteFolder));
 //     }
     //emit folderVerified(err);
+    kDebug() << "verify: " << localFolder << remoteFolder << alias << err;
     return err;
 }
 
@@ -447,8 +449,61 @@ void OwncloudSettings::slotRemoteFolderExists(const QString &folder, bool exists
         kDebug() << " job and folder exists" << exists;
         d->createFolderJobs[folder]->setResult(exists);
     } else {
-        kDebug() << "!createjob not found for folder : " << folder;
+        //kDebug() << "!createjob not found for folder : " << folder;
     }
+    emit remoteFolderExists(folder, exists);
 }
+
+QString OwncloudSettings::errorString(int e)
+{
+    /*
+        enum Error {
+            NoError, // We're fine
+            AuthenticationError, // owncloud server doesn't accept credentials
+            NetworkError, // server is unreachable
+            NoConfigurationError, // no configuration found
+            NoDaemonError, // owncloudsyncd is not running
+            CustomError // Anything else
+        };
+    */
+    QString o;
+    if (e == NoError) {
+        o = "NoError";
+    } else if (e == AuthenticationError) {
+        o = "AuthenticationError";
+    } else if (e == NetworkError) {
+        o = "NetworkError";
+    } else if (e == NoConfigurationError) {
+        o = "NoConfigurationError";
+    } else if (e == NoDaemonError) {
+        o = "NoDaemonError";
+    } else if (e == CustomError) {
+        o = "CustomError";
+    }
+
+    return o;
+}
+
+QString OwncloudSettings::statusString(int s)
+{
+    /*
+        enum Status {
+            Disconnected,
+            Connected,
+            Error
+        };
+    */
+    QString o;
+    if (s == Disconnected) {
+        o = "Disconnected";
+    } else if (s == Connected) {
+        o = "Connected";
+    } else if (s == Error) {
+        o = "Error";
+    }
+
+    return o;
+}
+
 
 #include "owncloudsettings.moc"

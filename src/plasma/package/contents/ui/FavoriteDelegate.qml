@@ -34,7 +34,7 @@ Item {
     property string displayName: aliasName(remotePath)
     property bool localPathExists: dir.exists(localPath)
 
-    height:  expanded ? 96 : 48
+    height:  expanded ? 84 : 48
     width: parent.width
     //opacity: expanded ? 0.6 : 1
 
@@ -114,14 +114,19 @@ Item {
 
     Connections {
         target: owncloudSettings
+        onOwncloudStatusChanged: {
+            if (owncloudSettings.owncloudStatus == OwncloudSettings.Connected) {
+                owncloudSettings.checkRemoteFolder(remotePath);
+            }
+        }
         onRemoteFolderExists: {
             if (folder == remotePath) {
-                print( " .. remote exists? " + remotePath + " yesno: " + exists);
+                print( " .. remote exists? " + remotePath + " yesno: " + exists + " index: " + index + " " + favDelegate.displayName);
                 favoritesModel.setProperty(index, "remotePathExists", exists);
                 errorMessage = i18n("The remote folder does not exist.");
                 if (exists) {
                     errorMessage = owncloudSettings.verifyFolder(localPath, remotePath, displayName);
-                    favoritesModel.setProperty(index, "folderVerified", errorMessage == "");
+                    favoritesModel.setProperty(index, "folderVerified", (errorMessage == ""));
                 }
             }
         }
