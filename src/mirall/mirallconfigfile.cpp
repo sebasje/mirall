@@ -19,8 +19,8 @@
 #include <QtCore>
 #include <QtGui>
 
-#define DEFAULT_REMOTE_POLL_INTERVAL 30000 // default remote poll time in milliseconds
-#define DEFAULT_LOCAL_POLL_INTERVAL  10000 // default local poll time in milliseconds
+#define DEFAULT_REMOTE_POLL_INTERVAL 300000 // default remote poll time in milliseconds
+#define DEFAULT_LOCAL_POLL_INTERVAL  100000 // default local poll time in milliseconds
 #define DEFAULT_POLL_TIMER_EXEED     10
 
 #define OC_ORGANIZATION QLatin1String("ownCloud")

@@ -47,7 +47,7 @@ ownCloudFolder::ownCloudFolder(const QString &alias,
     , _lastSeenFiles(0)
 {
 #ifdef USE_INOTIFY
-    qDebug() << "****** ownCloud folder using watcher *******";
+    qDebug() << "OC  INOTIFY ****** ownCloud folder using watcher *******";
     // The folder interval is set in the folder parent class.
 #else
     /* If local polling is used, the polltimer of class Folder has to fire more
@@ -56,6 +56,7 @@ ownCloudFolder::ownCloudFolder(const QString &alias,
      * remote poll interval, defined in slotPollTimerRemoteCheck
      */
 
+    qDebug() << "OC  NO INOTIFY !!!!!! ****** ownCloud folder using watcher *******";
     MirallConfigFile cfgFile;
 
     _pollTimer->stop();

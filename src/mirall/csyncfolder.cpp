@@ -78,7 +78,7 @@ void CSyncFolder::slotTerminateSync()
 
 void CSyncFolder::slotCSyncStarted()
 {
-    qDebug() << "    * csync thread started";
+    qDebug() << " OC    * csync thread started";
     emit syncStarted();
 }
 
@@ -89,6 +89,7 @@ void CSyncFolder::slotCSyncFinished()
         res.setStatus( SyncResult::Error );
         res.setErrorString( _errors.join(QLatin1String("\\n")));
     }
+    qDebug() << "OC slotCSyncFinished() " << res.statusString();
     emit syncFinished( res );
 }
 

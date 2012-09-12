@@ -286,7 +286,7 @@ void FolderMan::slotFolderSyncStarted( )
   */
 void FolderMan::slotFolderSyncFinished( const SyncResult& )
 {
-    qDebug() << "<===================================== sync finsihed for " << _currentSyncFolder;
+    qDebug() << " OC <===================================== sync finsihed for " << _currentSyncFolder;
 
     _currentSyncFolder.clear();
     QTimer::singleShot(200, this, SLOT(slotScheduleFolderSync()));
