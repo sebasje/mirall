@@ -23,23 +23,23 @@ o kill owncloudsettings::statusmessage and ::errormessage
 o swap names of owncloudsync and owncloudsyncdaemon
 o Fix Grid layout warning in Login.qml (-> Item)
 o move patches to github merge requests?
+o fix last sync time
+o "Sync Now!" button in folder delegates
+o check if folder (local + remote) exist, create if necessary
+o use errorMessage() in login widget
+o pop up login widget automatically when NoConfiguration Error or Auth error occurs
+o make sure add remote / local folder buttons appear correctly in delegate
 
-* Get two patches on github upstreamed, ping Klaas,
+* Get patches on github upstreamed, ping Klaas after vacation
 * add folder: check for both, local and remote folder if exists
 * Rename everything in the UI to Synchronization instead of owncloud
-* "Sync Now!" button in folder delegates
 
 * preprend "Favorites" page with Pictures, Videos, Documents, Music pathes and checkboxen
   -> shortcut to same-named remote folders
-  o check if folder (local + remote) exist, create if necessary
-  * use errorMessage() in login widget
-  o pop up login widget automatically when NoConfiguration Error or Auth error occurs
   * pre-fill user name from settings, password?
-  * make sure add remote / local folder buttons appear correctly in delegate
 * Settings page, with
   * slider-ish widget for polling interval
   * remote version information
-* fix last sync time
 
 * "Special" ownCloud folder, with metadata config therein, hidden in UI or
   shown with special cased delegate in folder list
