@@ -4,7 +4,9 @@
 # also defined, but not for general use are
 #  INOTIFY_LIBRARY, where to find the inotify library.
 
-find_path(INOTIFY_INCLUDE_DIR sys/inotify.h)
+#find_path(INOTIFY_INCLUDE_DIR sys/inotify.h ${CMAKE_ARCH_TRIPLET}/sys/inotify.h)
+find_path(INOTIFY_INCLUDE_DIR NAMES sys/inotify.h ${CMAKE_LIBRARY_ARCHITECTURE}/sys/inotify.h)
+#find_path(INOTIFY_INCLUDE_DIR NAMES sys/inotify.h ${CMAKE_ARCH_TRIPLET}/sys/inotify.h x86_64-linux-gnu/sys/inotify.h)
 mark_as_advanced(INOTIFY_INCLUDE_DIR)
 
 #set(INOTIFY_INCLUDE_DIR "/usr/include/x86_64-linux-gnu/")
@@ -15,9 +17,10 @@ mark_as_advanced(INOTIFY_INCLUDE_DIR)
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(INOTIFY DEFAULT_MSG INOTIFY_INCLUDE_DIR)
 
+
 IF(INOTIFY_FOUND)
   SET(INotify_INCLUDE_DIRS ${INOTIFY_INCLUDE_DIR})
-  MESSAGE("-- Inotify Found.")
+  MESSAGE("-- INotify Found.")
 ELSE()
   set(INOTIFY_INCLUDE_DIR "/usr/include/x86_64-linux-gnu/")
   set(INOTIFY_FOUND TRUE)
