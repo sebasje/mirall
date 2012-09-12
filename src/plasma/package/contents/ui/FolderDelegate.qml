@@ -27,7 +27,7 @@ import org.kde.qtextracomponents 0.1
 MouseArea {
     width: parent.width
     clip: true
-    height:  expanded ? 128 : 48;
+    height:  expanded ? 96 : 48;
     property bool expanded: folderList.currentIndex == index
 
     Behavior on height {
@@ -51,7 +51,7 @@ MouseArea {
         width: 48
         height: width
         anchors { top: parent.top; left: parent.left; }
-        opacity: (folderStatus == OwncloudFolder.Idle) ? 1.0 : 0.5
+        opacity: (folderStatus == OwncloudFolder.Idle) ? 1.0 : 0.8
         Behavior on opacity { FadeAnimation { } }
     }
     QIconItem {
@@ -63,8 +63,8 @@ MouseArea {
         Behavior on opacity { FadeAnimation { } }
     }
     PlasmaComponents.BusyIndicator {
-        width: parent.height/2
-        height: parent.height/2
+        width: folderIcon.width/2
+        height: width
         anchors { bottom: folderIcon.bottom; right: folderIcon.right; }
         opacity: (folderStatus == OwncloudFolder.Running) ? 1.0 : 0.0
         running: folderStatus == OwncloudFolder.Running
@@ -86,12 +86,14 @@ MouseArea {
             var out;
             if (folderStatus == OwncloudFolder.Error) {
                 out = errorMessage;
+            } else if (folderStatus == OwncloudFolder.Running) {
+                out = i18n("Syncing...");
             } else {
-                out = i18n("last synchronizeded %1", friendlyDate(syncTime));
-                if (expanded) {
-                    out = out + i18n("<br />Local folder: %1", localPath);
-                    out = out + i18n("<br />Remote folder: %1", remotePath);
-                }
+                out = i18n("Last sync: %1", friendlyDate(syncTime));
+            }
+            if (expanded) {
+                out = out + i18n("<br /><br />Local folder: %1", localPath);
+                out = out + i18n("<br />Remote folder: %1", remotePath);
             }
             return out;
         }
@@ -112,35 +114,59 @@ MouseArea {
     }
 
     PlasmaComponents.ToolButton {
+        id: syncFolderButton
+        text: i18n("Sync Now")
+        iconSource: "view-refresh"
+        enabled: OwncloudFolder.Running != folderStatus
+        opacity: OwncloudFolder.Disabled != folderStatus && expanded ? 1 : 0
+        anchors { right: removeFolderButton.left; rightMargin: 12; bottom: parent.bottom; bottomMargin: 12; }
+        Behavior on opacity { FadeAnimation { } }
+        onClicked: {
+            print("Sync folder " + displayName);
+            sync();
+        }
+    }
+
+    PlasmaComponents.ToolButton {
         id: removeFolderButton
         text: i18n("Remove")
         iconSource: "list-remove"
         opacity: expanded ? 1 : 0
-        anchors { right: parent.right; leftMargin: 12; bottom: parent.bottom; bottomMargin: 12; }
+        anchors { right: parent.right; rightMargin: 12; bottom: parent.bottom; bottomMargin: 12; }
         Behavior on opacity { FadeAnimation { } }
         onClicked: {
             print("Remove folder " + displayName);
-            // ...
             owncloudSettings.removeSyncFolder(displayName);
         }
     }
 
     function friendlyDate(date) {
-        var d = new Date(date);
+        // this way to get a Date object seems to be reliable...
+        var d = new Date( Qt.formatDate(date, "MM/dd/yyyy"));
+        d.setMinutes( Qt.formatDateTime(date, "mm"));
+        d.setHours( Qt.formatDateTime(date, "hh"));
+        d.setSeconds( Qt.formatDateTime(date, "ss"));
+
+        // ago is the difference between last sync and now in seconds
         var now = new Date();
-        var dout = Qt.formatDateTime(d, "hh:mm");
-        var ago = (now - d) / 1000;
-        var output = "";
-        if (ago < 60) {
-            output = i18np("%1 second ago", "%1 seconds ago", ago);
-        } else if (ago < 3600) {
-            output = i18np("%1 minute ago", "%1 minutes ago", Math.round(ago/60));
-        } else if (ago < 84600) {
-            output = i18np("%1 hour ago", "%1 hours ago", Math.round(ago/3600));
+        var ago = (now.getTime() - d.getTime()) / 1000;
+
+        //var output = "";
+        var dateFormat = ""
+        if (ago >= 86400 * 365) {
+            // more than a year ago, be verbose
+            dateFormat = "ddd dd MMM yyyy, hh:mm";
+        } else if (ago >= 86400*7) {
+            // at least 1 week ago, so include day and month
+            dateFormat = "ddd dd MMM, hh:mm";
+        } else if (ago >= 86400) {
+            // at least 24hrs ago, so include day
+            dateFormat = "dddd, hh:mm";
         } else {
-            output = i18np("%1 day ago", "%1 days ago", Math.round(ago/86400));
+            // within the last 24hrs, only show the time
+            dateFormat = "hh:mm";
         }
-        return output;
+        return Qt.formatDateTime(d, dateFormat);
     }
 
 }

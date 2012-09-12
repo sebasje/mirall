@@ -121,7 +121,7 @@ Item {
         }
         onRemoteFolderExists: {
             if (folder == remotePath) {
-                print( " .. remote exists? " + remotePath + " yesno: " + exists + " index: " + index + " " + favDelegate.displayName);
+                //print( " .. remote exists? " + remotePath + " yesno: " + exists + " index: " + index + " " + favDelegate.displayName);
                 favoritesModel.setProperty(index, "remotePathExists", exists);
                 errorMessage = i18n("The remote folder does not exist.");
                 if (exists) {
