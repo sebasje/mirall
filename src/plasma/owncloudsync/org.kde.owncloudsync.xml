@@ -38,6 +38,14 @@
       <arg name="enable" type="b" direction="in" />
     </method>
 
+    <method name="syncFolder">
+      <arg name="name" type="s" direction="in" />
+    </method>
+
+    <method name="cancelSync">
+      <arg name="name" type="s" direction="in" />
+    </method>
+
     <method name="addSyncFolder">
       <arg name="localFolder" type="s" direction="in" />
       <arg name="remoteFolder" type="s" direction="in" />

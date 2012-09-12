@@ -46,6 +46,7 @@ public:
     QVariantMap folderList;
     QVariantMap owncloudInfo;
     QHash<QString, QVariantMap> folders;
+    QHash<QString, QDateTime> syncTime;
 
     Mirall::FolderMan* folderMan;
     Mirall::ownCloudInfo* ocInfo;
@@ -106,7 +107,12 @@ OwncloudSync::~OwncloudSync()
 
 void OwncloudSync::slotSyncStateChange(const QString &s)
 {
-    //qDebug() << "OC slotSyncStateChange : " << s;
+    qDebug() << "OC slotSyncStateChange : " << s;
+    Mirall::Folder *f = d->folderMan->folder(s);
+    if (f && (f->syncResult().status() == Mirall::SyncResult::Success)) {
+        d->syncTime[s] = QDateTime::currentDateTime();
+        qDebug() << "OC updated syncTime for " << s << d->syncTime[s];
+    }
     updateFolder(d->folderMan->folder(s));
 }
 
@@ -129,6 +135,30 @@ void OwncloudSync::enableFolder(const QString &name, bool enabled)
     if (f) {
         f->setSyncEnabled(enabled);
         updateFolder(f);
+    } else {
+        qWarning() << "Folder \"" << name << "\" does not exist.";
+    }
+}
+
+void OwncloudSync::syncFolder(const QString& name)
+{
+    qDebug() << " OC syncFolder: " << name;
+    Mirall::Folder *f = d->folderMan->folder(name);
+    if (f) {
+        f->startSync(QStringList());
+
+    } else {
+        qWarning() << "Folder \"" << name << "\" does not exist.";
+    }
+}
+
+void OwncloudSync::cancelSync(const QString& name)
+{
+    qWarning() << "OC Terminating a sync operation is not implemented yet.";
+    //qDebug() << " OC syncFolder: " << name;
+    Mirall::Folder *f = d->folderMan->folder(name);
+    if (f) {
+        qWarning() << "Terminating a sync operation is not implemented yet.";
     } else {
         qWarning() << "Folder \"" << name << "\" does not exist.";
     }
@@ -178,6 +208,13 @@ void OwncloudSync::folderSyncFinished(Mirall::SyncResult r)
 {
     qDebug() << "OC syncFinished --> " << r.statusString();
     if (r.status() == Mirall::SyncResult::Success) {
+        Mirall::Folder *f = static_cast<Mirall::Folder*>(sender());
+        if (f) {
+            qDebug() << " OC updating time " << f->alias() << QDateTime::currentDateTime();
+            d->syncTime[f->alias()] = QDateTime::currentDateTime();
+        } else {
+            qDebug() << " OC no folder found";
+        }
         qDebug() << " OC ! !!!!!!!!!!!!! Sync result success!";
     }
 }
@@ -199,7 +236,8 @@ void OwncloudSync::updateFolder(const Mirall::Folder* folder)
     m["name"] = folder->alias();
     m["localPath"] = folder->path();
     m["remotePath"] = folder->secondPath();
-    //qDebug() << "OC updateFolder:: path, secondPath: " << folder->path() << ", " << folder->secondPath();
+    m["syncTime"] = d->syncTime[folder->alias()].toMSecsSinceEpoch();
+    qDebug() << "OC updateFolder:: path, secondPath: " << folder->path() << ", " << d->syncTime[folder->alias()];
 
     int s = 999;
     int r = folder->syncResult().status();

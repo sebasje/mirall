@@ -52,6 +52,8 @@ class OwncloudSync : public QObject
         QVariantMap folderList();
         void updateFolder(const Mirall::Folder *folder);
         void enableFolder(const QString &name, bool enabled = true);
+        void syncFolder(const QString &name);
+        void cancelSync(const QString &name);
         void addSyncFolder(const QString &localFolder, const QString &remoteFolder,
                            const QString &alias = QString());
         void removeSyncFolder(const QString &alias);
