@@ -72,6 +72,7 @@ class OwncloudFolder : public QObject
         Q_INVOKABLE void enable();
         Q_INVOKABLE void disable();
         Q_INVOKABLE void remove();
+        Q_INVOKABLE void sync();
 
     Q_SIGNALS:
         void folderStatusChanged();
@@ -83,6 +84,8 @@ class OwncloudFolder : public QObject
         void remotePathChanged();
         void syncTimeChanged();
         void enableFolder(const QString &name, bool enabled = true);
+        void syncFolder(const QString &name);
+        void cancelSync(const QString &name);
 
     private:
         OwncloudFolderPrivate* d;

@@ -42,6 +42,8 @@ OwncloudFolder::OwncloudFolder(QObject* parent)
     d->q = this;
     setName("d-fault.");
     setDisplayName(name());
+    setSyncTime(QDateTime::currentDateTime());
+
     d->error = NoError;
     d->status = Idle;
 }
@@ -61,8 +63,8 @@ void OwncloudFolder::setFolderStatus(int i)
     if (d->status != i) {
         kDebug() << "folderStatusChanged(" << displayName() << ", " << statusString(i) << ")";
         if (d->status == Running && i == Idle) {
-            kDebug() << "updating sync time" << displayName() << QDateTime::currentDateTime();
-            setSyncTime(QDateTime::currentDateTime());
+            //kDebug() << "updating sync time" << displayName() << QDateTime::currentDateTime();
+            //setSyncTime(QDateTime::currentDateTime());
         }
         d->status = i;
         emit folderStatusChanged();
@@ -183,6 +185,11 @@ void OwncloudFolder::disable()
 void OwncloudFolder::remove()
 {
     kDebug() << "Remove folder." << d->name;
+}
+
+void OwncloudFolder::sync()
+{
+    emit syncFolder(d->name);
 }
 
 QDateTime OwncloudFolder::syncTime() const

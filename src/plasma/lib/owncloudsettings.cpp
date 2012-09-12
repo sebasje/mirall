@@ -230,7 +230,7 @@ void OwncloudSettings::setFolderList(const QVariantMap& m)
 
 void OwncloudSettings::setFolder(const QVariantMap& m)
 {
-    //kDebug() << " Folder updated: " << m;
+    kDebug() << " Folder updated: " << m;
     QString alias = m["name"].toString();
     OwncloudFolder *folder = 0;
 
@@ -251,13 +251,19 @@ void OwncloudSettings::setFolder(const QVariantMap& m)
         d->folders << folder;
         connect(folder, SIGNAL(enableFolder(const QString&, bool)), this, SLOT(enableFolder(const QString&, bool)));
         connect(folder, SIGNAL(folderStatusChanged()), SLOT(updateGlobalStatus()));
+
+        connect(folder, SIGNAL(syncFolder(const QString&)), d->client, SLOT(syncFolder(const QString&)));
+        //connect(folder, SIGNAL(cancelFolder(const QString&)), d->client, SLOT(cancelSync(const QString&)));
     }
     folder->setDisplayName(alias);
     folder->setLocalPath(m["localPath"].toString());
     folder->setRemotePath(m["remotePath"].toString());
     folder->setFolderStatus(m["status"].toInt());
     folder->setErrorMessage(m["errorMessage"].toString());
-    //kDebug() << "OC Updating" << alias << folder->folderStatus() << folder->errorMessage();
+    QDateTime dt;
+    dt.setMSecsSinceEpoch(m["syncTime"].toULongLong());
+    folder->setSyncTime(dt);
+    kDebug() << " === OC Updating" << alias << folder->folderStatus() << dt;
 
     emit foldersChanged();
 }
@@ -339,7 +345,7 @@ QString OwncloudSettings::verifyFolder(const QString &localFolder, const QString
 //     if (remoteFolder.isEmpty()) {
 //         rError = true;
 //     }
-    kDebug() << "Checking " << alias << localFolder;
+    //kDebug() << "Checking " << alias << localFolder;
     foreach (const OwncloudFolder *folder, d->folders) {
 //         kDebug() << "    ?? " << folder->displayName();
 //         kDebug() << "    ?? " << folder->localPath();
@@ -362,7 +368,7 @@ QString OwncloudSettings::verifyFolder(const QString &localFolder, const QString
 //         err.append(i18n("The remote folder \"%1\" does not exist.", remoteFolder));
 //     }
     //emit folderVerified(err);
-    kDebug() << "verify: " << localFolder << remoteFolder << alias << err;
+    //kDebug() << "verify: " << localFolder << remoteFolder << alias << err;
     return err;
 }
 
