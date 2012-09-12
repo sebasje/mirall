@@ -88,11 +88,6 @@ OwncloudSync::OwncloudSync(QObject *parent)
     connect(d->ocInfo, SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
              SLOT(slotDirCheckReply(QString,QNetworkReply*)));
 
-//     connect(d->ocInfo, SIGNAL(webdavColCreated(QNetworkReply::NetworkError)),
-//              SLOT(slotCreateRemoteFolderFinished(QNetworkReply::NetworkError)));
-
-    //refresh();
-
     if(d->ocInfo->isConfigured() ) {
         d->ocInfo->checkInstallation();
         loadFolders();
@@ -107,7 +102,6 @@ OwncloudSync::~OwncloudSync()
 
 void OwncloudSync::slotSyncStateChange(const QString &s)
 {
-    qDebug() << "OC slotSyncStateChange : " << s;
     Mirall::Folder *f = d->folderMan->folder(s);
     if (f && (f->syncResult().status() == Mirall::SyncResult::Success)) {
         d->syncTime[s] = QDateTime::currentDateTime();
@@ -118,13 +112,13 @@ void OwncloudSync::slotSyncStateChange(const QString &s)
 
 QString OwncloudSync::display()
 {
-    qDebug() << "OC display() " << d->display;
+    //qDebug() << "OC display() " << d->display;
     return d->display;
 }
 
 QVariantMap OwncloudSync::folder(QString name)
 {
-    qDebug() << "OC folder()" << name;
+    //qDebug() << "OC folder()" << name;
     return d->folders[name];
 }
 
@@ -189,9 +183,9 @@ void OwncloudSync::loadFolders()
     if (d->ocStatus == OwncloudSettings::Connected) {
         //kDebug() << "Loaded folders : " << folders.count();
         QStringList fs;
-        qDebug() << "OC Loading folders";
+        //qDebug() << "OC Loading folders";
         foreach (Mirall::Folder* f, d->folderMan->map()) {
-            qDebug() << "OC New folder: " << f->alias() << f->path() << f->secondPath();
+            //qDebug() << "OC New folder: " << f->alias() << f->path() << f->secondPath();
             //fs << f->alias();
             connect(f, SIGNAL(syncFinished(Mirall::SyncResult)), SLOT(folderSyncFinished(Mirall::SyncResult)));
             updateFolder(f);
@@ -206,16 +200,13 @@ void OwncloudSync::loadFolders()
 
 void OwncloudSync::folderSyncFinished(Mirall::SyncResult r)
 {
-    qDebug() << "OC syncFinished --> " << r.statusString();
     if (r.status() == Mirall::SyncResult::Success) {
         Mirall::Folder *f = static_cast<Mirall::Folder*>(sender());
         if (f) {
-            qDebug() << " OC updating time " << f->alias() << QDateTime::currentDateTime();
             d->syncTime[f->alias()] = QDateTime::currentDateTime();
         } else {
-            qDebug() << " OC no folder found";
+            //qDebug() << " OC no folder found";
         }
-        qDebug() << " OC ! !!!!!!!!!!!!! Sync result success!";
     }
 }
 
@@ -251,12 +242,8 @@ void OwncloudSync::updateFolder(const Mirall::Folder* folder)
         if (r == Mirall::SyncResult::Undefined) s = OwncloudFolder::Error;
     } else {
         s = OwncloudFolder::Disabled;
-        //qDebug() << "OC sync enabled? " << folder->alias() << folder->syncEnabled();
     }
-//     qDebug() << "OC sync enabled? " << folder->alias() << folder->syncEnabled();
-    //qDebug() << "OC updateFolder: " << errorMsg(r);
     if (r == 999) {
-        //qDebug() << "OC dunno what to do with " << r;
         s = OwncloudFolder::Error;
     }
     m["status"] = s;
@@ -267,10 +254,8 @@ void OwncloudSync::updateFolder(const Mirall::Folder* folder)
         m["errorMessage"] = QString();
     }
 
-    //d->folderList[folder->alias()] = s;
-
     d->folders[folder->alias()] = m;
-    qDebug() << " OC FOLdERs: " << folder->alias() << folder->syncResult().statusString();
+    //qDebug() << " OC FOLdERs: " << folder->alias() << folder->syncResult().statusString();
     emit folderChanged(m);
 }
 

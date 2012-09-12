@@ -230,7 +230,7 @@ void OwncloudSettings::setFolderList(const QVariantMap& m)
 
 void OwncloudSettings::setFolder(const QVariantMap& m)
 {
-    kDebug() << " Folder updated: " << m;
+    //kDebug() << " Folder updated: " << m;
     QString alias = m["name"].toString();
     OwncloudFolder *folder = 0;
 
@@ -263,7 +263,7 @@ void OwncloudSettings::setFolder(const QVariantMap& m)
     QDateTime dt;
     dt.setMSecsSinceEpoch(m["syncTime"].toULongLong());
     folder->setSyncTime(dt);
-    kDebug() << " === OC Updating" << alias << folder->folderStatus() << dt;
+    //kDebug() << " === OC Updating" << alias << folder->folderStatus() << dt;
 
     emit foldersChanged();
 }
@@ -341,17 +341,9 @@ QString OwncloudSettings::verifyFolder(const QString &localFolder, const QString
 {
     bool aError = false;
     bool lError = false;
-//     bool rError = false;
-//     if (remoteFolder.isEmpty()) {
-//         rError = true;
-//     }
-    //kDebug() << "Checking " << alias << localFolder;
     foreach (const OwncloudFolder *folder, d->folders) {
-//         kDebug() << "    ?? " << folder->displayName();
-//         kDebug() << "    ?? " << folder->localPath();
         if (folder->displayName() == alias) aError = true;
         if (folder->localPath() == localFolder) lError = true;
-        //if (folder.remotePath() == alias) aError = true;
     }
     QString err;
 
@@ -364,17 +356,12 @@ QString OwncloudSettings::verifyFolder(const QString &localFolder, const QString
     if (aError) {
         err = i18n("The display name \"%1\" is already in use. ", alias);
     }
-//     if (rError) {
-//         err.append(i18n("The remote folder \"%1\" does not exist.", remoteFolder));
-//     }
-    //emit folderVerified(err);
     //kDebug() << "verify: " << localFolder << remoteFolder << alias << err;
     return err;
 }
 
 void OwncloudSettings::updateGlobalStatus()
 {
-    //kDebug();
     int newState = OwncloudFolder::Idle;
 
     bool disabled = true;
@@ -418,10 +405,9 @@ void OwncloudSettings::updateGlobalStatus()
         newState = OwncloudFolder::Error;
     }
 
-//     kDebug() << "disabled" << disabled << "running" << running << "idle" << (newState == OwncloudFolder::Idle);
     if (d->globalStatus != newState) {
         d->globalStatus = newState;
-//         kDebug() << "globalStatusChanged: " << _d;
+        //kDebug() << "globalStatusChanged: " << _d;
         emit globalStatusChanged();
     }
 }
