@@ -73,3 +73,26 @@ Ideas
 * loadable profiles, essentially folder configs with enabled / disabled, polling interval
 
 o == done; * == todo
+
+
+Testing:
+
+= First use =
+
+* delete ~/.local/share/data/Mirall
+* restart owncloudsyncd
+* Login page, leading to favorites after login
+  - error message when credentials are wrong?
+  - show favorites when logged in
+    1 local folder does not exist, remote folder exists
+    2 remote folder exists, local folder doesn't
+    3 both local and remote don't exist
+    4 both local and remote exist and are not empty
+
+
+Test setup:
+- Documents: 5 Local files, empty remote
+- Music: local empty, remote has 5 files
+- InstantUpload: local doesn't exist, remote has photos
+
+
