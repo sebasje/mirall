@@ -35,7 +35,7 @@ MouseArea {
     }
 
     onClicked: {
-        print("clicked" + index);
+        //print("clicked" + index);
         if (!expanded) {
             folderList.currentIndex = index;
             expanded = true;
@@ -120,7 +120,7 @@ MouseArea {
         enabled: OwncloudFolder.Running != folderStatus
         opacity: OwncloudFolder.Disabled != folderStatus && expanded ? 1 : 0
         anchors { right: removeFolderButton.left; rightMargin: 12; bottom: parent.bottom; bottomMargin: 12; }
-        Behavior on opacity { FadeAnimation { } }
+        Behavior on opacity { FadeAnimation { duration: expanded ? 400 : 150 } }
         onClicked: {
             print("Sync folder " + displayName);
             sync();
@@ -133,7 +133,7 @@ MouseArea {
         iconSource: "list-remove"
         opacity: expanded ? 1 : 0
         anchors { right: parent.right; rightMargin: 12; bottom: parent.bottom; bottomMargin: 12; }
-        Behavior on opacity { FadeAnimation { } }
+        Behavior on opacity { FadeAnimation { duration: expanded ? 400 : 150 } }
         onClicked: {
             print("Remove folder " + displayName);
             owncloudSettings.removeSyncFolder(displayName);

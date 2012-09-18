@@ -181,20 +181,4 @@ PlasmaComponents.PageStack {
             }
         }
     }
-
-    Component.onCompleted: {
-//         if (owncloudSettings.error == OwncloudSettings.NoDaemonError) {
-//             owncloudModule.state = "setup";
-//             setupWizard.state = "error";
-//         if (owncloudSettings.error == OwncloudSettings.NoConfigurationError ||
-//             owncloudSettings.error == OwncloudSettings.AuthenticationError) {
-//             owncloudModule.state = "setup";
-//             setupWizard.state = "login";
-//         } else {
-//             // FIXME: remove
-//             //owncloudModule.state = "setup";
-//             //setupWizard.state = "favorites";
-//         }
-        print("Loaded OwncloudSettingsModule.qml successfully.");
-    }
 }

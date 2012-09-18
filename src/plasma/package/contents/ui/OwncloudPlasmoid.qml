@@ -47,7 +47,7 @@ Item {
             height: 48
             text: {
                 if (owncloudSettings.owncloudStatus != OwncloudSettings.Connected) {
-                    return i18n("ownCloud Sync");
+                    return i18n("File Synchronization");
                 } else {
                     var u = owncloudSettings.url;
                     u = u.replace("https://", "");
@@ -69,10 +69,8 @@ Item {
 
         ErrorHandler {
             id: ocStatus
-            //height: 400
             anchors { top: folderList.top; left: folderList.left; right: folderList.right; }
             visible: owncloudSettings.owncloudStatus != OwncloudSettings.Connected
-            //Rectangle { color: "green"; anchors.fill: parent; opacity: .4; }
         }
         PlasmaComponents.Switch {
             id: enabledSwitch
@@ -91,8 +89,6 @@ Item {
             onClicked: {
                 addFolderDialog.open();
                 addSyncFolder.state = "localFolder"
-                //addFolder();
-                //return;
             }
             Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
         }
@@ -113,8 +109,4 @@ Item {
     function addFolder() {
         directoryPickerDialog.open()
     }
-    Component.onCompleted: {
-        print("Loaded OwncloudPlasmoid.qml successfully.");
-    }
-
 }
