@@ -443,4 +443,4 @@ void OwncloudSync::setupOwncloud(const QString &server, const QString &user, con
 }
 
 
-#include "owncloudsyncdaemon.moc"
+#include "owncloudsync.moc"

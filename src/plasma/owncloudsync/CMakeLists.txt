@@ -11,7 +11,8 @@ include_directories(
 set(owncloudsyncd_SRCS
   owncloudsync.cpp
   owncloudsyncdaemon.cpp
-  ../../mirall/owncloudinfo.cpp
+  kfilesync.cpp
+  ../../mirall/owncloudinfo.cpp # FIXME: Ouch. :/
   main.cpp
   )
 

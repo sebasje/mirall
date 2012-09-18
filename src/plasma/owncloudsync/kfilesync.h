@@ -18,55 +18,32 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************/
 
-#include "owncloudsyncdaemon.h"
+
+#ifndef KFILESYNC_H
+#define KFILESYNC_H
+
+#include "mirall/syncresult.h"
 #include "owncloudsync.h"
-#include "kfilesync.h"
 
-#include "owncloudsyncadaptor.h"
+#include <QObject>
+#include <QIcon>
+#include <QNetworkReply>
+#include <QVariant>
+#include <QStringListModel>
 
-#include <KDebug>
-#include <KGlobal>
-#include <KStandardDirs>
+class KFileSyncPrivate;
 
-#include <QtDBus/QDBusConnection>
-
-
-OwncloudSyncDaemon* OwncloudSyncDaemon::s_self = 0;
-
-OwncloudSyncDaemon::OwncloudSyncDaemon( QObject* parent )
-    : QObject( parent ),
-      m_currentState(StateDisabled)
+class KFileSync : public OwncloudSync
 {
-    s_self = this;
+    Q_OBJECT
 
-    OwncloudSync* syncdaemon = new KFileSync(this);
-    new OwncloudsyncAdaptor(syncdaemon);
+    public:
+        explicit KFileSync(QObject *parent = 0);
+        virtual ~KFileSync();
 
-    QDBusConnection::sessionBus().registerService( "org.kde.owncloudsync" );
+    private:
+        KFileSyncPrivate* d;
 
-    QDBusConnection::sessionBus().registerObject( "/", syncdaemon);
-    init();
-}
+};
 
-
-OwncloudSyncDaemon::~OwncloudSyncDaemon()
-{
-    QDBusConnection::sessionBus().unregisterService( "org.kde.owncloudsync" );
-}
-
-
-void OwncloudSyncDaemon::init()
-{
-}
-
-void OwncloudSyncDaemon::quit()
-{
-    QCoreApplication::instance()->quit();
-}
-
-OwncloudSyncDaemon* OwncloudSyncDaemon::self()
-{
-    return s_self;
-}
-
-#include "owncloudsyncdaemon.moc"
+#endif // KFILESYNC_H
