@@ -133,7 +133,6 @@ PlasmaComponents.PageStack {
             text: i18n("Add Folder")
             iconSource: "list-add"
             opacity: folderList.opacity
-            //visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
             anchors { bottom: parent.bottom; right: parent.right; rightMargin: 12; }
             onClicked: {
                 addSyncFolder.state = "localFolder";

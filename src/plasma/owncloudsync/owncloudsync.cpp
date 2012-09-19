@@ -24,14 +24,12 @@
 #include "owncloudsettings.h"
 
 #include <qdebug.h>
-//#include <QMessageBox>
 #include <QVariant>
 #include <QTimer>
 
 #include "mirall/syncresult.h"
 #include "mirall/folder.h"
 #include "mirall/folderman.h"
-#include "mirall/logbrowser.h"
 #include "mirall/mirallconfigfile.h"
 #include "mirall/owncloudinfo.h"
 

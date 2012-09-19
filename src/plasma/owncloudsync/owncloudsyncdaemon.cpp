@@ -19,14 +19,9 @@
  ***************************************************************************/
 
 #include "owncloudsyncdaemon.h"
-#include "owncloudsync.h"
 #include "kfilesync.h"
 
 #include "owncloudsyncadaptor.h"
-
-#include <KDebug>
-#include <KGlobal>
-#include <KStandardDirs>
 
 #include <QtDBus/QDBusConnection>
 
