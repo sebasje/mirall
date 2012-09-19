@@ -34,12 +34,6 @@ OwncloudSyncDaemon::OwncloudSyncDaemon( QObject* parent )
 {
     s_self = this;
 
-    OwncloudSync* syncdaemon = new KFileSync(this);
-    new OwncloudsyncAdaptor(syncdaemon);
-
-    QDBusConnection::sessionBus().registerService( "org.kde.owncloudsync" );
-
-    QDBusConnection::sessionBus().registerObject( "/", syncdaemon);
     init();
 }
 
@@ -52,6 +46,14 @@ OwncloudSyncDaemon::~OwncloudSyncDaemon()
 
 void OwncloudSyncDaemon::init()
 {
+    OwncloudSync* syncdaemon = new KFileSync(this);
+    //syncdaemon->init();
+    //OwncloudSync* syncdaemon = new OwncloudSync(this);
+    new OwncloudsyncAdaptor(syncdaemon);
+
+    QDBusConnection::sessionBus().registerService( "org.kde.owncloudsync" );
+
+    QDBusConnection::sessionBus().registerObject( "/", syncdaemon);
 }
 
 void OwncloudSyncDaemon::quit()

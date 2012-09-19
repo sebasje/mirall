@@ -23,7 +23,8 @@
 #include "owncloudfolder.h"
 #include "owncloudsettings.h"
 
-#include <qdebug.h>
+#include <KIO/AccessManager>
+#include <kdebug.h>
 #include <QVariant>
 #include <QTimer>
 
@@ -63,14 +64,22 @@ OwncloudSync::OwncloudSync(QObject *parent)
     d->delay = 0;
     d->ocStatus = OwncloudSettings::Disconnected;
     d->ocError = OwncloudSettings::NoError;
+    d->ocInfo = Mirall::ownCloudInfo::instance();
+    KIO::AccessManager *nam = new KIO::AccessManager(this);
+    kDebug() << "OC Seetting KIO::NAM";
+    d->ocInfo->setNetworkAccessManager(nam);
+    init();
 
+}
+
+void OwncloudSync::init()
+{
     d->folderMan = new Mirall::FolderMan();
     connect( d->folderMan, SIGNAL(folderSyncStateChange(QString)),
              this,SLOT(slotSyncStateChange(QString)));
     connect( d->folderMan, SIGNAL(folderSyncStateChange(QNetworkReply*)),
              this,SLOT(slotSyncStateChange(QNetworkReply)));
 
-    d->ocInfo = Mirall::ownCloudInfo::instance();
     //d->ocInfo->setCustomConfigHandle("mirall");
     connect(d->ocInfo,SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
              SLOT(slotOwnCloudFound(QString,QString,QString,QString)));
@@ -78,6 +87,7 @@ OwncloudSync::OwncloudSync(QObject *parent)
     connect(d->ocInfo,SIGNAL(noOwncloudFound(QNetworkReply*)),
              SLOT(slotNoOwnCloudFound(QNetworkReply*)));
 
+    kDebug() << "OC connecting to slotAuthCheck";
     connect(d->ocInfo,SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
              this,SLOT(slotAuthCheck(QString,QNetworkReply*)));
 
@@ -85,6 +95,7 @@ OwncloudSync::OwncloudSync(QObject *parent)
              SLOT(slotDirCheckReply(QString,QNetworkReply*)));
 
     if(d->ocInfo->isConfigured() ) {
+        qDebug() << "OCInfo is configured, checkInstallation(), loadFolders()";
         d->ocInfo->checkInstallation();
         loadFolders();
     }
@@ -187,9 +198,8 @@ void OwncloudSync::refresh()
 void OwncloudSync::loadFolders()
 {
     if (d->ocStatus == OwncloudSettings::Connected) {
-        //kDebug() << "Loaded folders : " << folders.count();
         QStringList fs;
-        //qDebug() << "OC Loading folders";
+        qDebug() << "OC Loading folders";
         foreach (Mirall::Folder* f, d->folderMan->map()) {
             //qDebug() << "OC New folder: " << f->alias() << f->path() << f->secondPath();
             //fs << f->alias();
@@ -200,8 +210,8 @@ void OwncloudSync::loadFolders()
         d->folderList.clear();
         d->folders.clear();
         emit folderListChanged(d->folderList);
-
     }
+    qDebug() << "OC Loaded folders : " << d->folders.count();
 }
 
 void OwncloudSync::folderSyncFinished(Mirall::SyncResult r)
@@ -386,7 +396,7 @@ void OwncloudSync::slotCheckAuthentication()
 
 void OwncloudSync::slotAuthCheck( const QString& ,QNetworkReply *reply )
 {
-    //qDebug() << "OC slotAuthCheck :: error code: " << reply->error();
+    kDebug() << "OC slotAuthCheck :: error code: " << reply->error();
     if( reply->error() == QNetworkReply::AuthenticationRequiredError ) { // returned if the user is wrong.
         if (d->ocStatus != OwncloudSettings::Error ||
                             d->ocError != OwncloudSettings::AuthenticationError) {
@@ -407,7 +417,7 @@ void OwncloudSync::slotAuthCheck( const QString& ,QNetworkReply *reply )
             emit errorChanged(d->ocError);
         }
     } else {
-        //qDebug() << "OC ######## Credentials are ok!";
+        qDebug() << "OC ######## Credentials are ok!";
         if (d->ocStatus != OwncloudSettings::Connected) {
             qDebug() << "OC changing to Connected/NoError!";
             d->ocStatus = OwncloudSettings::Connected;
@@ -428,7 +438,7 @@ void OwncloudSync::setupOwncloud(const QString &server, const QString &user, con
     bool https = server.startsWith("https");
 
     cfgFile.writeOwncloudConfig(QLatin1String("ownCloud"), server, user, password, https, false);
-    qDebug() << "OC Setting up: " << server << user << password << https;
+    kDebug() << "OC Setting up: " << server << user << password << https;
     cfgFile.acceptCustomConfig();
 
     if( d->folderMan ) {
@@ -444,7 +454,7 @@ void OwncloudSync::setupOwncloud(const QString &server, const QString &user, con
         d->ocInfo->resetSSLUntrust();
         d->ocInfo->checkInstallation();
     } else {
-        qDebug() << " OC  ownCloud seems not configured.";
+        kDebug() << " OC  ownCloud seems not configured.";
     }
 }
 

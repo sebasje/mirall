@@ -20,7 +20,7 @@
 
 
 #include "kfilesync.h"
-
+#include <kdebug.h>
 #include <KIO/AccessManager>
 
 class KFileSyncPrivate {
@@ -34,6 +34,13 @@ KFileSync::KFileSync(QObject *parent)
 
     KIO::AccessManager *nam = new KIO::AccessManager(this);
     ocInfo()->setNetworkAccessManager(nam);
+    if(ocInfo()->isConfigured() ) {
+        kDebug() << "OCInfo is configured, checkInstallation(), loadFolders()";
+
+        ocInfo()->checkInstallation();
+        loadFolders();
+    }
+
 }
 
 KFileSync::~KFileSync()

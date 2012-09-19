@@ -46,6 +46,7 @@ class OwncloudSync : public QObject
     public:
         explicit OwncloudSync(QObject *parent = 0);
         virtual ~OwncloudSync();
+        void init();
 
         Mirall::FolderMan* folderMan();
         Mirall::ownCloudInfo* ocInfo();
@@ -87,13 +88,15 @@ class OwncloudSync : public QObject
         void slotDirCheckReply( const QString&, QNetworkReply* );
         void slotCheckRemoteFolderFinished();
 
+    protected:
+        void loadFolders();
+
     private Q_SLOTS:
         void delayedReadConfig();
         void folderSyncFinished(Mirall::SyncResult r);
 
     private:
         OwncloudSyncPrivate* d;
-        void loadFolders();
 
 };
 
