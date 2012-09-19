@@ -21,6 +21,7 @@
 
 #include "kfilesync.h"
 
+#include <KIO/AccessManager>
 
 class KFileSyncPrivate {
 public:
@@ -30,6 +31,9 @@ KFileSync::KFileSync(QObject *parent)
     : OwncloudSync(parent)
 {
     d = new KFileSyncPrivate;
+
+    KIO::AccessManager *nam = new KIO::AccessManager(this);
+    ocInfo()->setNetworkAccessManager(nam);
 }
 
 KFileSync::~KFileSync()

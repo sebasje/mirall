@@ -23,6 +23,8 @@
 #define OWNCLOUDSYNC_H
 
 #include "mirall/syncresult.h"
+#include "mirall/folderman.h"
+#include "mirall/owncloudinfo.h"
 
 #include <QObject>
 #include <QIcon>
@@ -44,6 +46,9 @@ class OwncloudSync : public QObject
     public:
         explicit OwncloudSync(QObject *parent = 0);
         virtual ~OwncloudSync();
+
+        Mirall::FolderMan* folderMan();
+        Mirall::ownCloudInfo* ocInfo();
 
     public Q_SLOTS:
         QString display();

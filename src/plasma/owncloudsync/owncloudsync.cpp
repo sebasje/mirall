@@ -29,9 +29,7 @@
 
 #include "mirall/syncresult.h"
 #include "mirall/folder.h"
-#include "mirall/folderman.h"
 #include "mirall/mirallconfigfile.h"
-#include "mirall/owncloudinfo.h"
 
 class OwncloudSyncPrivate {
 public:
@@ -96,6 +94,16 @@ OwncloudSync::OwncloudSync(QObject *parent)
 OwncloudSync::~OwncloudSync()
 {
     delete d;
+}
+
+Mirall::FolderMan* OwncloudSync::folderMan()
+{
+    return d->folderMan;
+}
+
+Mirall::ownCloudInfo* OwncloudSync::ocInfo()
+{
+    return d->ocInfo;
 }
 
 void OwncloudSync::slotSyncStateChange(const QString &s)

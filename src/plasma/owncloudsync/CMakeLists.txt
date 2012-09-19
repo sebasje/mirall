@@ -26,9 +26,9 @@ kde4_add_kdeinit_executable(owncloudsyncd ${owncloudsyncd_SRCS})
 ADD_LIBRARY(owncloudsyncd_SRCS STATIC IMPORTED)
 
 target_link_libraries(kdeinit_owncloudsyncd
-  #${KDE4_KDEUI_LIBS}
   ${QT_QTDBUS_LIBRARY}
   ${QT_QTCORE_LIBRARY}
+  ${KDE4_KIO_LIBS}
   owncloudsync
 )
 
