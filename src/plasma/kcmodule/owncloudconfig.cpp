@@ -24,6 +24,7 @@
 #include "owncloudsettings.h"
 #include "owncloudfolder.h"
 #include "directorylister.h"
+#include "dirmodel.h"
 #include "minijob.h"
 #include "createfolderjob.h"
 
@@ -84,6 +85,7 @@ OwncloudConfig::OwncloudConfig(QWidget *parent, const QVariantList &)
     "This module allows you to configure ownCloud servers and folders you want to synchronize."));
 
     qmlRegisterType<DirectoryLister>("org.kde.plasma.owncloud", 0, 1, "DirectoryLister");
+    qmlRegisterType<DirModel>("org.kde.plasma.owncloud", 0, 1, "DirModel");
     qmlRegisterType<OwncloudSettings>("org.kde.plasma.owncloud", 0, 1, "OwncloudSettings");
     qmlRegisterType<OwncloudFolder>("org.kde.plasma.owncloud", 0, 1, "OwncloudFolder");
     qmlRegisterType<MiniJob>("org.kde.plasma.owncloud", 0, 1, "MiniJob");

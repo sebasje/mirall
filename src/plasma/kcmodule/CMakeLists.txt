@@ -2,6 +2,7 @@ set(kcm_owncloud_PART_SRCS
     kcmowncloud.cpp
     owncloudconfig.cpp
     ../lib/directorylister.cpp
+    ../lib/dirmodel.cpp
     ../lib/owncloudsettings.cpp
     ../lib/owncloudfolder.cpp
     ../lib/minijob.cpp
@@ -19,6 +20,7 @@ target_link_libraries(kcm_owncloud
     ${KDE4_KCMUTILS_LIBS}
     ${KDE4_PLASMA_LIBS}
     ${KDECLARATIVE_LIBRARIES}
+    ${KDE4_KIO_LIBS}
 )
 
 install(TARGETS kcm_owncloud DESTINATION ${PLUGIN_INSTALL_DIR})

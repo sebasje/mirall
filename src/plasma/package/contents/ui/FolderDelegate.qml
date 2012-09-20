@@ -51,7 +51,7 @@ MouseArea {
         width: 48
         height: width
         anchors { top: parent.top; left: parent.left; }
-        opacity: (folderStatus == OwncloudFolder.Idle) ? 1.0 : 0.8
+        //opacity: (folderStatus == OwncloudFolder.Idle) ? 1.0 : 0.8
         Behavior on opacity { FadeAnimation { } }
     }
     QIconItem {
@@ -92,15 +92,20 @@ MouseArea {
                 out = i18n("Last sync: %1", friendlyDate(syncTime));
             }
             if (expanded) {
-                out = out + i18n("<br /><br />Local folder: %1", localPath);
-                out = out + i18n("<br />Remote folder: %1", remotePath);
+                var lurl = "file://"+localPath;
+                var rurl = owncloudSettings.url+"/files/webdav.php/"+remotePath;
+                rurl = rurl.replace("http", "webdav");
+                var lp = localPath.replace(dir.homePath, "~/");
+                out = out + i18n("<br />Local folder: <a href=\"%1\">%2</a>", lurl, lp);
+                out = out + i18n("<br />Remote folder: <a href=\"%1\">%2</a>", rurl, "/"+remotePath);
             }
             return out;
         }
-        opacity: (expanded && folderStatus == OwncloudFolder.Error) ? 1.0 : 0.4
+        opacity: (expanded && folderStatus == OwncloudFolder.Error) ? 1.0 : 0.7
         Behavior on opacity { FadeAnimation { } }
+        onLinkActivated: Qt.openUrlExternally(link)
     }
-    PlasmaComponents.Switch {
+    PlasmaComponents.CheckBox {
         id: enabledSwitch
         checked: OwncloudFolder.Disabled != folderStatus
         anchors { verticalCenter: folderIcon.verticalCenter; right: parent.right; rightMargin: 24; }

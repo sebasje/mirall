@@ -38,7 +38,7 @@ Item {
     property int fadingDuration: 250
 
 
-    Behavior on height { FadeAnimation { } }
+    //Behavior on height { FadeAnimation { } }
 
     states: [
         State {
@@ -93,6 +93,7 @@ Item {
         //print("Next page" + addSyncFolder.state);
         if (addSyncFolder.state == "localFolder") {
             addSyncFolder.state = "remoteFolder";
+
         } else if (addSyncFolder.state == "remoteFolder") {
             addSyncFolder.cnt = addSyncFolder.cnt + 1
             var localFolder = addSyncFolder.localFolder;
@@ -104,21 +105,10 @@ Item {
         }
     }
 
-    PlasmaComponents.Button {
-        id: closeButton
-        width: 24
-        height: width
-        anchors { top: parent.top; right: parent.right; margins: 4; }
-        iconSource: "dialog-close"
-        opacity: addSyncFolder.state != "default" ? 1 : 0
-        onClicked: addSyncFolder.state = "default"
-        Behavior on opacity { FadeAnimation { } }
-    }
-
-    DirectoryPicker {
+    DirPicker {
         id: localFolderItem
         anchors.fill: parent
-        clip: true
+        //clip: true
         Behavior on opacity { FadeAnimation { } }
     }
     RemoteFolderPicker {

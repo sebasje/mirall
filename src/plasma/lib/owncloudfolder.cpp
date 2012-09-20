@@ -61,7 +61,7 @@ int OwncloudFolder::folderStatus() const
 void OwncloudFolder::setFolderStatus(int i)
 {
     if (d->status != i) {
-        kDebug() << "folderStatusChanged(" << displayName() << ", " << statusString(i) << ")";
+        //kDebug() << "folderStatusChanged(" << displayName() << ", " << statusString(i) << ")";
         if (d->status == Running && i == Idle) {
             //kDebug() << "updating sync time" << displayName() << QDateTime::currentDateTime();
             //setSyncTime(QDateTime::currentDateTime());

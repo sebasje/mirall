@@ -38,6 +38,9 @@ Item {
         // Update the popup icon
         onGlobalStatusChanged: updateGlobalStatus(owncloudSettings.globalStatus)
     }
+
+    DirectoryLister { id: dir }
+
     Item {
         id: owncloudItem
         anchors { fill: parent; margins: 12; }
@@ -72,9 +75,9 @@ Item {
             anchors { top: folderList.top; left: folderList.left; right: folderList.right; }
             visible: owncloudSettings.owncloudStatus != OwncloudSettings.Connected
         }
-        PlasmaComponents.Switch {
+        PlasmaComponents.CheckBox {
             id: enabledSwitch
-            text: i18n("All Folders")
+            text: i18n("Enable")
             visible: folderList.count > 0
             checked: owncloudSettings.globalStatus != OwncloudFolder.Disabled
             anchors { bottom: parent.bottom; left: parent.left; rightMargin: 12 }
@@ -101,12 +104,17 @@ Item {
                 height: 400
                 id: addSyncFolder
                 visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
-                anchors { verticalCenter: enabledSwitch.verticalCenter; right: folderList.right; rightMargin: 12 }
+                anchors { fill: parent }
             }
         }
     }
 
     function addFolder() {
         directoryPickerDialog.open()
+    }
+
+    Component.onCompleted: {
+        addFolderDialog.open();
+        addSyncFolder.state = "localFolder"
     }
 }

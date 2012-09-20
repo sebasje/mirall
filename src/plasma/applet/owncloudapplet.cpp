@@ -21,6 +21,7 @@
 #include "owncloudsettings.h"
 #include "owncloudfolder.h"
 #include "directorylister.h"
+#include "dirmodel.h"
 #include "createfolderjob.h"
 
 #include <QtDeclarative>
@@ -60,6 +61,7 @@ void OwncloudApplet::init()
     connect(m_declarativeWidget->mainComponent(), SIGNAL(statusChanged(QDeclarativeComponent::Status)), SLOT(connectObjects(QDeclarativeComponent::Status)));
 
     qmlRegisterType<DirectoryLister>("org.kde.plasma.owncloud", 0, 1, "DirectoryLister");
+    qmlRegisterType<DirModel>("org.kde.plasma.owncloud", 0, 1, "DirModel");
     qmlRegisterType<OwncloudSettings>("org.kde.plasma.owncloud", 0, 1, "OwncloudSettings");
     qmlRegisterType<OwncloudFolder>("org.kde.plasma.owncloud", 0, 1, "OwncloudFolder");
     qmlRegisterType<CreateFolderJob>("org.kde.plasma.owncloud", 0, 1, "CreateFolderJob");

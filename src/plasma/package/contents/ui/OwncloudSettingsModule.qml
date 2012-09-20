@@ -33,6 +33,8 @@ PlasmaComponents.PageStack {
         id: owncloudSettings
     }
 
+    DirectoryLister { id: dir }
+
     width: 400
     height: 400
 
@@ -79,13 +81,13 @@ PlasmaComponents.PageStack {
         }
     ]
 
-    PlasmaComponents.Button {
-        checkable: true
-        iconSource: "kolf"
-        checked: owncloudModule.state == "setup"
-        onCheckedChanged: checked ? owncloudModule.state = "setup" : owncloudModule.state = "default"
-        anchors { top: parent.top; right: parent.right; }
-    }
+//     PlasmaComponents.Button {
+//         checkable: true
+//         iconSource: "kolf"
+//         checked: owncloudModule.state == "setup"
+//         onCheckedChanged: checked ? owncloudModule.state = "setup" : owncloudModule.state = "default"
+//         anchors { top: parent.top; right: parent.right; }
+//     }
     Item {
         id: owncloudItem
         anchors { left: parent.left; right: parent.right; top: titleCol.bottom; bottom: parent.bottom; margins: 12; }
@@ -119,9 +121,9 @@ PlasmaComponents.PageStack {
 //             anchors { left: folderList.left; right: folderList.right; bottom: folderList.bottom; }
 //             height: 64
 //         }
-        PlasmaComponents.Switch {
+        PlasmaComponents.CheckBox {
             id: enabledSwitch
-            text: i18n("All Folders")
+            text: i18n("Enable All")
             visible: folderList.count > 0
             opacity: folderList.opacity
             checked: owncloudSettings.globalStatus != OwncloudFolder.Disabled
@@ -135,8 +137,10 @@ PlasmaComponents.PageStack {
             opacity: folderList.opacity
             anchors { bottom: parent.bottom; right: parent.right; rightMargin: 12; }
             onClicked: {
+                owncloudSettings.checkRemoteFolder("testfoo");
+/*
                 addSyncFolder.state = "localFolder";
-                owncloudModule.state = "addFolder";
+                owncloudModule.state = "addFolder";*/
             }
         }
 
@@ -179,5 +183,9 @@ PlasmaComponents.PageStack {
                 setupWizard.state = "default";
             }
         }
+    }
+
+    Component.onCompleted: {
+
     }
 }

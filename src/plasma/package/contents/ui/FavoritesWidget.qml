@@ -28,8 +28,6 @@ import org.kde.plasma.owncloud 0.1
 Item {
     id: favoritesWidget
 
-    DirectoryLister { id: dir }
-
     property QtObject favorites
 
     ListModel {

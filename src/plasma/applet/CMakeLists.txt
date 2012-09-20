@@ -15,6 +15,7 @@ set(owncloud_SRCS
     ../lib/owncloudsettings.cpp
     ../lib/owncloudfolder.cpp
     ../lib/directorylister.cpp
+    ../lib/dirmodel.cpp
     ../lib/minijob.cpp
     ../lib/job.cpp
     ../lib/createfolderjob.cpp
@@ -25,7 +26,7 @@ qt4_add_dbus_interface(owncloud_SRCS ../owncloudsync/org.kde.owncloudsync.xml ow
 add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
 
 kde4_add_plugin(plasma_applet_owncloud ${owncloud_SRCS})
-target_link_libraries(plasma_applet_owncloud ${KDE4_PLASMA_LIBS} ${QT_QTDECLARATIVE_LIBRARY})
+target_link_libraries(plasma_applet_owncloud ${KDE4_PLASMA_LIBS} ${QT_QTDECLARATIVE_LIBRARY}  ${KDE4_KIO_LIBS})
 
 install(TARGETS plasma_applet_owncloud DESTINATION ${PLUGIN_INSTALL_DIR})
 install(FILES plasma-applet-owncloud.desktop DESTINATION ${SERVICES_INSTALL_DIR})

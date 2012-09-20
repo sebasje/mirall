@@ -76,6 +76,23 @@ Item {
                 return "";
             }
         }
+
+        DirPicker {
+            id: dirPicker
+            anchors {top: remoteFolderName.bottom; left: parent.left; right: parent.right; topMargin: 24; }
+            Connections {
+                target: addSyncFolder
+                onStateChanged: {
+                    if (addSyncFolder.state == "remoteFolder") {
+                        var rurl = owncloudSettings.url+"/files/webdav.php/";
+                        rurl = rurl.replace("http", "webdav");
+                        print( "** Remote URL : " + rurl);
+                        dirPicker.url = rurl;
+                    }
+                }
+            }
+        }
+
         PlasmaComponents.ToolButton {
             id: createRemoteFolderButton
             anchors { right: parent.right; top: createLabel.bottom; rightMargin: 24; }
@@ -87,7 +104,6 @@ Item {
         }
         PlasmaComponents.TextField {
             id: aliasText
-            text: addSyncFolder.remoteFolder
             anchors { left: parent.left; top: createLabel.bottom; rightMargin: 24; }
             visible: folderExists && remoteFolderName != "" && checkedFolder != ""
             onTextChanged: {
@@ -101,8 +117,14 @@ Item {
             iconSource: "dialog-ok"
             text: i18n("Finished")
             onClicked: {
+                print("finishedButton::aliasText.text = " + aliasText.text);
                 addSyncFolder.remoteFolder = currentPath;
-                addSyncFolder.aliasName = currentPath;
+                if (aliasText.text != "") {
+                    addSyncFolder.aliasName = aliasText.text;
+                } else {
+                    addSyncFolder.aliasName =  currentPath;
+                }
+                print("finishedButton::aliasText.text = " + aliasText.text + " so: " + addSyncFolder.aliasName);
                 nextPage();
             }
         }

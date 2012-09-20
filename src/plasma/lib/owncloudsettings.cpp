@@ -441,7 +441,7 @@ void OwncloudSettings::slotRemoteFolderExists(const QString &folder, bool exists
         kDebug() << " job and folder exists" << exists;
         d->createFolderJobs[folder]->setResult(exists);
     } else {
-        //kDebug() << "!createjob not found for folder : " << folder;
+        kDebug() << "!createjob not found for folder : " << folder;
     }
     emit remoteFolderExists(folder, exists);
 }

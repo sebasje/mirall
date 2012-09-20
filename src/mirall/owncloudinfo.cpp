@@ -108,7 +108,7 @@ QNetworkReply* ownCloudInfo::getWebDAVPath( const QString& path )
 
 QNetworkReply* ownCloudInfo::getRequest( const QString& path, bool webdav )
 {
-    qDebug() << "Get Request to " << path;
+    qDebug() << "OC Get Request to " << path;
 
     MirallConfigFile cfgFile(  _configHandle );
     QString url = cfgFile.ownCloudUrl( _connection, webdav ) + path;
@@ -405,6 +405,7 @@ void ownCloudInfo::slotReplyFinished()
             _directories.remove(reply);
         }
 
+        qDebug() << "OC ownCloudDirExists" << dir << reply;
         emit ownCloudDirExists( dir, reply );
     }
     if( _configHandleMap.contains(reply)) {
@@ -430,7 +431,7 @@ bool ownCloudInfo::certsUntrusted()
 
 void ownCloudInfo::slotError( QNetworkReply::NetworkError err)
 {
-  qDebug() << "ownCloudInfo Network Error: " << err;
+  qDebug() << "OC ownCloudInfo Network Error: " << err;
 }
 
 // ============================================================================

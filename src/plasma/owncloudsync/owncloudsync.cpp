@@ -95,7 +95,6 @@ void OwncloudSync::init()
              SLOT(slotDirCheckReply(QString,QNetworkReply*)));
 
     if(d->ocInfo->isConfigured() ) {
-        qDebug() << "OCInfo is configured, checkInstallation(), loadFolders()";
         d->ocInfo->checkInstallation();
         loadFolders();
     }
@@ -122,7 +121,7 @@ void OwncloudSync::slotSyncStateChange(const QString &s)
     Mirall::Folder *f = d->folderMan->folder(s);
     if (f && (f->syncResult().status() == Mirall::SyncResult::Success)) {
         d->syncTime[s] = QDateTime::currentDateTime();
-        qDebug() << "OC updated syncTime for " << s << d->syncTime[s];
+//         qDebug() << "OC updated syncTime for " << s << d->syncTime[s];
     }
     updateFolder(d->folderMan->folder(s));
 }
@@ -184,7 +183,6 @@ void OwncloudSync::refresh()
 {
     qDebug() << "OC Syncdaemon refresh()";
     if (!d->ocInfo->isConfigured()) {
-        qDebug() << "OC not configured";
         d->ocStatus = OwncloudSettings::Error;
         d->ocError = OwncloudSettings::NoConfigurationError;
     } else {
@@ -199,7 +197,6 @@ void OwncloudSync::loadFolders()
 {
     if (d->ocStatus == OwncloudSettings::Connected) {
         QStringList fs;
-        qDebug() << "OC Loading folders";
         foreach (Mirall::Folder* f, d->folderMan->map()) {
             //qDebug() << "OC New folder: " << f->alias() << f->path() << f->secondPath();
             //fs << f->alias();
@@ -211,7 +208,6 @@ void OwncloudSync::loadFolders()
         d->folders.clear();
         emit folderListChanged(d->folderList);
     }
-    qDebug() << "OC Loaded folders : " << d->folders.count();
 }
 
 void OwncloudSync::folderSyncFinished(Mirall::SyncResult r)
@@ -244,7 +240,7 @@ void OwncloudSync::updateFolder(const Mirall::Folder* folder)
     m["localPath"] = folder->path();
     m["remotePath"] = folder->secondPath();
     m["syncTime"] = d->syncTime[folder->alias()].toMSecsSinceEpoch();
-    qDebug() << "OC updateFolder:: path, secondPath: " << folder->path() << ", " << d->syncTime[folder->alias()];
+//     qDebug() << "OC updateFolder:: path, secondPath: " << folder->path() << ", " << d->syncTime[folder->alias()];
 
     int s = 999;
     int r = folder->syncResult().status();
@@ -380,8 +376,6 @@ void OwncloudSync::slotOwnCloudFound( const QString& url, const QString& version
 
 void OwncloudSync::slotNoOwnCloudFound(QNetworkReply* reply)
 {
-    qDebug() << "OCD : NO ownCloud found!";
-
     d->ocStatus = OwncloudSettings::Error;
     d->ocError = OwncloudSettings::NoConfigurationError;
     emit statusChanged(d->ocStatus);
@@ -390,13 +384,12 @@ void OwncloudSync::slotNoOwnCloudFound(QNetworkReply* reply)
 
 void OwncloudSync::slotCheckAuthentication()
 {
-    qDebug() << "OC slotCheckAuthentication";
     d->ocInfo->getRequest("/", true ); // this call needs to be authenticated.
 }
 
 void OwncloudSync::slotAuthCheck( const QString& ,QNetworkReply *reply )
 {
-    kDebug() << "OC slotAuthCheck :: error code: " << reply->error();
+    //qDebug() << "OC slotAuthCheck :: error code: " << reply->error();
     if( reply->error() == QNetworkReply::AuthenticationRequiredError ) { // returned if the user is wrong.
         if (d->ocStatus != OwncloudSettings::Error ||
                             d->ocError != OwncloudSettings::AuthenticationError) {
@@ -417,7 +410,7 @@ void OwncloudSync::slotAuthCheck( const QString& ,QNetworkReply *reply )
             emit errorChanged(d->ocError);
         }
     } else {
-        qDebug() << "OC ######## Credentials are ok!";
+//         qDebug() << "OC ######## Credentials are ok!";
         if (d->ocStatus != OwncloudSettings::Connected) {
             qDebug() << "OC changing to Connected/NoError!";
             d->ocStatus = OwncloudSettings::Connected;

@@ -11,6 +11,7 @@ set(owncloudsettings_SRCS
     ../lib/owncloudsettings.cpp
     ../lib/owncloudfolder.cpp
     ../lib/directorylister.cpp
+    ../lib/dirmodel.cpp
     ../lib/minijob.cpp
     ../lib/job.cpp
     ../lib/createfolderjob.cpp
@@ -19,6 +20,6 @@ qt4_add_dbus_interface(owncloudsettings_SRCS ../owncloudsync/org.kde.owncloudsyn
 
 
 kde4_add_plugin(active_settings_owncloud ${owncloudsettings_SRCS})
-target_link_libraries(active_settings_owncloud ${KDE4_PLASMA_LIBS} ${QT_QTDECLARATIVE_LIBRARY})
+target_link_libraries(active_settings_owncloud ${KDE4_PLASMA_LIBS} ${QT_QTDECLARATIVE_LIBRARY} ${KDE4_KIO_LIBS} )
 install(TARGETS active_settings_owncloud DESTINATION ${PLUGIN_INSTALL_DIR})
 
