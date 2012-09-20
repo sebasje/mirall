@@ -51,6 +51,7 @@ Item {
         anchors { top: parent.top; left: parent.left; right: parent.right; }
         height: iconSize * 1.2
         tools: PlasmaComponents.ToolBarLayout {
+            spacing: 8
             PlasmaComponents.ToolButton {
                 iconSource: "go-previous"
                 onClicked: {
@@ -63,12 +64,15 @@ Item {
                     goUp();
                 }
             }
+            Breadcrumbs {
+
+            }
             PlasmaComponents.ToolButton {
                 id: closeButton
                 iconSource: "dialog-close"
                 onClicked: {
                     addSyncFolder.state = "default"
-                    dialog.close();
+                    addFolderDialog.close();
                 }
             }
         }
@@ -86,7 +90,7 @@ Item {
     }
 
     function goUp() {
-        var u = dirModel.url;
+        var u = url;
         u = u.split("://")[1];
         var protocol = dirModel.url.split("://")[0];
         var ds = u.split("/");
@@ -94,6 +98,10 @@ Item {
         for (var i = 0; i < ds.length-1; i++) {
             print(" ds" + i + " " + ds[i] + " " + protocol);
             np = np+"/"+ds[i];
+        }
+        print("dsl == " + ds.length);
+        if (ds.length<=2) {
+            np = np + "//";
         }
         open(np);
     }

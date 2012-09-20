@@ -130,6 +130,17 @@ Item {
         }
     }
 
+    PlasmaComponents.ToolButton {
+        id: goPrev
+        iconSource: "go-previous"
+        anchors { left: parent.left; bottom: parent.bottom; }
+        onClicked: {
+            addSyncFolder.state = "localPath";
+            remoteFolderItem.opacity = 0; // FIXME: shouldn't be necessary
+            feedbackItem.opacity = 0; // FIXME: shouldn't be necessary
+        }
+    }
+
     Connections {
         target: owncloudSettings
         onRemoteFolderExists: {
