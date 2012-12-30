@@ -244,7 +244,7 @@ void OwncloudSettings::setFolder(const QVariantMap& m)
         }
     }
     if (exists) {
-        //kDebug() << "OC Updating existing folder" << alias;
+        kDebug() << "OC Updating existing folder" << alias;
     } else {
         kDebug() << "OC New Folder" << alias;
         folder = new OwncloudFolder(this);
@@ -264,8 +264,9 @@ void OwncloudSettings::setFolder(const QVariantMap& m)
     dt.setMSecsSinceEpoch(m["syncTime"].toULongLong());
     folder->setSyncTime(dt);
     //kDebug() << " === OC Updating" << alias << folder->folderStatus() << dt;
-
-    emit foldersChanged();
+    if (!exists) {
+        emit foldersChanged();
+    }
 }
 
 void OwncloudSettings::enableFolder(const QString& name, bool enabled)

@@ -68,7 +68,7 @@ void OwncloudFolder::setFolderStatus(int i)
             //kDebug() << "updating sync time" << displayName() << QDateTime::currentDateTime();
             //setSyncTime(QDateTime::currentDateTime());
             // Prevent flickery UI
-            QTimer::singleShot(1500, this, SLOT(slotDelayedSuccess()));
+            QTimer::singleShot(2000, this, SLOT(slotDelayedSuccess()));
         } else {
             d->status = i;
             emit folderStatusChanged();
@@ -82,6 +82,7 @@ void OwncloudFolder::slotDelayedSuccess()
     if (d->status == Running) {
         d->status = Idle;
         emit folderStatusChanged();
+        qDebug() << "======= OC Folderstatus delay";
     }
 }
 

@@ -310,7 +310,6 @@ void OwncloudSync::checkRemoteFolder(const QString& f)
         QNetworkReply* reply = d->ocInfo->getWebDAVPath(f);
         connect(reply, SIGNAL(finished()), SLOT(slotCheckRemoteFolderFinished()));
         //connect(reply, SIGNAL(finished()), SLOT(slotCheckRemoteFolderFinished()));
-
     }
 }
 
