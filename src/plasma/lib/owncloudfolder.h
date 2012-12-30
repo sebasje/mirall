@@ -90,6 +90,9 @@ class OwncloudFolder : public QObject
     private:
         OwncloudFolderPrivate* d;
         QString statusString(int s);
+
+    private Q_SLOTS:
+        void slotDelayedSuccess();
 };
 
 #endif // OWNCLOUDFOLDER_H

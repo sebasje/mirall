@@ -20,6 +20,8 @@
 
 #include "owncloudfolder.h"
 
+
+#include <QTimer>
 #include <kdebug.h>
 
 
@@ -65,10 +67,21 @@ void OwncloudFolder::setFolderStatus(int i)
         if (d->status == Running && i == Idle) {
             //kDebug() << "updating sync time" << displayName() << QDateTime::currentDateTime();
             //setSyncTime(QDateTime::currentDateTime());
+            // Prevent flickery UI
+            QTimer::singleShot(1500, this, SLOT(slotDelayedSuccess()));
+        } else {
+            d->status = i;
+            emit folderStatusChanged();
         }
-        d->status = i;
-        emit folderStatusChanged();
 
+    }
+}
+
+void OwncloudFolder::slotDelayedSuccess()
+{
+    if (d->status == Running) {
+        d->status = Idle;
+        emit folderStatusChanged();
     }
 }
 
