@@ -172,14 +172,15 @@ PlasmaComponents.PageStack {
             if (owncloudSettings.error == OwncloudSettings.NoDaemonError) {
                 owncloudModule.state = "setup";
                 setupWizard.state = "error";
+                print("------ > No Daemon Error!")
                 print(" error daemon ");
             } else if (owncloudSettings.error == OwncloudSettings.NoConfigurationError ||
                 owncloudSettings.error == OwncloudSettings.AuthenticationError) {
                 owncloudModule.state = "setup";
                 setupWizard.state = "login";
-                print(" error to login ");
+                print(" -----> error to login ");
             } else {
-                print(" all good ");
+                print(" -----> all good ");
                 // FIXME: remove
                 owncloudModule.state = "default";
                 setupWizard.state = "default";
@@ -195,6 +196,6 @@ PlasmaComponents.PageStack {
     }
 
     Component.onCompleted: {
-
+        updateState();
     }
 }
