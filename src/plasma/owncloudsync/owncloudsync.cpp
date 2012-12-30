@@ -75,10 +75,8 @@ OwncloudSync::OwncloudSync(QObject *parent)
 void OwncloudSync::init()
 {
     d->folderMan = new Mirall::FolderMan();
-    connect( d->folderMan, SIGNAL(folderSyncStateChange(QString)),
-             this,SLOT(slotSyncStateChange(QString)));
-    connect( d->folderMan, SIGNAL(folderSyncStateChange(QNetworkReply*)),
-             this,SLOT(slotSyncStateChange(QNetworkReply)));
+    connect( d->folderMan, SIGNAL(folderSyncStateChange(const QString&)),
+             this,SLOT(slotSyncStateChange(const QString&)));
 
     //d->ocInfo->setCustomConfigHandle("mirall");
     connect(d->ocInfo,SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
