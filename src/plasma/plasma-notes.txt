@@ -96,3 +96,7 @@ Test setup:
 - InstantUpload: local doesn't exist, remote has photos
 
 
+# Build with
+
+cmakekde -DCSYNC_INCLUDE_PATH=ocsync/ 
+

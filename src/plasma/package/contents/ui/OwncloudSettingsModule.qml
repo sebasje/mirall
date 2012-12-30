@@ -137,7 +137,8 @@ PlasmaComponents.PageStack {
             opacity: folderList.opacity
             anchors { bottom: parent.bottom; right: parent.right; rightMargin: 12; }
             onClicked: {
-                owncloudSettings.checkRemoteFolder("testfoo");
+                //owncloudSettings.checkRemoteFolder("testfoo");
+                addFolder();
 /*
                 addSyncFolder.state = "localFolder";
                 owncloudModule.state = "addFolder";*/
@@ -183,6 +184,12 @@ PlasmaComponents.PageStack {
                 setupWizard.state = "default";
             }
         }
+    }
+
+    function addFolder() {
+
+        print("addFolder");
+        owncloudModule.state = "setup";
     }
 
     Component.onCompleted: {
