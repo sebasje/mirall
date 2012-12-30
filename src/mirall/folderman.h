@@ -27,7 +27,6 @@ class QSignalMapper;
 namespace Mirall {
 
 class SyncResult;
-class OwncloudSetup;
 
 class FolderMan : public QObject
 {
@@ -102,6 +101,12 @@ private:
     // finds all folder configuration files
     // and create the folders
     int setupKnownFolders();
+    void setupFavLink(const QString& folder);
+
+    // Escaping of the alias which is used in QSettings AND the file
+    // system, thus need to be escaped.
+    QString escapeAlias( const QString& ) const;
+    QString unescapeAlias( const QString& ) const;
 
     void removeFolder( const QString& );
 
@@ -109,7 +114,6 @@ private:
     Folder::Map    _folderMap;
     QHash<QString, bool> _folderEnabledMap;
     QString        _folderConfigPath;
-    OwncloudSetup *_ownCloudSetup;
     QSignalMapper *_folderChangeSignalMapper;
     QString        _currentSyncFolder;
     QStringList    _scheduleQueue;

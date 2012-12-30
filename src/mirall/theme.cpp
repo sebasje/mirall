@@ -18,11 +18,21 @@
 #include <QtCore>
 #include <QtGui>
 
+#include "mirall/miralltheme.h"
+#include "mirall/owncloudtheme.h"
+
+#include "config.h"
+
 namespace Mirall {
 
-Theme::Theme()
-{
+Theme* Theme::_instance = 0;
 
+Theme* Theme::instance() {
+    if (!_instance) {
+        _instance = new THEME_CLASS;
+        _instance->_mono = false;
+    }
+    return _instance;
 }
 
 QString Theme::statusHeaderText( SyncResult::Status status ) const
@@ -56,7 +66,7 @@ QString Theme::statusHeaderText( SyncResult::Status status ) const
 
 QString Theme::version() const
 {
-    return QString::fromLocal8Bit( MIRALL_STRINGIFY( MIRALL_VERSION ))+QLatin1String("beta1");
+    return QString::fromLocal8Bit( MIRALL_STRINGIFY( MIRALL_VERSION ));
 }
 
 QIcon Theme::trayFolderIcon( const QString& backend ) const
@@ -68,8 +78,19 @@ QIcon Theme::trayFolderIcon( const QString& backend ) const
  * helper to load a icon from either the icon theme the desktop provides or from
  * the apps Qt resources.
  */
-QIcon Theme::themeIcon( const QString& name ) const
+QIcon Theme::themeIcon( const QString& name, bool sysTray ) const
 {
+    QString flavor;
+    if (sysTray && _mono) {
+#ifdef Q_OS_MAC
+        flavor = QLatin1String("black");
+#else
+        flavor = QLatin1String("white");
+#endif
+    } else {
+        flavor = QLatin1String("colored");
+    }
+
     QIcon icon;
     if( QIcon::hasThemeIcon( name )) {
         // use from theme
@@ -78,13 +99,47 @@ QIcon Theme::themeIcon( const QString& name ) const
         QList<int> sizes;
         sizes <<16 << 24 << 32 << 48 << 64 << 128;
         foreach (int size, sizes) {
-            QString pixmapName = QString::fromLatin1(":/mirall/resources/%1-%2.png").arg(name).arg(size);
+            QString pixmapName = QString::fromLatin1(":/mirall/theme/%1/%2/%3.png").arg(flavor).arg(size).arg(name);
             if (QFile::exists(pixmapName)) {
                 icon.addFile(pixmapName, QSize(size, size));
             }
         }
+        if (icon.isNull()) {
+            foreach (int size, sizes) {
+                QString pixmapName = QString::fromLatin1(":/mirall/resources/%1-%2.png").arg(name).arg(size);
+                if (QFile::exists(pixmapName)) {
+                    icon.addFile(pixmapName, QSize(size, size));
+                }
+            }
+        }
     }
     return icon;
+}
+
+// if this option return true, the client only supports one folder to sync.
+// The Add-Button is removed accoringly.
+bool Theme::singleSyncFolder() const {
+    return false;
+}
+
+QString Theme::defaultServerFolder() const
+{
+    return QLatin1String("clientsync");
+}
+
+QString Theme::defaultClientFolder() const
+{
+    return appName();
+}
+
+void Theme::setSystrayUseMonoIcons(bool mono)
+{
+    _mono = mono;
+}
+
+bool Theme::systrayUseMonoIcons() const
+{
+    return _mono;
 }
 
 } // end namespace mirall

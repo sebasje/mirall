@@ -45,10 +45,10 @@ public:
 protected slots:
   void slotPwdStoreChanged( int );
   void slotSecureConChanged( int );
+  void handleNewOcUrl(const QString& ocUrl);
   void setupCustomization();
 private:
   Ui_OwncloudSetupPage _ui;
-
 };
 
 class OwncloudWizard: public QWizard
@@ -57,6 +57,7 @@ class OwncloudWizard: public QWizard
 public:
 
     enum {
+      Page_oCWelcome,
       Page_oCSetup,
       Page_SelectType,
       Page_Create_OC,
@@ -93,6 +94,20 @@ private:
     QString _oCUrl;
 };
 
+
+/**
+ * page for first launch only
+ */
+class OwncloudWelcomePage: public QWizardPage
+{
+    Q_OBJECT
+public:
+  OwncloudWelcomePage();
+
+  virtual int nextId() const  { return OwncloudWizard::Page_oCSetup; }
+};
+
+
 /**
  * page to ask for the type of Owncloud to connect to
  */
@@ -112,7 +127,6 @@ public:
 
 private:
   Ui_OwncloudWizardSelectTypePage _ui;
-
 };
 
 class CreateAnOwncloudPage: public QWizardPage

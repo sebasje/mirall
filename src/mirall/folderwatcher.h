@@ -30,9 +30,7 @@ class QTimer;
 
 namespace Mirall {
 
-#ifdef USE_INOTIFY
-class INotify;
-#endif
+class FolderWatcherPrivate;
 
 /**
  * Watches a folder and sub folders for changes
@@ -52,11 +50,6 @@ public:
      */
     FolderWatcher(const QString &root, QObject *parent = 0L);
     ~FolderWatcher();
-
-    /**
-     * All watched folders and subfolders
-     */
-    QStringList folders() const;
 
     /**
      * Root path being monitored
@@ -83,13 +76,6 @@ public:
     bool eventsEnabled() const;
 
     /**
-     * Enabled or disables folderChanged() events.
-     * If disabled, events are accumulated and emptied
-     * the next time a folderChanged() event happens.
-     */
-    void setEventsEnabled(bool enabled);
-
-    /**
      * Clear all pending events
      */
     void clearPendingEvents();
@@ -106,6 +92,22 @@ public:
      */
     void setEventInterval(int seconds);
 
+    QStringList ignores() const;
+public slots:
+    /**
+     * Enabled or disables folderChanged() events.
+     * If disabled, events are accumulated and emptied
+     * the next time a folderChanged() event happens.
+     */
+    void setEventsEnabled(bool enabled=true);
+
+    /**
+     * @brief setEventsEnabledDelayed - start event logging after a while
+     * @param delay     - delay time in milliseconds
+     * @param enabled   - enable the events.
+     */
+    void setEventsEnabledDelayed( int );
+
 signals:
     /**
      * Emitted when one of the paths is changed
@@ -116,32 +118,27 @@ protected:
     void setProcessTimer();
 
 protected slots:
-    void slotINotifyEvent(int mask, int cookie, const QString &path);
-    void slotAddFolderRecursive(const QString &path);
     // called when the manually process timer triggers
     void slotProcessTimerTimeout();
+    void changeDetected(const QString &f);
+
+protected:
+    QHash<QString, int> _pendingPathes;
 
 private:
     bool _eventsEnabled;
     int _eventInterval;
-#ifdef USE_INOTIFY
-    INotify *_inotify;
-#endif
+    FolderWatcherPrivate *_d;
     QString _root;
     // paths pending to notified
     // QStringList _pendingPaths;
-    QHash<QString, int> _pendingPathes;
-
     QTimer *_processTimer;
-
-    // to cancel events that belong to the same action
-    int _lastMask;
-    QString _lastPath;
     QStringList _ignores;
-
     // for the initial synchronization, without
     // any file changed
     bool _initialSyncDone;
+
+    friend class FolderWatcherPrivate;
 };
 
 }

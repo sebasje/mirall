@@ -1,4 +1,7 @@
-build
+*build*/
 *flymake*
-CMakeLists.txt.user
-qtcreator-build/*
+CMakeLists.txt.user*
+*.patch
+*~
+*.autosave
+doc/_build/*

@@ -48,7 +48,6 @@ Folder::Folder(const QString &alias, const QString &path, const QString& secondP
     QObject::connect(_pollTimer, SIGNAL(timeout()), this, SLOT(slotPollTimerTimeout()));
     _pollTimer->start();
 
-#ifdef USE_INOTIFY
     _watcher = new Mirall::FolderWatcher(path, this);
 
     MirallConfigFile cfg;
@@ -57,7 +56,6 @@ Folder::Folder(const QString &alias, const QString &path, const QString& secondP
 
     QObject::connect(_watcher, SIGNAL(folderChanged(const QStringList &)),
                      SLOT(slotChanged(const QStringList &)));
-#endif
     QObject::connect(this, SIGNAL(syncStarted()),
                      SLOT(slotSyncStarted()));
     QObject::connect(this, SIGNAL(syncFinished(const SyncResult &)),
@@ -70,16 +68,50 @@ Folder::Folder(const QString &alias, const QString &path, const QString& secondP
     _online = true;
 #endif
 
-    _pathWatcher = new QFileSystemWatcher(this);
-    _pathWatcher->addPath( _path );
-    connect(_pathWatcher, SIGNAL(directoryChanged(QString)),SLOT(slotLocalPathChanged(QString)));
-
     _syncResult.setStatus( SyncResult::NotYetStarted );
 
+    // check if the local path exists
+    checkLocalPath();
 }
 
 Folder::~Folder()
 {
+}
+
+void Folder::checkLocalPath()
+{
+    QFileInfo fi(_path);
+
+    if( fi.isDir() && fi.isReadable() ) {
+        qDebug() << "Checked local path ok";
+    } else {
+        if( !fi.exists() ) {
+            // try to create the local dir
+            QDir d(_path);
+            if( d.mkpath(_path) ) {
+                qDebug() << "Successfully created the local dir " << _path;
+            }
+        }
+        // Check directory again
+        if( !fi.exists() ) {
+            _syncResult.setErrorString(tr("Local folder %1 does not exist.").arg(_path));
+            _syncResult.setStatus( SyncResult::SetupError );
+        } else if( !fi.isDir() ) {
+            _syncResult.setErrorString(tr("%1 should be a directory but is not.").arg(_path));
+            _syncResult.setStatus( SyncResult::SetupError );
+        } else if( !fi.isReadable() ) {
+            _syncResult.setErrorString(tr("%1 is not readable.").arg(_path));
+            _syncResult.setStatus( SyncResult::SetupError );
+        }
+    }
+
+    // if all is fine, connect a FileSystemWatcher
+    if( _syncResult.status() != SyncResult::SetupError ) {
+        _pathWatcher = new QFileSystemWatcher(this);
+        _pathWatcher->addPath( _path );
+        connect(_pathWatcher, SIGNAL(directoryChanged(QString)),
+                SLOT(slotLocalPathChanged(QString)));
+    }
 }
 
 QString Folder::alias() const
@@ -89,7 +121,11 @@ QString Folder::alias() const
 
 QString Folder::path() const
 {
-    return _path;
+    QString p(_path);
+    if( ! p.endsWith(QLatin1Char('/')) ) {
+        p.append(QLatin1Char('/'));
+    }
+    return p;
 }
 
 QString Folder::secondPath() const
@@ -104,7 +140,7 @@ QString Folder::nativePath() const
 
 QString Folder::nativeSecondPath() const
 {
-    return QDir::toNativeSeparators(_secondPath);
+    return secondPath();
 }
 
 bool Folder::syncEnabled() const
@@ -115,9 +151,7 @@ bool Folder::syncEnabled() const
 void Folder::setSyncEnabled( bool doit )
 {
   _enabled = doit;
-#ifdef USE_INOTIFY
   _watcher->setEventsEnabled( doit );
-#endif
   if( doit && ! _pollTimer->isActive() ) {
       _pollTimer->start();
   }
@@ -179,12 +213,10 @@ void Folder::incrementErrorCount()
   // of the watcher is doubled.
   _errorCount++;
   if( _errorCount > 1 ) {
-#ifdef USE_INOTIFY
     int interval = _watcher->eventInterval();
     int newInt = 2*interval;
     qDebug() << "Set new watcher interval to " << newInt;
     _watcher->setEventInterval( newInt );
-#endif
     _errorCount = 0;
   }
 }
@@ -224,9 +256,7 @@ void Folder::startSync( const QStringList &pathList )
 void Folder::slotPollTimerTimeout()
 {
     qDebug() << "* Polling" << alias() << "for changes. Ignoring all pending events until now";
-#ifdef USE_INOTIFY
     _watcher->clearPendingEvents();
-#endif
     evaluateSync(QStringList());
 }
 
@@ -245,16 +275,12 @@ void Folder::slotChanged(const QStringList &pathList)
 void Folder::slotSyncStarted()
 {
     // disable events until syncing is done
-#ifdef USE_INOTIFY
     _watcher->setEventsEnabled(false);
-#endif
 }
 
 void Folder::slotSyncFinished(const SyncResult &result)
 {
-#ifdef USE_INOTIFY
-    _watcher->setEventsEnabled(true);
-#endif
+    _watcher->setEventsEnabledDelayed(2000);
 
     qDebug() << "OO folder slotSyncFinished: result: " << int(result.status()) << " local: " << result.localRunOnly();
     emit syncStateChange();
@@ -279,6 +305,16 @@ void Folder::slotLocalPathChanged( const QString& dir )
             qDebug() << "ALARM: The local path was DELETED!";
         }
     }
+}
+
+void Folder::setConfigFile( const QString& file )
+{
+    _configFile = file;
+}
+
+QString Folder::configFile()
+{
+    return _configFile;
 }
 
 void Folder::setBackend( const QString& b )

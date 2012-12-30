@@ -30,7 +30,7 @@ class SyncResult;
 class Theme
 {
 public:
-    Theme();
+    static Theme* instance();
 
     virtual QString appName() const = 0;
 
@@ -49,7 +49,7 @@ public:
     /**
       * get an sync state icon
       */
-    virtual QIcon   syncStateIcon( SyncResult::Status ) const = 0;
+    virtual QIcon   syncStateIcon( SyncResult::Status, bool sysTray = false ) const = 0;
 
     virtual QIcon   folderDisabledIcon() const = 0;
     virtual QPixmap splashScreen() const = 0;
@@ -59,11 +59,46 @@ public:
     virtual QString statusHeaderText( SyncResult::Status ) const;
     virtual QString version() const;
 
+    /**
+     * Characteristics: bool if more than one sync folder is allowed
+     */
+    virtual bool singleSyncFolder() const;
+
+    /**
+     * The default folder name without path on the server at setup time.
+     */
+    virtual QString defaultServerFolder() const;
+
+    /**
+     * The default folder name without path on the client side at setup time.
+     */
+    virtual QString defaultClientFolder() const;
+
+    /**
+     * Override to encforce a particular locale, i.e. "de" or "pt_BR"
+     */
+    virtual QString enforcedLocale() const { return QString::null; }
+
+    /**
+     * Define if the systray icons should be using mono design
+     */
+    void setSystrayUseMonoIcons(bool mono);
+
+    /**
+     * Retrieve wether to use mono icons for systray
+     */
+    bool systrayUseMonoIcons() const;
+
 protected:
-    QIcon themeIcon(const QString& name) const;
+    QIcon themeIcon(const QString& name, bool sysTray = false) const;
+    Theme() {}
 
 private:
+    Theme(Theme const&);
+    Theme& operator=(Theme const&);
 
+    static Theme* _instance;
+    bool _mono;
 
 };
 

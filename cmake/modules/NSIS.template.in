@@ -1,8 +1,11 @@
 ;ownCloud installer script.
 
-!define APPLICATION_NAME ownCloud
-!define APPLICATION_EXECUTABLE owncloud.exe
-!define APPLICATION_DOMAIN owncloud.com
+!define APPLICATION_SHORTNAME "@APPLICATION_SHORTNAME@"
+!define APPLICATION_NAME "@APPLICATION_NAME@"
+!define APPLICATION_VENDOR "@APPLICATION_VENDOR@"
+!define APPLICATION_EXECUTABLE "@APPLICATION_EXECUTABLE@.exe"
+!define APPLICATION_DOMAIN "@APPLICATION_DOMAIN@"
+!define APPLICATION_LICENSE "@APPLICATION_LICENSE@"
 
 !define MUI_FINISHPAGE_LINK_LOCATION "http://www.${APPLICATION_DOMAIN}"
 
@@ -10,11 +13,14 @@
 ;-----------------------------------------------------------------------------
 ; Some installer script options (comment-out options not required)
 ;-----------------------------------------------------------------------------
-;!define OPTION_LICENSE_AGREEMENT
+!if "@APPLICATION_LICENSE@" != ""
+  !define OPTION_LICENSE_AGREEMENT
+!endif
 !define OPTION_UAC_PLUGIN_ENHANCED
 !define OPTION_SECTION_SC_START_MENU
 !define OPTION_SECTION_SC_DESKTOP
 !define OPTION_SECTION_SC_QUICK_LAUNCH
+!define OPTION_SECTION_SC_AUTOSTART
 !define OPTION_FINISHPAGE
 !define OPTION_FINISHPAGE_LAUNCHER
 ; !define OPTION_FINISHPAGE_RELEASE_NOTES
@@ -37,7 +43,7 @@
 !define CSYNC_PLUGIN_DIR "@CSYNC_PLUGIN_DIR@"
 !define CSYNC_CONFIG_DIR "@CSYNC_CONFIG_DIR@"
 
-!define NSI_PATH "${SOURCE_PATH}/admin/win/nsi"
+!define NSI_PATH "${source_path}/admin/win/nsi"
 
 ;-----------------------------------------------------------------------------
 ; Installer version
@@ -57,7 +63,7 @@
 ; Initial installer setup and definitions.
 ;-----------------------------------------------------------------------------
 Name "@CPACK_NSIS_PACKAGE_NAME@"
-Caption "${APPLICATION_NAME} Installer"
+Caption "${APPLICATION_NAME} Setup"
 BrandingText "${APPLICATION_NAME} ${VERSION}  -- ${BUILD_TIME}"
 OutFile "@CPACK_TOPLEVEL_DIRECTORY@/@CPACK_OUTPUT_FILE_NAME@"
 InstallDir "$PROGRAMFILES\@CPACK_PACKAGE_INSTALL_DIRECTORY@"
@@ -89,7 +95,7 @@ ReserveFile "${NSISDIR}\Plugins\InstallOptions.dll"
 ; Memento selections stored in registry.
 ;-----------------------------------------------------------------------------
 !define MEMENTO_REGISTRY_ROOT HKLM
-!define MEMENTO_REGISTRY_KEY Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_NAME}
+!define MEMENTO_REGISTRY_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_NAME}"
 
 ;-----------------------------------------------------------------------------
 ; Modern User Interface (MUI) defintions and setup.
@@ -97,13 +103,13 @@ ReserveFile "${NSISDIR}\Plugins\InstallOptions.dll"
 !define MUI_ABORTWARNING
 !define MUI_ICON ${NSI_PATH}\installer.ico
 !define MUI_UNICON ${NSI_PATH}\installer.ico
-!define MUI_WELCOMEFINISHPAGE_BITMAP ${NSI_PATH}\welcome_oc.bmp
-!define MUI_WELCOMEPAGE_TITLE "@CPACK_PACKAGE_NAME@ ${VERSION} Setup$\r$\nInstaller"
+!define MUI_WELCOMEFINISHPAGE_BITMAP ${NSI_PATH}\welcome_${APPLICATION_SHORTNAME}.bmp
+!define MUI_WELCOMEPAGE_TITLE "Welcome to the @CPACK_PACKAGE_NAME@ ${VERSION} Setup Wizard"
 !define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation.$\r$\n$\r$\n$_CLICK"
 !define MUI_HEADERIMAGE
-!define MUI_HEADERIMAGE_BITMAP ${NSI_PATH}\page_header_oc.bmp
+!define MUI_HEADERIMAGE_BITMAP ${NSI_PATH}\page_header_${APPLICATION_SHORTNAME}.bmp
 !define MUI_COMPONENTSPAGE_SMALLDESC
-!define MUI_FINISHPAGE_TITLE "@CPACK_PACKAGE_NAME@ Install Completed"
+!define MUI_FINISHPAGE_TITLE "@CPACK_PACKAGE_NAME@ Setup Completed"
 !define MUI_FINISHPAGE_LINK "Click here to visit the @CPACK_PACKAGE_NAME@ website."
 !define MUI_FINISHPAGE_NOREBOOTSUPPORT
 !ifdef OPTION_FINISHPAGE_RELEASE_NOTES
@@ -122,7 +128,7 @@ ReserveFile "${NSISDIR}\Plugins\InstallOptions.dll"
 ;-----------------------------------------------------------------------------
 !insertmacro MUI_PAGE_WELCOME
 !ifdef OPTION_LICENSE_AGREEMENT
-   !insertmacro MUI_PAGE_LICENSE "LICENSE.txt"
+   !insertmacro MUI_PAGE_LICENSE "${source_path}/${APPLICATION_LICENSE}"
 !endif
 Page custom PageReinstall PageLeaveReinstall
 !insertmacro MUI_PAGE_COMPONENTS
@@ -264,7 +270,7 @@ FunctionEnd
 #   INSTALLER SECTIONS                                                       #
 #                                                                            #
 ##############################################################################
-Section "${APPLICATION_NAME}" SEC_OWNCLOUD_PLAYER
+Section "${APPLICATION_NAME}" SEC_OWNCLOUD
    SectionIn 1 2 3 RO
    SetDetailsPrint listonly
 
@@ -302,7 +308,7 @@ Section "${APPLICATION_NAME}" SEC_OWNCLOUD_PLAYER
         ; FIXME: fix installation dir of module, currently needs manual copying to
         ; /usr/i686-w64-mingw32/sys-root/mingw/bin/csync_modules/
 
-        File "${CSYNC_PLUGIN_DIR}/csync_owncloud.dll"
+        File "${CSYNC_PLUGIN_DIR}/ocsync_owncloud.dll"
         SetOutPath "$INSTDIR"
    !endif
 
@@ -318,7 +324,10 @@ Section "${APPLICATION_NAME}" SEC_OWNCLOUD_PLAYER
    File "${QT_DLL_PATH}\QtNetwork4.dll"
    File "${QT_DLL_PATH}\QtXml4.dll"
 
-   File "${CSYNC_LIBRARY_DIR}/libcsync.dll"
+   ;QtKeyChain stuff
+   File "${MING_BIN}\libqtkeychain.dll"
+
+   File "${CSYNC_LIBRARY_DIR}/libocsync.dll"
    File "${MING_BIN}\libsqlite3-0.dll"
    File "${MING_BIN}\libiniparser.dll"
    File "${MING_BIN}\libdl.dll"
@@ -347,8 +356,8 @@ Section "${APPLICATION_NAME}" SEC_OWNCLOUD_PLAYER
    File "${MING_BIN}\libssl-8.dll"
 
    ; CSync configs
-   File "${CSYNC_CONFIG_DIR}/csync.conf"
-   File "${SOURCE_PATH}/exclude.lst"
+   File "${CSYNC_CONFIG_DIR}/ocsync.conf"
+   File "${SOURCE_PATH}/sync-exclude.lst"
 
 SectionEnd
 
@@ -356,7 +365,7 @@ SectionGroup "Shortcuts"
 
 !ifdef OPTION_SECTION_SC_START_MENU
    ${MementoSection} "Start Menu Program Group" SEC_START_MENU
-      SectionIn 1 2
+      SectionIn 1 2 3
       SetDetailsPrint textonly
       DetailPrint "Adding shortcuts for the ${APPLICATION_NAME} program group to the Start Menu."
       SetDetailsPrint listonly
@@ -393,15 +402,27 @@ SectionGroup "Shortcuts"
 
 SectionGroupEnd
 
+!ifdef OPTION_SECTION_SC_AUTOSTART
+   ${MementoSection} "Autostart" SEC_AUTOSTART
+      SectionIn 1 2
+      SetDetailsPrint textonly
+      DetailPrint "Creating Windows Start Entry"
+      SetDetailsPrint listonly
+      WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Run" \
+               "${APPLICATION_NAME}" "$INSTDIR\${APPLICATION_EXECUTABLE}" 
+  ${MementoSectionEnd}
+!endif
+
 ${MementoSectionDone}
 
 ; Installer section descriptions
 ;--------------------------------
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 !insertmacro MUI_DESCRIPTION_TEXT ${SEC_APPLICATION} "${APPLICATION_NAME} essentials."
-!insertmacro MUI_DESCRIPTION_TEXT ${SEC_START_MENU} "{APPLICATION_NAME} program group."
-!insertmacro MUI_DESCRIPTION_TEXT ${SEC_DESKTOP} "Desktop shortcut for {APPLICATION_NAME}."
-!insertmacro MUI_DESCRIPTION_TEXT ${SEC_QUICK_LAUNCH} "Quick Launch shortcut for {APPLICATION_NAME}."
+!insertmacro MUI_DESCRIPTION_TEXT ${SEC_START_MENU} "${APPLICATION_NAME} program group."
+!insertmacro MUI_DESCRIPTION_TEXT ${SEC_DESKTOP} "Desktop shortcut for ${APPLICATION_NAME}."
+!insertmacro MUI_DESCRIPTION_TEXT ${SEC_QUICK_LAUNCH} "Quick Launch shortcut for ${APPLICATION_NAME}."
+!insertmacro MUI_DESCRIPTION_TEXT ${SEC_QUICK_AUTOSTART} "Register ${APPLICATION_NAME} to run on Windows startup."
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 Section -post
@@ -428,7 +449,7 @@ Section -post
    WriteRegExpandStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_NAME}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
    WriteRegExpandStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_NAME}" "InstallLocation" "$INSTDIR"
    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_NAME}" "DisplayName" "${APPLICATION_NAME}"
-   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_NAME}" "Publisher" "${APPLICATION_DOMAIN}"
+   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_NAME}" "Publisher" "${APPLICATION_VENDOR}"
    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_NAME}" "DisplayIcon" "$INSTDIR\Uninstall.exe,0"
    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_NAME}" "DisplayVersion" "${VERSION}"
    WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_NAME}" "VersionMajor" "${VER_MAJOR}"
@@ -440,7 +461,7 @@ Section -post
 
 
    SetDetailsPrint textonly
-   DetailPrint "Finsihed."
+   DetailPrint "Finished."
 SectionEnd
 
 ##############################################################################
@@ -455,7 +476,7 @@ Var UnPageUserAppDataCheckbox_State
 Var UnPageUserAppDataEditBox
 
 Function un.UnPageUserAppData
-   !insertmacro MUI_HEADER_TEXT "Uninstall ${APPLICATION_DOMAIN}" "Remove ${APPLICATION_DOMAIN}'s data folder from your computer."
+   !insertmacro MUI_HEADER_TEXT "Uninstall ${APPLICATION_NAME}" "Remove ${APPLICATION_NAME}'s data folder from your computer."
    nsDialogs::Create /NOUNLOAD 1018
    Pop $UnPageUserAppDataDialog
 
@@ -463,10 +484,10 @@ Function un.UnPageUserAppData
       Abort
    ${EndIf}
 
-   ${NSD_CreateLabel} 0 0 100% 12u "Do you want to delete ${APPLICATION_DOMAIN}'s data folder?"
+   ${NSD_CreateLabel} 0 0 100% 12u "Do you want to delete ${APPLICATION_NAME}'s data folder?"
    Pop $0
 
-   ${NSD_CreateText} 0 13u 100% 12u "$LOCALAPPDATA\${APPLICATION_DOMAIN}"
+   ${NSD_CreateText} 0 13u 100% 12u "$LOCALAPPDATA\${APPLICATION_NAME}"
    Pop $UnPageUserAppDataEditBox
    SendMessage $UnPageUserAppDataEditBox ${EM_SETREADONLY} 1 0
 
@@ -481,6 +502,10 @@ FunctionEnd
 
 Function un.UnPageUserAppDataLeave
    ${NSD_GetState} $UnPageUserAppDataCheckbox $UnPageUserAppDataCheckbox_State
+FunctionEnd
+
+Function un.EnsureOwncloudShutdown
+   !insertmacro CheckAndConfirmEndProcess "${APPLICATION_EXECUTABLE}"
 FunctionEnd
 
 Section Uninstall
@@ -499,6 +524,11 @@ Section Uninstall
    DeleteRegKey HKLM "Software\${APPLICATION_NAME}"
 
    DeleteRegKey HKCR "${APPLICATION_NAME}"
+
+   ;Windows Start entry
+   !ifdef OPTION_SECTION_SC_AUTOSTART
+      DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "${APPLICATION_NAME}"
+   !endif
 
    ;Start menu shortcuts.
    !ifdef OPTION_SECTION_SC_START_MENU
@@ -528,7 +558,7 @@ Section Uninstall
    ${EndIf}
 
    SetDetailsPrint textonly
-   DetailPrint "Finsihed."
+   DetailPrint "Finshed."
 SectionEnd
 
 ##############################################################################
@@ -629,6 +659,9 @@ Function un.onInit
    StrCmp $R0 0 +3
       MessageBox MB_OK|MB_ICONEXCLAMATION "This uninstaller is already running."
       Abort
+
+   ;Shutdown ${APPLICATION_NAME} in order to remove locked files.
+   Call un.EnsureOwncloudShutdown
 FunctionEnd
 
 Function un.onUnInstSuccess

@@ -38,7 +38,10 @@ public:
 
     ~OwncloudSetupWizard();
 
-    void startWizard( );
+    /**
+     * @intro wether or not to show the intro wizard page
+     */
+    void startWizard(bool intro = false);
 
     void installServer();
 
@@ -76,6 +79,8 @@ protected slots:
     void slotInstallOCServer();
     void slotConnectToOCUrl( const QString& );
     void slotCreateOCLocalhost();
+
+    void slotCreateRemoteFolder(bool);
 
 private slots:
     void slotOwnCloudFound( const QString&, const QString&, const QString&, const QString& );

@@ -4,13 +4,35 @@ project(mirall)
 set(PACKAGE "mirall")
 set( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules )
 
+if ( EXISTS ${CMAKE_SOURCE_DIR}/OEM.cmake )
+     include ( ${CMAKE_SOURCE_DIR}/OEM.cmake )
+else ()
+     include ( ${CMAKE_SOURCE_DIR}/OWNCLOUD.cmake )
+endif()
+
 include(${CMAKE_SOURCE_DIR}/VERSION.cmake)
 configure_file( ${CMAKE_SOURCE_DIR}/src/mirall/version.h.in "${CMAKE_CURRENT_BINARY_DIR}/src/mirall/version.h" )
 include_directories(BEFORE "${CMAKE_CURRENT_BINARY_DIR}/src/mirall/")
 
 include(GNUInstallDirs)
+
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+
+# if we cannot get it from git, directly try .tag (packages)
+# this will work if the tar balls have been properly created
+# via git-archive.
+if (${GIT_SHA1} STREQUAL "GITDIR-NOTFOUND")
+    file(READ ${CMAKE_SOURCE_DIR}/.tag sha1_candidate)
+    string(REPLACE "\n" "" sha1_candidate ${sha1_candidate})
+    if (NOT ${sha1_candidate} STREQUAL "$Format:%H$")
+        message("${sha1_candidate}")
+        set (GIT_SHA1 "${sha1_candidate}")
+    endif()
+endif()
+
 ## stupid, we should upstream this
-if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr")
+if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT CMAKE_INSTALL_SYSCONFDIR)
     set(CMAKE_INSTALL_SYSCONFDIR "/etc")
 endif()
 
@@ -19,7 +41,7 @@ endif()
 # BUILD_OWNCLOUD_OSX_BUNDLE was not initialized OR set to true on OSX
 if(APPLE AND (NOT DEFINED BUILD_OWNCLOUD_OSX_BUNDLE OR BUILD_OWNCLOUD_OSX_BUNDLE))
     set(BUILD_OWNCLOUD_OSX_BUNDLE ON)
-    set(OWNCLOUD_OSX_BUNDLE "owncloud.app")
+    set(OWNCLOUD_OSX_BUNDLE "${APPLICATION_EXECUTABLE}.app")
 
 # BUILD_OWNCLOUD_OSX_BUNDLE was disabled on OSX
 elseif(APPLE AND NOT BUILD_OWNCLOUD_OSX_BUNDLE)
@@ -31,24 +53,23 @@ else()
 endif()
 #####
 
+#### find libs
 find_package(Qt4 4.6.0 COMPONENTS QtCore QtGui QtXml QtNetwork QtTest REQUIRED )
 find_package(Csync)
+if(UNIX)
+find_package(INotify REQUIRED)
+else()
 find_package(INotify)
+endif()
+find_package(Sphinx)
+find_package(PdfLatex)
+find_package(QtKeychain)
 
 set(WITH_CSYNC CSYNC_FOUND)
+set(WITH_QTKEYCHAIN ${QTKEYCHAIN_FOUND})
 set(USE_INOTIFY ${INOTIFY_FOUND})
 
 configure_file(config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-
-
-macro(add_tests)
-foreach( loop_var ${ARGV} )
-  qt4_automoc(test${loop_var}.cpp)
-  add_executable(test${loop_var} test${loop_var}.cpp)
-  target_link_libraries(test${loop_var} ${QT_LIBRARIES} mirall_static)
-  add_test(test${loop_var} ${CMAKE_CURRENT_BINARY_DIR}/test${loop_var} --catch_system_errors=no)
-endforeach( loop_var )
-endmacro(add_tests)
 
 set(CPACK_SOURCE_IGNORE_FILES
   # hidden files
@@ -71,9 +92,6 @@ set(CPACK_SOURCE_IGNORE_FILES
 
 include(OwnCloudCPack.cmake)
 
-include(CTest)
-enable_testing()
-
 #
 # This cmake builds two targets (aka apps), mirall and owncloud. For the owncloud
 # target, OWNCLOUD_CLIENT needs to be a compile flag. It is set in src/CMakeLists.txt
@@ -88,13 +106,16 @@ file( GLOB TRANS_FILES ${CMAKE_SOURCE_DIR}/translations/mirall_*.ts)
 set(TRANSLATIONS ${TRANS_FILES})
 
 add_subdirectory(src)
+add_subdirectory(doc)
+
 if(UNIT_TESTING)
+    include(CTest)
+    enable_testing()
     add_subdirectory(test)
 endif(UNIT_TESTING)
 
 if(BUILD_OWNCLOUD_OSX_BUNDLE)
-    install( FILES exclude.lst DESTINATION ${OWNCLOUD_OSX_BUNDLE}/Contents/Resources )
+    configure_file(sync-exclude.lst ${OWNCLOUD_OSX_BUNDLE}/Contents/Resources/sync-exclude.lst COPYONLY)
 else()
-    install( FILES exclude.lst DESTINATION ${CMAKE_INSTALL_SYSCONFDIR} )
+    install( FILES sync-exclude.lst DESTINATION ${CMAKE_INSTALL_SYSCONFDIR} )
 endif()
-

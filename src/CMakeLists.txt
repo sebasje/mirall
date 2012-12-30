@@ -3,6 +3,7 @@ include(${QT_USE_FILE})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 QT4_ADD_RESOURCES ( MIRALL_RC_SRC ../mirall.qrc)
+QT4_ADD_RESOURCES ( MIRALL_RC_SRC ../theme.qrc)
 
 set(mirall_UI
 mirall/folderwizardsourcepage.ui
@@ -16,7 +17,7 @@ mirall/createanowncloudpage.ui
 mirall/owncloudftpaccesspage.ui
 mirall/owncloudwizardresultpage.ui
 mirall/owncloudcredentialspage.ui
-mirall/sslerrorsdialog.ui
+mirall/sslerrordialog.ui
 mirall/proxydialog.ui
 )
 
@@ -61,6 +62,7 @@ set(libsync_SRCS
     mirall/unisonfolder.cpp
     mirall/networklocation.cpp
     mirall/mirallconfigfile.cpp
+    mirall/credentialstore.cpp
     mirall/csyncfolder.cpp
     mirall/owncloudfolder.cpp
     #mirall/owncloudinfo.cpp
@@ -69,6 +71,9 @@ set(libsync_SRCS
     mirall/theme.cpp
     mirall/owncloudtheme.cpp
     mirall/miralltheme.cpp
+    mirall/owncloudinfo.cpp
+    mirall/logger.cpp
+    mirall/utility.cpp
 )
 
 
@@ -81,20 +86,55 @@ set(libsync_HEADERS
     mirall/csyncfolder.h
     mirall/owncloudfolder.h
     mirall/csyncthread.h
+    mirall/owncloudinfo.h
+    mirall/credentialstore.h
+    mirall/logger.h
 )
 
 IF( INOTIFY_FOUND )
     set(libsync_SRCS ${libsync_SRCS} mirall/inotify.cpp)
+    set(libsync_SRCS ${libsync_SRCS} mirall/folderwatcher_inotify.cpp)
     set(libsync_HEADERS ${libsync_HEADERS} mirall/inotify.h)
+    set(libsync_HEADERS ${libsync_HEADERS} mirall/folderwatcher_inotify.h)
 ENDIF()
+IF( WIN32 ) 
+    set(libsync_SRCS ${libsync_SRCS} mirall/folderwatcher_win.cpp)
+    set(libsync_HEADERS ${libsync_HEADERS} mirall/folderwatcher_win.h)
+ENDIF()
+IF( APPLE )
+    set(libsync_SRCS ${libsync_SRCS} mirall/folderwatcher_mac.cpp)
+ENDIF()
+
 
 qt4_wrap_cpp(syncMoc ${libsync_HEADERS})
 
+list(APPEND libsync_LINK_TARGETS
+    ${QT_LIBRARIES}
+    ${CSYNC_LIBRARY}
+)
+
+if(QTKEYCHAIN_FOUND)
+    list(APPEND libsync_LINK_TARGETS ${QTKEYCHAIN_LIBRARY})
+    include_directories(${QTKEYCHAIN_INCLUDE_DIR})
+endif()
+
 add_library(mirallsync   SHARED ${libsync_SRCS} ${syncMoc})
 add_library(owncloudsync SHARED ${libsync_SRCS} ${syncMoc})
-#set_target_properties( owncloudsync PROPERTIES COMPILE_DEFINITIONS OWNCLOUD_CLIENT)
-target_link_libraries(mirallsync ${QT_LIBRARIES} ${CSYNC_LIBRARY} )
-target_link_libraries(owncloudsync ${QT_LIBRARIES} ${CSYNC_LIBRARY} )
+#<<<<<<< HEAD
+##set_target_properties( owncloudsync PROPERTIES COMPILE_DEFINITIONS OWNCLOUD_CLIENT)
+#target_link_libraries(mirallsync ${QT_LIBRARIES} ${CSYNC_LIBRARY} )
+#target_link_libraries(owncloudsync ${QT_LIBRARIES} ${CSYNC_LIBRARY} )
+#=======
+set_target_properties( owncloudsync PROPERTIES COMPILE_DEFINITIONS OWNCLOUD_CLIENT)
+
+target_link_libraries(mirallsync ${libsync_LINK_TARGETS} )
+target_link_libraries(owncloudsync ${libsync_LINK_TARGETS} )
+
+if ( APPLE )
+    target_link_libraries(mirallsync /System/Library/Frameworks/CoreServices.framework)
+    target_link_libraries(owncloudsync /System/Library/Frameworks/CoreServices.framework)
+endif()
+#>>>>>>> master
 
 if(NOT BUILD_OWNCLOUD_OSX_BUNDLE)
     install(TARGETS mirallsync owncloudsync
@@ -112,7 +152,6 @@ set(mirall_SRCS
     mirall/statusdialog.cpp
     mirall/owncloudwizard.cpp
     mirall/owncloudsetupwizard.cpp
-    mirall/owncloudinfo.cpp
     mirall/updatedetector.cpp
     mirall/occinfo.cpp
     mirall/sslerrordialog.cpp
@@ -123,7 +162,6 @@ set(mirall_SRCS
 set(mirall_HEADERS
     mirall/application.h
     mirall/folderwizard.h
-    mirall/owncloudinfo.h
     mirall/owncloudsetupwizard.h
     mirall/owncloudwizard.h
     mirall/statusdialog.h
@@ -176,9 +214,9 @@ if(NOT BUILD_OWNCLOUD_OSX_BUNDLE)
 
     # we may not add MACOSX_BUNDLE here, if not building one
 
-    # add_executable(owncloud main.cpp ${final_src})
-    add_executable(owncloud WIN32 main.cpp ${final_src})
-    set_target_properties( owncloud PROPERTIES COMPILE_DEFINITIONS OWNCLOUD_CLIENT) 
+    # add_executable( ${APPLICATION_EXECUTABLE} main.cpp ${final_src})
+    add_executable( ${APPLICATION_EXECUTABLE} WIN32 main.cpp ${final_src})
+    set_target_properties( ${APPLICATION_EXECUTABLE} PROPERTIES COMPILE_DEFINITIONS OWNCLOUD_CLIENT)
 
     # mirall is not built for the bundle
     add_executable( mirall WIN32 main.cpp ${final_src})
@@ -216,25 +254,29 @@ else()
     set(MACOSX_BUNDLE_ICON_FILE "ownCloud.icns")
 
     # we must add MACOSX_BUNDLE only if building a bundle
-    add_executable(owncloud WIN32 MACOSX_BUNDLE main.cpp ${final_src})
-    set_target_properties( owncloud PROPERTIES COMPILE_DEFINITIONS OWNCLOUD_CLIENT)
+    add_executable( ${APPLICATION_EXECUTABLE} WIN32 MACOSX_BUNDLE main.cpp ${final_src})
+    set_target_properties( ${APPLICATION_EXECUTABLE} PROPERTIES COMPILE_DEFINITIONS OWNCLOUD_CLIENT)
 
     #FIXME: hardcoded path
-    install(FILES /usr/local/lib/csync-0/csync_owncloud.so DESTINATION ${OWNCLOUD_OSX_BUNDLE}/Contents/Plugins)
+    if ( EXISTS ${CSYNC_BINARY_DIR}/modules/ocsync_owncloud.so )
+        install(FILES ${CSYNC_BINARY_DIR}/modules/ocsync_owncloud.so DESTINATION ${OWNCLOUD_OSX_BUNDLE}/Contents/Plugins)
+    else()
+        install(FILES /usr/local/lib/ocsync-0/ocsync_owncloud.so DESTINATION ${OWNCLOUD_OSX_BUNDLE}/Contents/Plugins)
+    endif()
     install(FILES ${mirall_I18N} DESTINATION ${OWNCLOUD_OSX_BUNDLE}/Contents/translations)
 
     list(APPEND dirs "/usr/local/lib")
 endif()
 
 
-set_target_properties( owncloud PROPERTIES
+set_target_properties( ${APPLICATION_EXECUTABLE} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY  ${BIN_OUTPUT_DIRECTORY}
 )
-target_link_libraries(owncloud ${QT_LIBRARIES} )
-target_link_libraries(owncloud owncloudsync)
-target_link_libraries(owncloud ${CSYNC_LIBRARY})
+target_link_libraries( ${APPLICATION_EXECUTABLE} ${QT_LIBRARIES} )
+target_link_libraries( ${APPLICATION_EXECUTABLE} owncloudsync )
+target_link_libraries( ${APPLICATION_EXECUTABLE} ${CSYNC_LIBRARY} )
 
-install(TARGETS owncloud
+install(TARGETS ${APPLICATION_EXECUTABLE}
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
@@ -245,7 +287,7 @@ install(TARGETS owncloud
 # currently it needs to be done because the code right above needs to be executed no matter
 # if building a bundle or not and the install_qt4_executable needs to be called afterwards
 if(BUILD_OWNCLOUD_OSX_BUNDLE)
-    install_qt4_executable(${OWNCLOUD_OSX_BUNDLE} "" "${OWNCLOUD_OSX_BUNDLE}/Contents/Plugins/csync_owncloud.so" ${dirs})
+    install_qt4_executable(${OWNCLOUD_OSX_BUNDLE} "" "${OWNCLOUD_OSX_BUNDLE}/Contents/Plugins/ocsync_owncloud.so" ${dirs})
 endif()
 
 find_program(KRAZY2_EXECUTABLE krazy2)

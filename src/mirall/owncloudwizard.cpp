@@ -14,6 +14,7 @@
  */
 #include "mirall/owncloudwizard.h"
 #include "mirall/mirallconfigfile.h"
+#include "mirall/theme.h"
 
 #include <QDebug>
 #include <QDesktopServices>
@@ -54,9 +55,31 @@ void setupCustomMedia( QVariant variant, QLabel *label )
 // ======================================================================
 
 
+OwncloudWelcomePage::OwncloudWelcomePage()
+{
+    setTitle(tr("Welcome to %1").arg(Theme::instance()->appName()));
+
+    QVBoxLayout *lay = new QVBoxLayout(this);
+    QLabel *content = new QLabel;
+    lay->addWidget(content, 100, Qt::AlignTop);
+    content->setAlignment(Qt::AlignTop);
+    content->setTextFormat(Qt::RichText);
+    content->setWordWrap(true);
+    content->setText(tr("<p>In order to connect to your %1 server, you need to provide the server address "
+                        "as well as your credentials.</p><p>This wizard will guide you through the process.<p>"
+                        "<p>If you have not received this information, please contact your %1 hosting provider.</p>")
+                     .arg(Theme::instance()->appName()));
+}
+
+
 OwncloudSetupPage::OwncloudSetupPage()
 {
     _ui.setupUi(this);
+
+    setTitle(tr("Create the %1 Connection").arg(Theme::instance()->appName()));
+
+    connect(_ui.leUrl, SIGNAL(textChanged(QString)), SLOT(handleNewOcUrl(QString)));
+
     registerField( QLatin1String("OCUrl"), _ui.leUrl );
     registerField( QLatin1String("OCUser"),   _ui.leUsername );
     registerField( QLatin1String("OCPasswd"), _ui.lePassword);
@@ -73,11 +96,6 @@ OwncloudSetupPage::OwncloudSetupPage()
 
     _ui.cbConnectOC->hide();
     setupCustomization();
-
-#if QT_VERSION >= 0x040700
-    _ui.leUsername->setPlaceholderText(tr("john"));
-    _ui.lePassword->setPlaceholderText(tr("secret"));
-#endif
 }
 
 OwncloudSetupPage::~OwncloudSetupPage()
@@ -147,6 +165,27 @@ void OwncloudSetupPage::slotSecureConChanged( int state )
     }
 }
 
+void OwncloudSetupPage::handleNewOcUrl(const QString& ocUrl)
+{
+    QString url = ocUrl;
+    int len = 0;
+    if (url.startsWith(QLatin1String("https://"))) {
+        _ui.cbSecureConnect->setChecked(true);
+        len = 8;
+    }
+    if (url.startsWith(QLatin1String("http://"))) {
+        _ui.cbSecureConnect->setChecked(false);
+        len = 7;
+    }
+    if( len ) {
+        int pos = _ui.leUrl->cursorPosition();
+        url.remove(0, len);
+        _ui.leUrl->setText(url);
+        _ui.leUrl->setCursorPosition(qMax(0, pos-len));
+
+    }
+}
+
 bool OwncloudSetupPage::isComplete() const
 {
     if( _ui.leUrl->text().isEmpty() ) return false;
@@ -159,8 +198,6 @@ bool OwncloudSetupPage::isComplete() const
 
 void OwncloudSetupPage::initializePage()
 {
-    QString user = QString::fromLocal8Bit(qgetenv( "USER" ));
-    _ui.leUsername->setText( user );
 }
 
 int OwncloudSetupPage::nextId() const
@@ -240,11 +277,6 @@ OwncloudCredentialsPage::OwncloudCredentialsPage()
     connect( _ui.OCPasswdEdit, SIGNAL(textChanged(QString)), this, SIGNAL(completeChanged()));
 
     connect( _ui.cbPwdNoLocalStore, SIGNAL(stateChanged(int)), this, SLOT(slotPwdStoreChanged(int)));
-
-#if QT_VERSION >= 0x040700
-    _ui.OCUserEdit->setPlaceholderText(tr("john"));
-    _ui.OCPasswdEdit->setPlaceholderText(tr("secret"));
-#endif
 }
 
 OwncloudCredentialsPage::~OwncloudCredentialsPage()
@@ -267,8 +299,6 @@ bool OwncloudCredentialsPage::isComplete() const
 
 void OwncloudCredentialsPage::initializePage()
 {
-    QString user = QString::fromLocal8Bit(qgetenv( "USER" ));
-    _ui.OCUserEdit->setText( user );
 }
 
 int OwncloudCredentialsPage::nextId() const
@@ -289,8 +319,6 @@ OwncloudFTPAccessPage::OwncloudFTPAccessPage()
 
 #if QT_VERSION >= 0x040700
     _ui.ftpUrlEdit->setPlaceholderText(tr("ftp.mydomain.org"));
-    _ui.ftpUserEdit->setPlaceholderText(tr("john"));
-    _ui.ftpPasswdEdit->setPlaceholderText(tr("secret"));
 #endif
 }
 
@@ -413,7 +441,8 @@ void OwncloudWizardResultPage::appendResultText( const QString& msg, OwncloudWiz
 
 void OwncloudWizardResultPage::showOCUrlLabel( const QString& url, bool show )
 {
-  _ui.ocLinkLabel->setText( tr("Congratulations! Your <a href=\"%1\" title=\"%1\">new ownCloud</a> is now up and running!").arg(url) );
+  _ui.ocLinkLabel->setText( tr("Congratulations! Your <a href=\"%1\" title=\"%1\">new %2</a> is now up and running!")
+		  .arg(url).arg( Theme::instance()->appName()));
   _ui.ocLinkLabel->setOpenExternalLinks( true );
 
   if( show ) {
@@ -445,6 +474,7 @@ OwncloudWizard::OwncloudWizard(QWidget *parent)
     : QWizard(parent)
 {
 #ifdef OWNCLOUD_CLIENT
+    setPage(Page_oCWelcome,      new OwncloudWelcomePage() );
     setPage(Page_oCSetup,        new OwncloudSetupPage() );
 #else
     setPage(Page_SelectType,     new OwncloudWizardSelectTypePage() );
@@ -465,8 +495,7 @@ OwncloudWizard::OwncloudWizard(QWidget *parent)
 
 QString OwncloudWizard::ocUrl() const
 {
-    QString url = field("OCUrl").toString();
-
+    QString url = field("OCUrl").toString().simplified();
     if( field("secureConnect").toBool() ) {
         url.prepend(QLatin1String("https://"));
     } else {

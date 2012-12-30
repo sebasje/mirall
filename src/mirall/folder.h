@@ -21,6 +21,7 @@
 #include <QString>
 #include <QStringList>
 #include <QHash>
+#include <QTimer>
 
 #if QT_VERSION >= 0x040700
 #include <QNetworkConfigurationManager>
@@ -29,15 +30,12 @@
 #include "mirall/syncresult.h"
 
 class QAction;
-class QTimer;
 class QIcon;
 class QFileSystemWatcher;
 
 namespace Mirall {
 
-#ifdef USE_INOTIFY
 class FolderWatcher;
-#endif
 
 class Folder : public QObject
 {
@@ -138,6 +136,12 @@ public:
      QString backend() const;
 
      /**
+      * set the config file name.
+      */
+     void setConfigFile( const QString& );
+     QString configFile();
+
+     /**
       * This is called if the sync folder definition is removed. Do cleanups here.
       */
      virtual void wipe();
@@ -178,9 +182,7 @@ signals:
     void scheduleToSync( const QString& );
 
 protected:
-#ifdef USE_INOTIFY
     FolderWatcher *_watcher;
-#endif
     int _errorCount;
     SyncResult _syncResult;
 
@@ -192,11 +194,14 @@ private:
      */
     void evaluateSync(const QStringList &pathList);
 
+    virtual void checkLocalPath();
+
     QString   _path;
     QString   _secondPath;
     QString   _alias;
     bool      _onlyOnlineEnabled;
     bool      _onlyThisLANEnabled;
+    QString   _configFile;
 
     QFileSystemWatcher *_pathWatcher;
 

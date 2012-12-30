@@ -16,6 +16,8 @@
 #include "mirall/folder.h"
 #include "mirall/theme.h"
 #include "mirall/owncloudinfo.h"
+#include "mirall/mirallconfigfile.h"
+#include "mirall/credentialstore.h"
 
 #include <QtCore>
 #include <QtGui>
@@ -71,20 +73,29 @@ QSize FolderViewDelegate::sizeHint(const QStyleOptionViewItem & option ,
   QFontMetrics fm(font);
   QFontMetrics aliasFm(aliasFont);
 
+  int margin = aliasFm.height()/2;
+
   w = 8 + fm.boundingRect( p ).width();
 
   // calc height
-  int h = aliasFm.height()/2;  // margin to top
+
+  int h = margin;  // margin to top
   h += aliasFm.height();       // alias
   h += fm.height()/2;          // between alias and local path
   h += fm.height();            // local path
   h += fm.height()/2;          // between local and remote path
   h += fm.height();            // remote path
-  h += aliasFm.height()/2;     // bottom margin
+  h += margin;     // bottom margin
 
-  int minHeight = 48 + fm.height()/2 + fm.height()/2; // icon + margins
+  int minHeight = 48 + margin + margin; // icon + margins
 
   if( h < minHeight ) h = minHeight;
+
+  // add some space to show an error condition.
+  if( ! qvariant_cast<QString>(index.data(FolderErrorMsg)).isEmpty() ) {
+      h += margin+fm.height();
+  }
+
   return QSize( w, h );
 }
 
@@ -97,18 +108,23 @@ void FolderViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
 
   QFont aliasFont    = QApplication::font();
   QFont subFont = QApplication::font();
+  QFont errorFont = subFont;
+
   //font.setPixelSize(font.weight()+);
   aliasFont.setBold(true);
   aliasFont.setPointSize( subFont.pointSize()+2 );
 
   QFontMetrics subFm( subFont );
   QFontMetrics aliasFm( aliasFont );
+  int margin = aliasFm.height()/2;
 
   QIcon folderIcon = qvariant_cast<QIcon>(index.data(FolderIconRole));
   QIcon statusIcon = qvariant_cast<QIcon>(index.data(FolderStatusIcon));
   QString aliasText = qvariant_cast<QString>(index.data(FolderAliasRole));
   QString pathText = qvariant_cast<QString>(index.data(FolderPathRole));
   QString remotePath = qvariant_cast<QString>(index.data(FolderSecondPathRole));
+  QString errorText  = qvariant_cast<QString>(index.data(FolderErrorMsg));
+
   // QString statusText = qvariant_cast<QString>(index.data(FolderStatus));
   bool syncEnabled = index.data(FolderSyncEnabled).toBool();
   // QString syncStatus = syncEnabled? tr( "Enabled" ) : tr( "Disabled" );
@@ -118,16 +134,22 @@ void FolderViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
   QRect aliasRect = option.rect;
   QRect iconRect = option.rect;
 
-  iconRect.setRight( iconsize.width()+30 );
-  iconRect.setTop( iconRect.top() + (iconRect.height()-iconsize.height())/2);
-  aliasRect.setLeft(iconRect.right());
+  iconRect.setLeft( margin );
+  iconRect.setWidth( 48 );
+  iconRect.setTop( iconRect.top() + margin ); // (iconRect.height()-iconsize.height())/2);
+
+  QRect statusRect = iconRect;
+  statusRect.setLeft( option.rect.right() - margin - 48 );
+  statusRect.setRight( option.rect.right() - margin );
+
+  aliasRect.setLeft(iconRect.right()+margin);
 
   aliasRect.setTop(aliasRect.top() + aliasFm.height()/2 );
   aliasRect.setBottom(aliasRect.top()+subFm.height());
 
   // local directory box
   QRect localPathRect = aliasRect;
-  localPathRect.setTop(aliasRect.bottom() + subFm.height() / 2);
+  localPathRect.setTop(aliasRect.bottom() + margin / 3);
   localPathRect.setBottom(localPathRect.top()+subFm.height());
 
   // remote directory box
@@ -135,14 +157,16 @@ void FolderViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
   remotePathRect.setTop( localPathRect.bottom() + subFm.height()/2 );
   remotePathRect.setBottom( remotePathRect.top() + subFm.height());
 
+  iconRect.setBottom(remotePathRect.bottom());
+
   //painter->drawPixmap(QPoint(iconRect.right()/2,iconRect.top()/2),icon.pixmap(iconsize.width(),iconsize.height()));
   if( syncEnabled ) {
-      painter->drawPixmap(QPoint(iconRect.left()+15,iconRect.top()), folderIcon.pixmap(iconsize.width(),iconsize.height()));
+      painter->drawPixmap(QPoint(iconRect.left(),iconRect.top()), folderIcon.pixmap(iconsize.width(),iconsize.height()));
   } else {
-      painter->drawPixmap(QPoint(iconRect.left()+15,iconRect.top()), folderIcon.pixmap(iconsize.width(),iconsize.height(), QIcon::Disabled ));
+      painter->drawPixmap(QPoint(iconRect.left(),iconRect.top()), folderIcon.pixmap(iconsize.width(),iconsize.height(), QIcon::Disabled ));
   }
 
-  painter->drawPixmap(QPoint(option.rect.right() - 4 - 48, option.rect.top() + (option.rect.height()-48)/2 ), statusIcon.pixmap(48,48));
+  painter->drawPixmap(QPoint(statusRect.left(), statusRect.top()), statusIcon.pixmap(48,48));
 
   painter->setFont(aliasFont);
   painter->drawText(aliasRect, aliasText);
@@ -150,6 +174,35 @@ void FolderViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
   painter->setFont(subFont);
   painter->drawText(localPathRect.left(),localPathRect.top()+17, pathText);
   painter->drawText(remotePathRect, tr("Remote path: %1").arg(remotePath));
+
+  // paint an error overlay if there is an error string
+  if( !errorText.isEmpty() ) {
+      QRect errorRect = localPathRect;
+      errorRect.setLeft( iconRect.left());
+      errorRect.setTop( iconRect.bottom()+subFm.height()/2 );
+      errorRect.setHeight(subFm.height()+margin);
+      errorRect.setRight( statusRect.right() );
+
+      painter->setBrush( QColor(0xbb, 0x4d, 0x4d) );
+      painter->setPen( QColor(0xaa, 0xaa, 0xaa));
+      painter->drawRoundedRect( errorRect, 4, 4 );
+
+      QIcon warnIcon(":/mirall/resources/warning-16");
+      painter->drawPixmap( QPoint(errorRect.left()+2, errorRect.top()+2), warnIcon.pixmap(QSize(16,16)));
+
+      painter->setPen( Qt::white );
+      painter->setFont(errorFont);
+      QRect errorTextRect = errorRect;
+      errorTextRect.setLeft( errorTextRect.left()+margin/2 +16);
+      errorTextRect.setTop( errorTextRect.top()+margin/2 );
+
+      int linebreak = errorText.indexOf(QLatin1String("<br"));
+      QString eText = errorText;
+      if(linebreak) {
+          eText = errorText.left(linebreak);
+      }
+      painter->drawText(errorTextRect, eText);
+  }
 
   // painter->drawText(lastSyncRect, tr("Last Sync: %1").arg( statusText ));
   // painter->drawText(statusRect, tr("Sync Status: %1").arg( syncStatus ));
@@ -169,7 +222,7 @@ StatusDialog::StatusDialog( Theme *theme, QWidget *parent) :
     QDialog(parent),
     _theme( theme )
 {
-  setupUi( this  );
+  setupUi( this );
   setWindowTitle( QString::fromLatin1( "%1 %2" ).arg(_theme->appName(), _theme->version() ) );
 
   _model = new FolderStatusModel();
@@ -197,14 +250,8 @@ StatusDialog::StatusDialog( Theme *theme, QWidget *parent) :
   _ButtonInfo->setEnabled(false);
   _ButtonAdd->setEnabled(true);
 
-#if defined Q_WS_X11 
-  connect(_folderList, SIGNAL(activated(QModelIndex)), SLOT(slotFolderActivated(QModelIndex)));
-  connect( _folderList,SIGNAL(doubleClicked(QModelIndex)),SLOT(slotDoubleClicked(QModelIndex)));
-#endif
-#if defined Q_WS_WIN || defined Q_WS_MAC
   connect(_folderList, SIGNAL(clicked(QModelIndex)), SLOT(slotFolderActivated(QModelIndex)));
-  connect( _folderList,SIGNAL(doubleClicked(QModelIndex)),SLOT(slotDoubleClicked(QModelIndex)));
-#endif
+  connect(_folderList, SIGNAL(doubleClicked(QModelIndex)),SLOT(slotDoubleClicked(QModelIndex)));
 
   _ocUrlLabel->setWordWrap( true );
 }
@@ -250,6 +297,11 @@ void StatusDialog::setFolderList( Folder::Map folders )
         slotAddFolder( f );
     }
 
+   QModelIndex idx = _model->index(0, 0);
+   if (idx.isValid())
+        _folderList->setCurrentIndex(idx);
+    buttonsSetEnabled();
+
 }
 
 void StatusDialog::slotAddFolder( Folder *folder )
@@ -259,6 +311,30 @@ void StatusDialog::slotAddFolder( Folder *folder )
     QStandardItem *item = new QStandardItem();
     folderToModelItem( item, folder );
     _model->appendRow( item );
+}
+
+
+void StatusDialog::buttonsSetEnabled()
+{
+    bool haveFolders = _folderList->model()->rowCount() > 0;
+
+    _ButtonRemove->setEnabled(false);
+    if( _theme->singleSyncFolder() ) {
+        // only one folder synced folder allowed.
+        _ButtonAdd->setVisible(!haveFolders);
+    } else {
+        _ButtonAdd->setVisible(true);
+        _ButtonAdd->setEnabled(true);
+    }
+
+    QModelIndex selected = _folderList->currentIndex();
+    bool isSelected = selected.isValid();
+
+    _ButtonEnable->setEnabled(isSelected);
+    _ButtonRemove->setEnabled(isSelected);
+    _ButtonFetch->setEnabled(isSelected);
+    _ButtonInfo->setEnabled(isSelected);
+    _ButtonPush->setEnabled(isSelected);
 }
 
 void StatusDialog::slotUpdateFolderState( Folder *folder )
@@ -330,6 +406,7 @@ void StatusDialog::slotRemoveSelectedFolder()
     if( selected.isValid() ) {
         _model->removeRow( selected.row() );
     }
+    buttonsSetEnabled();
 }
 
 void StatusDialog::slotFetchFolder()
@@ -398,12 +475,12 @@ void StatusDialog::slotCheckConnection()
         connect(ownCloudInfo::instance(), SIGNAL(noOwncloudFound(QNetworkReply*)),
                 this, SLOT(slotOCInfoFail(QNetworkReply*)));
 
-        _ocUrlLabel->setText( tr("Checking ownCloud connection..."));
+        _ocUrlLabel->setText( tr("Checking %1 connection...").arg(Theme::instance()->appName()));
         qDebug() << "Check status.php from statusdialog.";
         ownCloudInfo::instance()->checkInstallation();
     } else {
         // ownCloud is not yet configured.
-        _ocUrlLabel->setText( tr("No ownCloud connection configured."));
+        _ocUrlLabel->setText( tr("No %1 connection configured.").arg(Theme::instance()->appName()));
         _ButtonAdd->setEnabled( false);
     }
 }
@@ -424,9 +501,11 @@ void StatusDialog::slotOCInfo( const QString& url, const QString& versionStr, co
 
     qDebug() << "#-------# oC found on " << url;
     /* enable the open button */
+    MirallConfigFile cfg;
     _ocUrlLabel->setOpenExternalLinks(true);
-    _ocUrlLabel->setText( tr("Connected to <a href=\"%1\">%2</a>, ownCloud %3").arg(url).arg(url).arg(versionStr) );
-    _ocUrlLabel->setToolTip( tr("Version: %1").arg(version));
+    _ocUrlLabel->setText( tr("Connected to <a href=\"%1\">%1</a> as <i>%2</i>.")
+                          .arg(url).arg( CredentialStore::instance()->user()) );
+    _ocUrlLabel->setToolTip( tr("Version: %1 (%2)").arg(versionStr).arg(version));
     _ButtonAdd->setEnabled(true);
 
     disconnect(ownCloudInfo::instance(), SIGNAL(ownCloudInfoFound(const QString&, const QString&, const QString&, const QString&)),
@@ -442,7 +521,7 @@ void StatusDialog::slotOCInfoFail( QNetworkReply *reply)
     QString errStr = tr("unknown problem.");
     if( reply ) errStr = reply->errorString();
 
-    _ocUrlLabel->setText( tr("<p>Failed to connect to ownCloud: <tt>%1</tt></p>").arg(errStr) );
+    _ocUrlLabel->setText( tr("<p>Failed to connect to %1: <tt>%2</tt></p>").arg(Theme::instance()->appName()).arg(errStr) );
     _ButtonAdd->setEnabled( false);
 
     disconnect(ownCloudInfo::instance(), SIGNAL(ownCloudInfoFound(const QString&, const QString&, const QString&, const QString&)),

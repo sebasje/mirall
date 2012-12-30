@@ -15,6 +15,8 @@
 #include "mirall/owncloudinfo.h"
 #include "mirall/mirallconfigfile.h"
 #include "mirall/version.h"
+#include "mirall/theme.h"
+#include "mirall/credentialstore.h"
 
 #include <QtCore>
 #include <QtGui>
@@ -45,14 +47,11 @@ ownCloudInfo* ownCloudInfo::instance()
   return _instance;
 }
 
-ownCloudInfo::ownCloudInfo( const QString& connectionName, QObject *parent ) :
-    QObject(parent),
+ownCloudInfo::ownCloudInfo() :
+    QObject(0),
     _manager(0)
 {
-    if( connectionName.isEmpty() )
-        _connection = QLatin1String( "ownCloud");
-    else
-        _connection = connectionName;
+    _connection = Theme::instance()->appName();
 
     setNetworkAccessManager( new QNetworkAccessManager( this ) );
 
@@ -98,6 +97,7 @@ bool ownCloudInfo::isConfigured()
 
 void ownCloudInfo::checkInstallation()
 {
+    /* No authentication required for this. */
     getRequest( QLatin1String("status.php"), false );
 }
 
@@ -141,23 +141,24 @@ void ownCloudInfo::mkdirRequest( const QString& dir )
     if (url.scheme() == "https")
         conMode = QHttp::ConnectionModeHttps;
 
-    QHttp* qhttp = new QHttp(url.host(), conMode, 0, this);
-    qhttp->setUser( cfgFile.ownCloudUser( _connection ), cfgFile.ownCloudPasswd( _connection ));
+    QHttp* qhttp = new QHttp(QString(url.encodedHost()), conMode, 0, this);
+    qhttp->setUser( CredentialStore::instance()->user(_connection),
+                    CredentialStore::instance()->password(_connection) );
 
     connect(qhttp, SIGNAL(requestStarted(int)), this,SLOT(qhttpRequestStarted(int)));
     connect(qhttp, SIGNAL(requestFinished(int, bool)), this,SLOT(qhttpRequestFinished(int,bool)));
     connect(qhttp, SIGNAL(responseHeaderReceived(QHttpResponseHeader)), this, SLOT(qhttpResponseHeaderReceived(QHttpResponseHeader)));
     //connect(qhttp, SIGNAL(authenticationRequired(QString,quint16,QAuthenticator*)), this, SLOT(qhttpAuthenticationRequired(QString,quint16,QAuthenticator*)));
 
-    QHttpRequestHeader header("MKCOL", url.path(), 1,1);   /* header */
-    header.setValue("Host", url.host() );
+    QHttpRequestHeader header("MKCOL", QString(url.encodedPath()), 1,1);   /* header */
+    header.setValue("Host", QString(url.encodedHost()));
     header.setValue("User-Agent", QString("mirall-%1").arg(MIRALL_STRINGIFY(MIRALL_VERSION)).toAscii() );
     header.setValue("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
     header.setValue("Accept-Language", "it,de-de;q=0.8,it-it;q=0.6,en-us;q=0.4,en;q=0.2");
     header.setValue("Connection", "keep-alive");
     header.setContentType("application/x-www-form-urlencoded"); //important
     header.setContentLength(0);
-    header.setValue("Authorization", cfgFile.basicAuthHeader());
+    header.setValue("Authorization", CredentialStore::instance()->basicAuthHeader());
 
     int david = qhttp->request(header,0,0);
     //////////////// connect(davinfo, SIGNAL(dataSendProgress(int,int)), this, SLOT(SendStatus(int, int)));
@@ -253,8 +254,8 @@ void ownCloudInfo::slotAuthentication( QNetworkReply *reply, QAuthenticator *aut
     MirallConfigFile cfgFile( configHandle );
     qDebug() << "Authenticating request for " << reply->url();
     if( reply->url().toString().startsWith( cfgFile.ownCloudUrl( _connection, true )) ) {
-        auth->setUser( cfgFile.ownCloudUser( _connection ) );
-        auth->setPassword( cfgFile.ownCloudPasswd( _connection ));
+        auth->setUser( CredentialStore::instance()->user() ); //_connection ) );
+        auth->setPassword( CredentialStore::instance()->password() ); // _connection ));
     } else {
         qDebug() << "WRN: attempt to authenticate to different url - attempt " <<_authAttempts;
     }
@@ -444,7 +445,7 @@ void ownCloudInfo::setupHeaders( QNetworkRequest & req, quint64 size )
     req.setRawHeader( QByteArray("Host"), url.host().toUtf8() );
     req.setRawHeader( QByteArray("User-Agent"), QString::fromLatin1("mirall-%1")
                       .arg(QLatin1String(MIRALL_STRINGIFY(MIRALL_VERSION))).toAscii());
-    req.setRawHeader( QByteArray("Authorization"), cfgFile.basicAuthHeader() );
+    req.setRawHeader( QByteArray("Authorization"), CredentialStore::instance()->basicAuthHeader() );
 
     if (size) {
         req.setHeader( QNetworkRequest::ContentLengthHeader, size);
@@ -465,6 +466,5 @@ QNetworkReply* ownCloudInfo::davRequest(const QString& reqVerb,  QNetworkRequest
     }
 }
 #endif
-
 }
 

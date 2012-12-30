@@ -18,6 +18,7 @@
 #include <QDebug>
 #include <QPixmap>
 #include <QIcon>
+#include <QStyle>
 #include <QApplication>
 
 namespace Mirall {
@@ -33,7 +34,7 @@ QString ownCloudTheme::appName() const
      * because the value is used by QDesktopServices to find the config
      * file. Be aware.
      */
-    return QApplication::translate("appname", "ownCloud");
+    return QLatin1String("ownCloud");
 }
 
 QString ownCloudTheme::configFileName() const
@@ -51,7 +52,7 @@ QIcon ownCloudTheme::folderIcon( const QString& backend ) const
   QString name;
 
   if( backend == QLatin1String("owncloud")) {
-      name = QLatin1String( "owncloud-icon-framed" );
+      name = QLatin1String( "owncloud-framed" );
   }
   if( backend == QLatin1String("unison" )) {
       name  = QLatin1String( "folder-sync" );
@@ -69,44 +70,45 @@ QIcon ownCloudTheme::folderIcon( const QString& backend ) const
 
 QIcon ownCloudTheme::trayFolderIcon( const QString& ) const
 {
-    return themeIcon( QLatin1String("owncloud-icon") );
+    QPixmap fallback = qApp->style()->standardPixmap(QStyle::SP_FileDialogNewFolder);
+    return QIcon::fromTheme("folder", fallback);
 }
 
-QIcon ownCloudTheme::syncStateIcon( SyncResult::Status status ) const
+QIcon ownCloudTheme::syncStateIcon( SyncResult::Status status, bool sysTray ) const
 {
     // FIXME: Mind the size!
     QString statusIcon;
 
     switch( status ) {
     case SyncResult::Undefined:
-        statusIcon = QLatin1String("owncloud-icon-error");
+        statusIcon = QLatin1String("offline");
         break;
     case SyncResult::NotYetStarted:
-        statusIcon = QLatin1String("owncloud-icon");
+        statusIcon = QLatin1String("offline");
         break;
     case SyncResult::SyncRunning:
-        statusIcon = QLatin1String("owncloud-icon-sync");
+        statusIcon = QLatin1String("sync");
         break;
     case SyncResult::Success:
-        statusIcon = QLatin1String("owncloud-icon-sync-ok");
+        statusIcon = QLatin1String("ok");
         break;
     case SyncResult::Error:
-        statusIcon = QLatin1String("owncloud-icon-error");
+        statusIcon = QLatin1String("error");
         break;
     case SyncResult::SetupError:
-        statusIcon = QLatin1String("owncloud-icon-error");
+        statusIcon = QLatin1String("error");
         break;
     default:
-        statusIcon = QLatin1String("owncloud-icon-error");
+        statusIcon = QLatin1String("error");
     }
 
-    return themeIcon( statusIcon );
+    return themeIcon( statusIcon, sysTray );
 }
 
 QIcon ownCloudTheme::folderDisabledIcon( ) const
 {
     // Fixme: Do we really want the dialog-canel from theme here?
-    return themeIcon( QLatin1String("owncloud-icon-error") );
+    return themeIcon( QLatin1String("owncloud-error") );
 }
 
 QIcon ownCloudTheme::applicationIcon( ) const

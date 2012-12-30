@@ -1,7 +1,61 @@
 ChangeLog
 =========
-version 1.1.0 (release ), csync 0.60.0 required
-  * 
+version 1.1.2 (release 2012-11- ), csync 0.60.2 required
+  * [Fixes] Allow to properly cancel the password dialog.
+  * [Fixes] Share folder name correctly percent encoded with old Qt
+            4.6 builds ie. Debian.
+  * [Fixes] If local sync dir is not existing, create it.
+  * [Fixes] lots of other minor fixes.
+  * [GUI] Display error messages in status dialog.
+  * [GUI] GUI fixes for the connection wizard.
+  * [GUI] Show username for connection in statusdialog.
+  * [GUI] Show intro wizard on new connection setup.
+  * [APP] Use CredentialStore to better support various credential
+          backends.
+  * [APP] Handle missing local folder more robust: Create it if
+          missing instead of ignoring.
+  * [APP] Simplify treewalk code.
+  * [Platform] Fix Mac building
+
+version 1.1.1 (release 2012-10-18), csync 0.60.1 required
+  * [GUI]   Allow changing folder name in single folder mode 
+  * [GUI]   Windows: Add license to installer
+  * [GUI]   owncloud --logwindow will bring up the log window
+            in an already running instance
+  * [Fixes] Make sure SSL errors are always handled
+  * [Fixes] Allow special characters in folder alias 
+  * [Fixes] Proper workaround for Menu bug in Ubuntu 
+  * [Fixes] csync: Fix improper memory cleanup which could
+            cause memory leaks and crashes
+  * [Fixes] csync: Fix memory leak 
+  * [Fixes] csync: Allow single quote (') in file names 
+  * [Fixes] csync: Remove stray temporary files 
+
+version 1.1.0 (release 2012-10-10), csync 0.60.0 required
+  * [GUI]   Added an about dialog
+  * [GUI]   Improved themeing capabilities of the client.
+  * [GUI]   Minor fixes in folder assistant.
+  * [GUI]   Reworked tray context menu.
+  * [GUI]   Users can now sync the server root folder.
+  * [Fixes] Proxy support: now supports Proxy Auto-Configuration (PAC)
+            on Windows, reliability fixes across all OSes.
+  * [Fixes] Url entry field in setup assistant handles http/https correctly.
+  * [Fixes] Button enable state in status dialog.
+  * [Fixes] Crash fixed on ending the client, tray icon related.
+  * [Fixes] Crash through wrong delete operator.
+  * [MacOS] behave correctly on retina displays.
+  * [MacOS] fix focus policy.
+  * [MacOS] Packaging improvements.
+  * [MacOS] Packaging improvements.
+  * [Platform] Windows: Setup closes client prior to uninstall.
+  * [Platform] Windows: ownCloud gets added to autorun by default.
+  * [Platform] insert correct version info from cmake.
+  * [Platform] csync conf file and database were moved to the users app data
+               directory, away from the .csync dir.
+  *         Renamed exclude.lst to sync-exclude.lst and moved it to
+            /etc/appName()/ for more clean packaging. From the user path, 
+	    still exclude.lst is read if sync-exclude.lst is not existing.
+  *         Placed custom.ini with customization options to /etc/appName()
 
 version 1.0.5 (release 2012-08-14), csync 0.50.8 required
   * [Fixes] Fixed setup dialog: Really use https if checkbox is activated.

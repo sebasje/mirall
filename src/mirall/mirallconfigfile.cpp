@@ -12,9 +12,12 @@
  * for more details.
  */
 
+#include "config.h"
+
 #include "mirall/mirallconfigfile.h"
 #include "mirall/owncloudtheme.h"
 #include "mirall/miralltheme.h"
+#include "mirall/credentialstore.h"
 
 #include <QtCore>
 #include <QtGui>
@@ -23,14 +26,10 @@
 #define DEFAULT_LOCAL_POLL_INTERVAL  100000 // default local poll time in milliseconds
 #define DEFAULT_POLL_TIMER_EXEED     10
 
-#define OC_ORGANIZATION QLatin1String("ownCloud")
-#define OC_APPLICATION  QLatin1String("ownCloudClient")
-
 #define CA_CERTS_KEY QLatin1String("CaCertificates")
 
 namespace Mirall {
 
-QString MirallConfigFile::_passwd;
 QString MirallConfigFile::_oCVersion;
 bool    MirallConfigFile::_askedUser = false;
 
@@ -48,27 +47,33 @@ QString MirallConfigFile::configPath() const
 
 QString MirallConfigFile::excludeFile() const
 {
-    const QString exclFile(QLatin1String("exclude.lst"));
-    QString dir = configPath();
-    dir += exclFile;
+    // prefer sync-exclude.lst, but if it does not exist, check for
+    // exclude.lst for compatibility reasonsin the user writeable
+    // directories.
+    const QString exclFile("sync-exclude.lst");
 
-    QFileInfo fi( dir );
-    if( fi.isReadable() ) {
-        return dir;
+    QFileInfo fi;
+    fi.setFile( configPath(), exclFile );
+
+    if( ! fi.isReadable() ) {
+        fi.setFile( configPath(), QLatin1String("exclude.lst") );
     }
 
     // Check alternative places...
+    if( ! fi.isReadable() ) {
 #ifdef Q_OS_WIN32
-    fi.setFile( QApplication::applicationDirPath(), exclFile );
+        fi.setFile( QApplication::applicationDirPath(), exclFile );
 #endif
 #ifdef Q_OS_LINUX
-    fi.setFile( QString("/etc"), exclFile );
+        fi.setFile( QString("/etc/%1").arg(Theme::instance()->appName()), exclFile );
 #endif
 #ifdef Q_OS_MAC
-    // exec path is inside the bundle
-    fi.setFile( QApplication::applicationDirPath(),
-                QLatin1String("../Resources/") + exclFile );
+        // exec path is inside the bundle
+        fi.setFile( QApplication::applicationDirPath(),
+                    QLatin1String("../Resources/") + exclFile );
 #endif
+    }
+
     if( fi.isReadable() ) {
         qDebug() << "  ==> returning exclude file path: " << fi.absoluteFilePath();
         return fi.absoluteFilePath();
@@ -79,15 +84,10 @@ QString MirallConfigFile::excludeFile() const
 
 QString MirallConfigFile::configFile() const
 {
-#ifdef OWNCLOUD_CLIENT
-    ownCloudTheme theme;
-#else
-    mirallTheme theme;
-#endif
     if( qApp->applicationName().isEmpty() ) {
-        qApp->setApplicationName( theme.appName() );
+        qApp->setApplicationName( Theme::instance()->appName() );
     }
-    QString dir = configPath() + theme.configFileName();
+    QString dir = configPath() + Theme::instance()->configFileName();
     if( !_customHandle.isEmpty() ) {
         dir.append( QLatin1Char('_'));
         dir.append( _customHandle );
@@ -104,7 +104,7 @@ bool MirallConfigFile::exists()
 
 QString MirallConfigFile::defaultConnection() const
 {
-    return QLatin1String("ownCloud");
+    return Theme::instance()->appName();
 }
 
 bool MirallConfigFile::connectionExists( const QString& conn )
@@ -147,14 +147,58 @@ void MirallConfigFile::writeOwncloudConfig( const QString& connection,
         pwd.clear();
     }
 
-    QByteArray pwdba = pwd.toUtf8();
-    settings.setValue( QLatin1String("passwd"), QVariant(pwdba.toBase64()) );
+#ifdef WITH_QTKEYCHAIN
+    // Password is stored to QtKeyChain now by default in CredentialStore
+    // The CredentialStore calls clearPasswordFromConfig after the creds
+    // were successfully wiritten to delete the passwd entry from config.
+    qDebug() << "Going to delete the password from settings file.";
+#else
+    if( !skipPwd )
+        writePassword( passwd );
+#endif
     settings.setValue( QLatin1String("nostoredpassword"), QVariant(skipPwd) );
     settings.sync();
-
     // check the perms, only read-write for the owner.
     QFile::setPermissions( file, QFile::ReadOwner|QFile::WriteOwner );
 
+    // Store credentials temporar until the config is finalized.
+    CredentialStore::instance()->setCredentials( cloudsUrl, user, passwd );
+
+}
+
+// This method is called after the password was successfully stored into the
+// QKeyChain in CredentialStore.
+void MirallConfigFile::clearPasswordFromConfig( const QString& connection )
+{
+    const QString file = configFile();
+    QString con( defaultConnection() );
+    if( !connection.isEmpty() )
+        con = connection;
+
+    QSettings settings( file, QSettings::IniFormat);
+    settings.setIniCodec( "UTF-8" );
+    settings.beginGroup( con );
+    settings.remove(QLatin1String("passwd"));
+    settings.remove(QLatin1String("password"));
+    settings.sync();
+}
+
+bool MirallConfigFile::writePassword( const QString& passwd, const QString& connection )
+{
+    const QString file = configFile();
+    QString pwd( passwd );
+    QString con( defaultConnection() );
+    if( !connection.isEmpty() )
+        con = connection;
+
+    QSettings settings( file, QSettings::IniFormat);
+    settings.setIniCodec( "UTF-8" );
+
+    // store password into settings file.
+    settings.beginGroup( con );
+    QByteArray pwdba = pwd.toUtf8();
+    settings.setValue( QLatin1String("passwd"), QVariant(pwdba.toBase64()) );
+    settings.sync();
 }
 
 // set the url, called from redirect handling.
@@ -325,6 +369,19 @@ int MirallConfigFile::pollTimerExceedFactor( const QString& connection ) const
   return pte;
 }
 
+bool MirallConfigFile::passwordStorageAllowed( const QString& connection )
+{
+    QString con( connection );
+    if( connection.isEmpty() ) con = defaultConnection();
+
+    QSettings settings( configFile(), QSettings::IniFormat );
+    settings.setIniCodec( "UTF-8" );
+    settings.beginGroup( con );
+
+    bool skipPwd = settings.value( QLatin1String("nostoredpassword"), false ).toBool();
+    return !skipPwd;
+}
+
 QString MirallConfigFile::ownCloudPasswd( const QString& connection ) const
 {
     QString con( connection );
@@ -336,38 +393,22 @@ QString MirallConfigFile::ownCloudPasswd( const QString& connection ) const
 
     QString pwd;
 
-    bool skipPwd = settings.value( QLatin1String("nostoredpassword"), false ).toBool();
-    if( skipPwd ) {
-        if( ! _askedUser ) {
-            bool ok;
-            QString text = QInputDialog::getText(0, QApplication::translate("MirallConfigFile","ownCloud Password Required"),
-                                                 QApplication::translate("MirallConfigFile","Please enter your ownCloud password:"),
-                                                 QLineEdit::Password,
-                                                 QString::null, &ok);
-            if( ok && !text.isEmpty() ) { // empty password is not allowed on ownCloud
-                _passwd = text;
-                _askedUser = true;
-            }
-        }
-        pwd = _passwd;
-    } else {
-        QByteArray pwdba = settings.value(QLatin1String("passwd")).toByteArray();
-        if( pwdba.isEmpty() ) {
-            // check the password entry, cleartext from before
-            // read it and convert to base64, delete the cleartext entry.
-            QString p = settings.value(QLatin1String("password")).toString();
+    QByteArray pwdba = settings.value(QLatin1String("passwd")).toByteArray();
+    if( pwdba.isEmpty() ) {
+        // check the password entry, cleartext from before
+        // read it and convert to base64, delete the cleartext entry.
+        QString p = settings.value(QLatin1String("password")).toString();
 
-            if( ! p.isEmpty() ) {
-                // its there, save base64-encoded and delete.
+        if( ! p.isEmpty() ) {
+            // its there, save base64-encoded and delete.
 
-                pwdba = p.toUtf8();
-                settings.setValue( QLatin1String("passwd"), QVariant(pwdba.toBase64()) );
-                settings.remove( QLatin1String("password") );
-                settings.sync();
-            }
+            pwdba = p.toUtf8();
+            settings.setValue( QLatin1String("passwd"), QVariant(pwdba.toBase64()) );
+            settings.remove( QLatin1String("password") );
+            settings.sync();
         }
-        pwd = QString::fromUtf8( QByteArray::fromBase64(pwdba) );
     }
+    pwd = QString::fromUtf8( QByteArray::fromBase64(pwdba) );
 
     return pwd;
 }
@@ -407,15 +448,6 @@ int MirallConfigFile::maxLogLines() const
     return logLines;
 }
 
-QByteArray MirallConfigFile::basicAuthHeader() const
-{
-    QString concatenated = ownCloudUser() + QLatin1Char(':') + ownCloudPasswd();
-    const QString b(QLatin1String("Basic "));
-    QByteArray data = b.toLocal8Bit() + concatenated.toLocal8Bit().toBase64();
-
-    return data;
-}
-
 // remove a custom config file.
 void MirallConfigFile::cleanupCustomConfig()
 {
@@ -438,6 +470,7 @@ void MirallConfigFile::acceptCustomConfig()
     }
 
     QString srcConfig = configFile(); // this considers the custom handle
+
     _customHandle.clear();
     QString targetConfig = configFile();
     QString targetBak = targetConfig + QLatin1String(".bak");
@@ -458,6 +491,9 @@ void MirallConfigFile::acceptCustomConfig()
         }
     }
     QFile::remove( targetBak );
+
+    // inform the credential store about the password change.
+    CredentialStore::instance()->saveCredentials( );
 }
 
 QVariant MirallConfigFile::customMedia( customMediaType type )
@@ -480,15 +516,22 @@ QVariant MirallConfigFile::customMedia( customMediaType type )
     }
 
     if( !key.isEmpty() ) {
-#ifdef Q_OS_WIN32
+        const QString customFile("custom.ini");
         QFileInfo fi;
-        fi.setFile( QApplication::applicationDirPath(), QLatin1String("ownCloudClient.ini"));
-        qDebug() << "Custom Config file: " << fi.absoluteFilePath();
-        QSettings settings( fi.absoluteFilePath(), QSettings::IniFormat );
-#else
 
-        QSettings settings( QSettings::IniFormat, QSettings::SystemScope, OC_ORGANIZATION, OC_APPLICATION );
+#ifdef Q_OS_WIN32
+        fi.setFile( QApplication::applicationDirPath(), customFile );
 #endif
+#ifdef Q_OS_MAC
+        // exec path is inside the bundle
+        fi.setFile( QApplication::applicationDirPath(),
+                    QLatin1String("../Resources/") + customFile );
+#endif
+#ifdef Q_OS_LINUX
+        fi.setFile( QString("/etc/%1").arg(Theme::instance()->appName()), customFile );
+#endif
+        QSettings settings( fi.absoluteFilePath(), QSettings::IniFormat );
+
         QString cfg = settings.fileName();
         qDebug() << "Trying to read config ini file at " << cfg;
 

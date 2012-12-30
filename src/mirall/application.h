@@ -63,10 +63,14 @@ protected slots:
     void slotInfoFolder( const QString& );
     void slotConfigure();
     void slotConfigureProxy();
+    void slotParseOptions( const QString& );
+    void slotShowTrayMessage(const QString&, const QString&);
 
     void slotSyncStateChange( const QString& );
+    void slotownCloudWizardDone(int);
 protected:
 
+    void parseOptions(const QStringList& );
     void setupActions();
     void setupSystemTray();
     void setupContextMenu();
@@ -80,14 +84,17 @@ protected slots:
     void slotTrayClicked( QSystemTrayIcon::ActivationReason );
     void slotFolderOpenAction(const QString & );
     void slotOpenOwnCloud();
-    void slotStartFolderSetup(int result = 1); // defaulting to Accepted
+    void slotStartFolderSetup(int result = QDialog::Accepted); // defaulting to Accepted
     void slotOwnCloudFound( const QString&, const QString&, const QString&, const QString& );
     void slotNoOwnCloudFound( QNetworkReply* );
     void slotCheckAuthentication();
     void slotAuthCheck( const QString& ,QNetworkReply* );
     void slotOpenLogBrowser();
-    void slotSSLFailed( QNetworkReply *reply, QList<QSslError> errors );
 
+    void slotAbout();
+    void slotSSLFailed( QNetworkReply *reply, QList<QSslError> errors );
+    void slotFetchCredentials();
+    void slotCredentialsFetched( bool );
     void slotStartUpdateDetector();
 
 private:
@@ -101,6 +108,7 @@ private:
     QAction *_actionConfigure;
     QAction *_actionOpenoC;
     QAction *_actionConfigureProxy;
+    QAction *_actionAbout;
 
 #if QT_VERSION >= 0x040700
     QNetworkConfigurationManager *_networkMgr;
@@ -120,7 +128,10 @@ private:
     UpdateDetector *_updateDetector;
     QMap<QString, QString> _overallStatusStrings;
     LogBrowser *_logBrowser;
-    bool        _helpOnly;
+    QString _logFile;
+    bool _showLogWindow;
+    bool _logFlush;
+    bool _helpOnly;
 };
 
 } // namespace Mirall

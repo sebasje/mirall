@@ -23,8 +23,43 @@
 #include "mirall/csyncthread.h"
 
 class QProcess;
+class QTimer;
 
 namespace Mirall {
+
+enum SyncFileStatus_s {
+    STATUS_NONE,
+    STATUS_EVAL,
+    STATUS_REMOVE,
+    STATUS_RENAME,
+    STATUS_NEW,
+    STATUS_CONFLICT,
+    STATUS_IGNORE,
+    STATUS_SYNC,
+    STATUS_STAT_ERROR,
+    STATUS_ERROR,
+    STATUS_UPDATED
+};
+typedef SyncFileStatus_s SyncFileStatus;
+
+class DownloadNotifier : public QObject
+{
+    Q_OBJECT
+public:
+    DownloadNotifier(const QString &localPrefix, const QString &remotePrefix, QObject *parent = 0);
+public slots:
+    void slotFileReceived(const QString&);
+signals:
+    void guiLog(const QString&, const QString&);
+private slots:
+    void sendResults();
+private:
+    QTimer *_timer;
+    QString _url;
+    QString _localPrefix;
+    QString _remotePrefix;
+    int _items;
+};
 
 class ownCloudFolder : public Folder
 {
@@ -35,10 +70,13 @@ public:
                    const QString &secondPath, QObject *parent = 0L);
     virtual ~ownCloudFolder();
     QString secondPath() const;
+    QString nativeSecondPath() const;
     virtual bool isBusy() const;
     virtual void startSync(const QStringList &pathList);
 
     virtual void wipe();
+
+    SyncFileStatus fileStatus( const QString& );
 
 public slots:
     void startSync();
@@ -51,25 +89,15 @@ private slots:
     void slotCSyncStarted();
     void slotCSyncError(const QString& );
     void slotCSyncFinished();
-    void slotThreadTreeWalkResult( WalkStats* );
-    void slotCsyncStateDbFile(const QString&);
-    void slotWipeDb();
-
-    void slotPollTimerRemoteCheck();
 
 private:
+    DownloadNotifier *_notifier;
     QString      _secondPath;
     QThread     *_thread;
     CSyncThread *_csync;
-    bool         _localCheckOnly;
-    bool         _localFileChanges;
-    int          _pollTimerCnt;
-    int          _pollTimerExceed;
     QStringList  _errors;
     bool         _csyncError;
     bool         _wipeDb;
-    ulong        _lastSeenFiles;
-    QString      _csyncStateDbFile;
 };
 
 }

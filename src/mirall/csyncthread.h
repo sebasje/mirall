@@ -21,6 +21,7 @@
 #include <QMutex>
 #include <QThread>
 #include <QString>
+#include <QNetworkProxy>
 
 #include <csync.h>
 
@@ -28,50 +29,26 @@ class QProcess;
 
 namespace Mirall {
 
-enum walkErrorTypes {
-    WALK_ERROR_NONE = 0,
-    WALK_ERROR_WALK,
-    WALK_ERROR_INSTRUCTIONS,
-    WALK_ERROR_DIR_PERMS
-};
-
-struct walkStats_s {
-    const char *sourcePath;
-    int errorType;
-
-    ulong eval;
-    ulong removed;
-    ulong renamed;
-    ulong newFiles;
-    ulong conflicts;
-    ulong ignores;
-    ulong sync;
-    ulong error;
-
-    ulong dirPermErrors;
-
-    ulong seenFiles;
-};
-
-typedef walkStats_s WalkStats;
-
 class CSyncThread : public QObject
 {
     Q_OBJECT
 public:
-    CSyncThread(const QString &source, const QString &target, bool = false);
+    CSyncThread(const QString &source, const QString &target);
     ~CSyncThread();
 
-    static void setConnectionDetails( const QString&, const QString&,
-                                      const QString&, const QString&, int,
-                                      const QString&, const QString& );
+    static void setConnectionDetails( const QString&, const QString&, const QNetworkProxy& );
     static QString csyncConfigDir();
+
+    const char* proxyTypeToCStr(QNetworkProxy::ProxyType);
+    QString csyncErrorToString( CSYNC_ERROR_CODE, const char * );
 
     Q_INVOKABLE void startSync();
 
 signals:
-    void treeWalkResult(WalkStats*);
+    void fileReceived( const QString& );
+    void fileRemoved( const QString& );
     void csyncError( const QString& );
+    void csyncWarning( const QString& );
 
     void csyncStateDbFile( const QString& );
     void wipeDb();
@@ -80,9 +57,10 @@ signals:
     void started();
 
 private:
-    static int checkPermissions( TREE_WALK_FILE* file, void *data);
-    void emitStateDb( CSYNC *csync );
-
+    static void progress(const char *remote_url,
+                    enum csync_notify_type_e kind,
+                    long long o1, long long o2,
+                    void *userdata);
     static int getauth(const char *prompt,
                 char *buf,
                 size_t len,
@@ -94,17 +72,12 @@ private:
     static QMutex _mutex;
     static QString _user;
     static QString _passwd;
-    static QString _proxyType;
-    static QString _proxyHost;
-    static QString _proxyPort;
-    static QString _proxyUser;
-    static QString _proxyPwd;
+    static QNetworkProxy _proxy;
 
     static QString _csyncConfigDir;
 
     QString _source;
     QString _target;
-    bool    _localCheckOnly;
 };
 }
 
