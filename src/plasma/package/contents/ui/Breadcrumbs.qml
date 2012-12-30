@@ -36,17 +36,22 @@ Item {
 
     function urlElement(ix) {
         var offset = 3;
-        if (url.indexOf("webdav") == 0) {
-            offset = 7;
-        }
-        print(" +++ UUUU " + url + " o " + offset + " " + ix);
         var e;
-        var els = url.split("/");
+        var els = currentPath.split("/");
+        if (url.indexOf("webdav") == 0) {
+            offset = 0;
+            els = currentPath.split("files/webdav.php")[1].split("/");
+            print ("elslength: " + els.length + ";" +currentPath)
+            if (els.length  <= 1 && ix == 0) {
+                return " "
+            }
+        }
+        print(" +++ UUUU " + currentPath + " o " + offset + " ix: " + ix);
         for (var i = offset; i < els.length; i++) {
 //             print(" ix: " + ix + " e[" + i + "] = " + els[i]);
         }
         if (els.length < ix+offset) {
-            return "";
+            return "/";
         }
         e = els[ix+offset];
         print("===> " + e);
@@ -92,11 +97,12 @@ Item {
             if (protocol != "webdav") {
                 offset = 1;
             } else {
-                offset = 5;
-                print(" @@@ offset: " + offset);
+                els = currentPath.split("files/webdav.php")[1].split("/");
+                //print(" webdav @@@ offset: " + offset + " " + currentPath + " " + els[offset-5]);
+                offset = 1;
                 //o = protocol+":/"; // FIXME
             }
-            for (var i = offset; i < els.length; i++) {
+            for (var i = offset; i <= els.length; i++) {
                 print(" +++++++++++ model: " + i + " o[" + n + "] = " + els[i]);
                 o[n] = els[i];
                 n++;

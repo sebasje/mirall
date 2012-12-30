@@ -67,13 +67,25 @@ Item {
             Breadcrumbs {
 
             }
-            PlasmaComponents.ToolButton {
-                id: closeButton
-                iconSource: "dialog-close"
-                onClicked: {
-                    addSyncFolder.state = "default"
-                    if (addFolderDialog && typeof(addFolderDialog)) {
-                        addFolderDialog.close();
+            Row {
+                PlasmaComponents.ToolButton {
+                    id: pickButton
+                    text: i18n("Choose")
+                    iconSource: "dialog-ok-apply"
+                    onClicked: {
+                        print("emit " + currentPath);
+                        directoryPicked(currentPath);
+                        nextPage();
+                    }
+                }
+                PlasmaComponents.ToolButton {
+                    id: closeButton
+                    iconSource: "dialog-close"
+                    onClicked: {
+                        addSyncFolder.state = "default"
+                        if (addFolderDialog && typeof(addFolderDialog)) {
+                            addFolderDialog.close();
+                        }
                     }
                 }
             }

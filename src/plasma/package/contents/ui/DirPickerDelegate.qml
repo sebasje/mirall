@@ -29,7 +29,7 @@ Item {
     width: parent.width - 24
     height: iconSize*1.5
 
-    state: "default"
+    state: "expanded"
 
     property alias op: exProxy.opacity
 
@@ -78,21 +78,21 @@ Item {
             }
         }
     }
-    PlasmaComponents.ToolButton {
-        id: pickFolderButton
-//         text: i18n("Choose")
-        iconSource: "dialog-ok-apply"
-        anchors { verticalCenter: parent.verticalCenter; right: parent.right; }
-        opacity: op
-        onClicked: {
-            var p = currentPath+"/"+name
-            dirModel.url = p;
-            print("picking: " + p + "|"+name+"|");
-            //addSyncFolder.localFolder = currentPath;
-            directoryPicked(p);
-            nextPage();
-        }
-    }
+//     PlasmaComponents.ToolButton {
+//         id: pickFolderButton
+// //         text: i18n("Choose")
+//         iconSource: "dialog-ok-apply"
+//         anchors { verticalCenter: parent.verticalCenter; right: parent.right; }
+//         opacity: op
+//         onClicked: {
+//             var p = currentPath+"/"+name
+//             dirModel.url = p;
+//             print("picking: " + p + "|"+name+"|");
+//             //addSyncFolder.localFolder = currentPath;
+//             directoryPicked(p);
+//             nextPage();
+//         }
+//     }
     //Rectangle { anchors.fill: parent; color: "green"; opacity: 0.2 }
 }
 
