@@ -79,12 +79,20 @@ Item {
 
         DirPicker {
             id: dirPicker
-            anchors {top: remoteFolderName.bottom; left: parent.left; right: parent.right; topMargin: 24; }
+            anchors {top: createLabel.bottom; left: parent.left; right: parent.right; topMargin: 24; }
+            onDirectoryPicked: {
+                currentPath = url;
+                // webdav://localhost/owncloud/files/webdav.php/
+                var wurl = url.split("/files/webdav.php/")[1];
+
+                print("Directory picked " + url + "|" + wurl);
+                folderPicked(wurl);
+            }
             Connections {
                 target: addSyncFolder
                 onStateChanged: {
                     if (addSyncFolder.state == "remoteFolder") {
-                        var rurl = owncloudSettings.url+"/files/webdav.php/";
+                        var rurl = owncloudSettings.url+"/files/webdav.php";
                         rurl = rurl.replace("http", "webdav");
                         print( "** Remote URL : " + rurl);
                         dirPicker.url = rurl;
@@ -117,14 +125,14 @@ Item {
             iconSource: "dialog-ok"
             text: i18n("Finished")
             onClicked: {
-                print("finishedButton::aliasText.text = " + aliasText.text);
+                print("XXX finishedButton::aliasText.text = " + aliasText.text);
                 addSyncFolder.remoteFolder = currentPath;
                 if (aliasText.text != "") {
                     addSyncFolder.aliasName = aliasText.text;
                 } else {
                     addSyncFolder.aliasName =  currentPath;
                 }
-                print("finishedButton::aliasText.text = " + aliasText.text + " so: " + addSyncFolder.aliasName);
+                print("XXX finishedButton::aliasText.text = " + aliasText.text + " so: " + addSyncFolder.aliasName);
                 nextPage();
             }
         }

@@ -82,6 +82,7 @@ Item {
                     lister.enterDirectory(modelData);
                     filterText.text = "";
                 } else {
+                    print("XXX directory picked " + currentPath);
                     directoryPicked(currentPath);
                 }
             }

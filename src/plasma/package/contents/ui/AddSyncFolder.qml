@@ -98,8 +98,8 @@ Item {
             addSyncFolder.cnt = addSyncFolder.cnt + 1
             var localFolder = addSyncFolder.localFolder;
             var remoteFolder = addSyncFolder.remoteFolder;
-            var aliasName = addSyncFolder.aliasName;
-            print("Adding folder " + localFolder + " " + remoteFolder + " " + aliasName );
+            var aliasName = (addSyncFolder.aliasName != "") ? addSyncFolder.aliasName : addSyncFolder.remoteFolder;
+            //print("+++ Adding folder " + localFolder + " " + remoteFolder + " " + aliasName );
             owncloudSettings.addSyncFolder(localFolder, remoteFolder, aliasName);
             addSyncFolder.state = "feedback";
         }
@@ -108,6 +108,12 @@ Item {
     DirPicker {
         id: localFolderItem
         anchors.fill: parent
+
+        onDirectoryPicked: {
+            print("XXX Local Directory picked " + url);
+            localFolder = url;
+        }
+
         //clip: true
         Behavior on opacity { FadeAnimation { } }
     }
@@ -115,13 +121,16 @@ Item {
         id: remoteFolderItem
         anchors.fill: parent
         onFolderPicked: {
-            print("remote Folder picked ... " + folder);
+            print("XXX remote Folder picked ... " + folder);
             addSyncFolder.cnt = addSyncFolder.cnt + 1
             var localFolder = addSyncFolder.localFolder;
             var remoteFolder = folder;
-            var l = addSyncFolder.localFolder.split('/');
-            var aliasName = l[l.length];
-            print("Adding folder " + localFolder + " " + remoteFolder + " " + aliasName );
+            //var l = addSyncFolder.localFolder.split('/');
+            //var aliasName = l[l.length];
+            var aliasName = (addSyncFolder.aliasName != "") ? addSyncFolder.aliasName : remoteFolder;
+            print("XXX Adding folder " + localFolder + " " + remoteFolder + " " + aliasName);
+
+            //owncloudSettings.addSyncFolder(localFolder, remoteFolder, aliasName);
             owncloudSettings.addSyncFolder(localFolder, remoteFolder, aliasName);
             addSyncFolder.state = "feedback";
         }

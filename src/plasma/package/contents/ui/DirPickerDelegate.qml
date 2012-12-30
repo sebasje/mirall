@@ -86,8 +86,9 @@ Item {
         opacity: op
         onClicked: {
             var p = currentPath+"/"+name
-            print("picking: " + p);
-            addSyncFolder.localFolder = currentPath;
+            dirModel.url = p;
+            print("picking: " + p + "|"+name+"|");
+            //addSyncFolder.localFolder = currentPath;
             directoryPicked(p);
             nextPage();
         }

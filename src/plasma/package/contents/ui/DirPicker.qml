@@ -49,7 +49,7 @@ Item {
     PlasmaComponents.ToolBar {
         id: toolbar
         anchors { top: parent.top; left: parent.left; right: parent.right; }
-        height: iconSize * 1.2
+        height: iconSize * 2
         tools: PlasmaComponents.ToolBarLayout {
             spacing: 8
             PlasmaComponents.ToolButton {
@@ -72,7 +72,9 @@ Item {
                 iconSource: "dialog-close"
                 onClicked: {
                     addSyncFolder.state = "default"
-                    addFolderDialog.close();
+                    if (addFolderDialog && typeof(addFolderDialog)) {
+                        addFolderDialog.close();
+                    }
                 }
             }
         }

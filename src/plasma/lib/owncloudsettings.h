@@ -99,7 +99,7 @@ class OwncloudSettings : public QObject
         Q_INVOKABLE void startDaemon();
         Q_INVOKABLE void enableFolder(const QString &name, bool enabled = true);
         Q_INVOKABLE void addSyncFolder(const QString &localFolder, const QString &remoteFolder,
-                                       const QString &alias);
+                                       const QString &aliasName);
         Q_INVOKABLE void removeSyncFolder(const QString &alias);
         Q_INVOKABLE void checkRemoteFolder(const QString &folder);
         Q_INVOKABLE CreateFolderJob* createRemoteFolder(const QString &folder);

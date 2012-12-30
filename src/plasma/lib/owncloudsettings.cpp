@@ -316,11 +316,11 @@ void OwncloudSettings::enableAllFolders(bool enabled)
     }
 }
 
-void OwncloudSettings::addSyncFolder(const QString &localFolder, const QString &remoteFolder, const QString &alias)
+void OwncloudSettings::addSyncFolder(const QString &localFolder, const QString &remoteFolder, const QString &aliasName)
 {
     if (d->client) {
-        kDebug() << "addSyncFolder: " << localFolder << remoteFolder << alias;
-        d->client->addSyncFolder(localFolder, remoteFolder, alias);
+        kDebug() << " .. addSyncFolder: " << localFolder << remoteFolder << aliasName;
+        d->client->addSyncFolder(localFolder, remoteFolder, aliasName);
     }
 }
 
@@ -342,6 +342,7 @@ void OwncloudSettings::removeSyncFolder(const QString& alias)
 
 QString OwncloudSettings::verifyFolder(const QString &localFolder, const QString &remoteFolder, const QString &alias)
 {
+    Q_UNUSED(remoteFolder);
     bool aError = false;
     bool lError = false;
     foreach (const OwncloudFolder *folder, d->folders) {
