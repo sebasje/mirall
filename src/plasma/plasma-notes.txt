@@ -30,6 +30,9 @@ o use errorMessage() in login widget
 o pop up login widget automatically when NoConfiguration Error or Auth error occurs
 o make sure add remote / local folder buttons appear correctly in delegate
 
+
+1.0:
+===
 * make add custom folder work
 * investigate if pre-filling passwords is possible
 * use mirall's new icons?
@@ -39,9 +42,12 @@ o Get patches on github upstreamed, ping Klaas after vacation
 * add folder: check for both, local and remote folder if exists
 o Rename everything in the UI to Synchronization instead of owncloud
 
-* preprend "Favorites" page with Pictures, Videos, Documents, Music pathes and checkboxen
-  -> shortcut to same-named remote folders
-  * pre-fill user name from settings, password?
+o preprend "Favorites" page with Pictures, Videos, Documents, Music pathes and checkboxen
+* pre-fill user name from settings, password?
+* remove stuff from plasmoid, start kcmshell or active-settings from it
+
+later:
+=====
 * Settings page, with
   * slider-ish widget for polling interval
   * remote version information
@@ -94,7 +100,7 @@ Testing:
     2 remote folder exists, local folder doesn't
     3 both local and remote don't exist
     4 both local and remote exist and are not empty
-
+    5 folder already set up
 
 Test setup:
 - Documents: 5 Local files, empty remote
