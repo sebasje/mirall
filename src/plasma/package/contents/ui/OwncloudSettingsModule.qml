@@ -55,8 +55,8 @@ PlasmaComponents.PageStack {
         }
     }
 
-    //state: "setup"
-    state: "addFolder"
+    state: "default"
+//     state: "addFolder"
 
     states: [
         State {
@@ -113,7 +113,7 @@ PlasmaComponents.PageStack {
             id: folderList
             width: parent.width
             clip: true
-            height: 500
+            height: 540
             visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
             anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: enabledSwitch.top; }
             Behavior on opacity { FadeAnimation { } }
@@ -158,6 +158,14 @@ PlasmaComponents.PageStack {
         }
     }
 
+    NavigationItem {
+        id: navigationItem
+        anchors {
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
+    }
     Connections {
         target: owncloudSettings
         onErrorChanged: updateState()
@@ -168,7 +176,11 @@ PlasmaComponents.PageStack {
         if (owncloudSettings.owncloudStatus == OwncloudSettings.Disconnected) {
             owncloudModule.state = "setup";
             setupWizard.state = "login";
-            print(" disconnected");
+            print(" ------> disconnected");
+        } else {
+            print(" -----> connected");
+            owncloudModule.state = "default";
+            setupWizard.state = "favorites";
         }
         if (owncloudSettings.owncloudStatus == OwncloudSettings.Error) {
             if (owncloudSettings.error == OwncloudSettings.NoDaemonError) {
@@ -188,11 +200,12 @@ PlasmaComponents.PageStack {
                 setupWizard.state = "default";
             }
         }
+
     }
 
     function addFolder() {
 
-        print("addFolder");
+        print("setup");
 
         owncloudModule.state = "setup";
     }

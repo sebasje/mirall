@@ -24,7 +24,7 @@ import org.kde.plasma.components 0.1 as PlasmaComponents
 import org.kde.qtextracomponents 0.1 as QtExtras
 import org.kde.plasma.owncloud 0.1
 
-Item {
+PlasmaComponents.ListItem {
     id: fileDelegate
     width: parent.width - 24
     height: iconSize*1.5
@@ -63,7 +63,7 @@ Item {
         maximumLineCount: 3
         //width: parent.width
         font.pointSize: theme.smallestFont.pointSize
-        anchors { verticalCenter: parent.verticalCenter; left: fileIcon.right; leftMargin: 8; right: pickFolderButton.left; }
+        anchors { verticalCenter: parent.verticalCenter; left: fileIcon.right; leftMargin: 8; right: parent.right; }
         text: name
     }
     MouseArea {

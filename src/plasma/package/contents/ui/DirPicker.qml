@@ -40,6 +40,7 @@ Item {
 
     DirModel {
         id: dirModel
+        mimeFilter: "inode/directory"
         //sortDirectoriesFirst: true
         //fileNameFilter: "*.png"
     }
@@ -80,10 +81,13 @@ Item {
                 }
                 PlasmaComponents.ToolButton {
                     id: closeButton
+                    text: i18n("Cancel")
                     iconSource: "dialog-close"
                     onClicked: {
-                        addSyncFolder.state = "default"
-                        if (addFolderDialog && typeof(addFolderDialog)) {
+                        addSyncFolder.state = "default";
+                        setupWizard.state = "favorites";
+                        owncloudModule.state = "default";
+                        if (addFolderDialog && typeof(addFolderDialog) != "undefined") {
                             addFolderDialog.close();
                         }
                     }

@@ -33,8 +33,7 @@ ListView {
     spacing: 24
     delegate: FolderDelegate { }
 
-//     footer:
-
+    //Rectangle { color: "blue"; opacity: 0.4; anchors.fill: parent; }
     function statusIcon(e) {
         var icon = "task-complete";
         if (e == OwncloudFolder.Idle) icon = "task-complete";

@@ -33,6 +33,7 @@ class DirModel : public KDirModel
     Q_OBJECT
 
     Q_PROPERTY(QString url READ url WRITE setUrl NOTIFY urlChanged)
+    Q_PROPERTY(QString mimeFilter READ mimeFilter WRITE setMimeFilter NOTIFY mimeFilterChanged)
 
 public:
     enum FileItemRoles {
@@ -58,8 +59,12 @@ public:
     QString url() const;
     void setUrl(const QString &u);
 
+    QString mimeFilter() const;
+    void setMimeFilter(const QString &m);
+
 Q_SIGNALS:
     void urlChanged();
+    void mimeFilterChanged();
 
 private:
     DirModelPrivate *d;

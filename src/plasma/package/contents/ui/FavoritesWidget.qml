@@ -101,12 +101,12 @@ Item {
         return o;
     }
 
-    PlasmaExtras.Heading {
-        id: favHeading
-        text: i18n("What would you like to synchronize?")
-        level: 3
-        anchors { left: parent.left; right: parent.right; top: parent.top; }
-    }
+//     PlasmaExtras.Heading {
+//         id: favHeading
+//         text: i18n("What would you like to synchronize?")
+//         level: 3
+//         anchors { left: parent.left; right: parent.right; top: parent.top; }
+//     }
     PlasmaExtras.Paragraph {
         id: favInfo
         text: {
@@ -116,7 +116,7 @@ Item {
                 return i18n("Choose the local directories you would like to synchronize.");
             }
         }
-        anchors { left: parent.left; right: parent.right; top: favHeading.bottom; rightMargin: 12; topMargin: 12 }
+        anchors { left: parent.left; right: parent.right; top: parent.top; rightMargin: 12; }
     }
 
     ListView {
@@ -125,27 +125,41 @@ Item {
         spacing: 12
         anchors { left: parent.left; right: parent.right; top: favInfo.bottom; topMargin: 12; bottom: footerItem.top; }
         interactive: contentHeight > height
-        clip: true
+//         clip: true
 
         delegate: FavoriteDelegate {}
 
-        footer: Item {
-            //Rectangle { color: "orange"; opacity: 0.5; anchors.fill: parent; }
-            width: parent.width
-            height: 32
-            PlasmaComponents.ToolButton {
-                id: addSyncFolderButton2
-                text: i18n("Add Folder")
-                iconSource: "list-add"
-                anchors { bottom: parent.bottom; right: parent.right; rightMargin: 12; }
+        footer: AddFolderButton {
+                anchors.topMargin: 48
+
                 onClicked: {
                     setupWizard.state = "addSyncFolder";
                     addSyncFolder.state = "localFolder";
                 }
-            }
         }
+
+//         footer: Item {
+//             //Rectangle { color: "orange"; opacity: 0.5; anchors.fill: parent; }
+//             width: parent.width
+//             height: 32
+//             PlasmaComponents.ToolButton {
+//                 id: addSyncFolderButton2
+//                 text: i18n("Add Folder")
+//                 iconSource: "list-add"
+//                 anchors { bottom: parent.bottom; right: parent.right; }
+//                 onClicked: {
+//                     setupWizard.state = "addSyncFolder";
+//                     addSyncFolder.state = "localFolder";
+//                 }
+//             }
+//         }
     }
 
+
+    Connections {
+        target: navigationItem
+        onApply: apply();
+    }
 
     function apply() {
         print(" apply! ");

@@ -52,6 +52,7 @@ DirModel::DirModel(QObject *parent)
     //d->dirLister = new DirLister
     d->dirLister = new KDirLister(this);
     d->dirLister->setDelayedMimeTypes(true);
+    //d->dirLister->setMimeFilter(QStringList("inode/directory"));
     d->dirLister->setAutoErrorHandlingEnabled(false, 0);
 
     setDirLister(d->dirLister);
@@ -123,5 +124,19 @@ QString DirModel::url() const
     return d->url;
 }
 
+QString DirModel::mimeFilter() const
+{
+    QStringList m = d->dirLister->mimeFilters();
+    if (m.count() == 0) {
+        return QString();
+    }
+    return m[0];
+}
+
+void DirModel::setMimeFilter(const QString& m)
+{
+    d->dirLister->setMimeFilter(QStringList(m));
+    emit mimeFilterChanged();
+}
 
 #include "dirmodel.moc"

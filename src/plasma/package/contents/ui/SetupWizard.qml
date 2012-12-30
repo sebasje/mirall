@@ -28,7 +28,7 @@ Item {
     id: setupWizard
     objectName: "setupWizard"
     state: "login"
-    property int maxWidth: 600
+    property int maxWidth: parent.width
     property bool isFirstRun: true
     states: [
         State {
@@ -93,44 +93,6 @@ Item {
             anchors { top: errorLabel.bottom; left: parent.horizontalCenter; }
 
             onClicked: owncloudSettings.startDaemon()
-        }
-    }
-
-    Item {
-        id: setupNavigation
-        anchors { left: parent.left; bottom: parent.bottom; bottomMargin: 24; }
-        width: parent.width > maxWidth ? maxWidth : parent.width
-
-        PlasmaComponents.ToolButton {
-            id: navLogin
-            text: i18n("Sign in")
-            iconSource: "dialog-password"
-            opacity: setupWizard.state == "login" ? 0 : 1
-            Behavior on opacity { FadeAnimation { } }
-            onClicked: setupWizard.state = "login"
-            anchors { verticalCenter: parent.verticalCenter; left: parent.left; }
-        }
-        PlasmaComponents.ToolButton {
-            id: navFavs
-            text: i18n("Setup folders")
-            iconSource: "folder-sync"
-            opacity: ((setupWizard.state == "favorites") ||
-                      (owncloudSettings.owncloudStatus != OwncloudSettings.Connected)) ? 0 : 1
-            Behavior on opacity { FadeAnimation { } }
-            onClicked: setupWizard.state = "favorites"
-            anchors { verticalCenter: parent.verticalCenter; right: parent.right; }
-        }
-        PlasmaComponents.ToolButton {
-            id: done
-            text: i18n("Finish")
-            iconSource: "dialog-ok-apply"
-            opacity: (setupWizard.state == "favorites") ? 1 : 0
-            Behavior on opacity { FadeAnimation { } }
-            onClicked: {
-                favoritesWidget.apply();
-                owncloudModule.state = "default";
-            }
-            anchors { verticalCenter: parent.verticalCenter; right: parent.right; }
         }
     }
 

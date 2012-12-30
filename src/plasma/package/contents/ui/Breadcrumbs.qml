@@ -41,20 +41,23 @@ Item {
         if (url.indexOf("webdav") == 0) {
             offset = 0;
             els = currentPath.split("files/webdav.php")[1].split("/");
-            print ("elslength: " + els.length + ";" +currentPath)
+//             print ("elslength: " + els.length + ";" +currentPath)
             if (els.length  <= 1 && ix == 0) {
                 return " "
             }
         }
-        print(" +++ UUUU " + currentPath + " o " + offset + " ix: " + ix);
-        for (var i = offset; i < els.length; i++) {
-//             print(" ix: " + ix + " e[" + i + "] = " + els[i]);
-        }
+//         print(" +++ UUUU " + currentPath + " o " + offset + " ix: " + ix);
+//         for (var i = offset; i < els.length; i++) {
+// //             print(" ix: " + ix + " e[" + i + "] = " + els[i]);
+//         }
         if (els.length < ix+offset) {
             return "/";
         }
         e = els[ix+offset];
-        print("===> " + e);
+        if (!e) {
+            e = "";
+        }
+//         print("===> " + e);
         return e;
     }
 
@@ -72,11 +75,11 @@ Item {
         var els = us[1].split("/");
 //         var els = url.split("/");
         for (var i = offset; i <= ix+1; i++) {
-            print(protocol + " offset, ix: " + offset + " " + ix + " e[" + i + "] = " + els[i]);
+//             print(protocol + " offset, ix: " + offset + " " + ix + " e[" + i + "] = " + els[i]);
             o = o + "/" + els[i];
         }
 //         e = els[ix+offset];
-        print(" targetUrl: " + o);
+//         print(" targetUrl: " + o);
         return o;
     }
 
@@ -103,7 +106,7 @@ Item {
                 //o = protocol+":/"; // FIXME
             }
             for (var i = offset; i <= els.length; i++) {
-                print(" +++++++++++ model: " + i + " o[" + n + "] = " + els[i]);
+//                 print(" +++++++++++ model: " + i + " o[" + n + "] = " + els[i]);
                 o[n] = els[i];
                 n++;
             }
