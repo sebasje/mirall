@@ -361,6 +361,24 @@ QString OwncloudSettings::verifyFolder(const QString &localFolder, const QString
     return err;
 }
 
+bool OwncloudSettings::isConfigured(const QString &localFolder, const QString &remoteFolder, const QString &alias)
+{
+
+    foreach (const OwncloudFolder *folder, d->folders) {
+        kDebug() << " --- !!!!!!!";
+        kDebug() << "displayName" << alias << folder->displayName() << (folder->displayName() == alias);
+        kDebug() << "remotePath" << remoteFolder << folder->remotePath() << (folder->remotePath() == remoteFolder);
+        kDebug() << "displayName" << folder->localPath() << localFolder << (QDir(folder->localPath()) == QDir(localFolder));
+        if ((folder->displayName() == alias) &&
+            (QDir(folder->localPath()) == QDir(localFolder)) &&
+            (folder->remotePath() == remoteFolder)) {
+            kDebug() << "=========== Folder configured: " << folder->displayName();
+            return true;
+        }
+    }
+    return false;
+}
+
 void OwncloudSettings::updateGlobalStatus()
 {
     int newState = OwncloudFolder::Idle;

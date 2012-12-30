@@ -106,6 +106,8 @@ class OwncloudSettings : public QObject
         Q_INVOKABLE bool createLocalFolder(const QString &folder);
         Q_INVOKABLE QString verifyFolder(const QString &localFolder, const QString &remoteFolder,
                                        const QString &alias);
+        Q_INVOKABLE bool isConfigured(const QString &localFolder, const QString &remoteFolder,
+                                       const QString &alias);
         Q_INVOKABLE void setupOwncloud(const QString &server, const QString &user,
                                        const QString &password);
         Q_INVOKABLE MiniJob* createMiniJob();

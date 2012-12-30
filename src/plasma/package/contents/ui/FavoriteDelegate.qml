@@ -33,6 +33,7 @@ Item {
     property string localPath: aliasLocalPath(remotePath)
     property string displayName: aliasName(remotePath)
     property bool localPathExists: dir.exists(localPath)
+    property bool isConfigured: owncloudSettings.isConfigured(localPath, remotePath, displayName)
 
     height:  expanded ? 84 : 48
     width: parent.width
@@ -58,6 +59,9 @@ Item {
         verticalAlignment: Text.AlignTop
         anchors { left: aliasLabel.left; right: addFav.left; top: aliasLabel.bottom; bottom: parent.bottom; }
         text: {
+            if (isConfigured) {
+                return i18n("Folder already set up.");
+            }
             if (errorMessage != "") {
                 return errorMessage;
             } else {
@@ -76,8 +80,19 @@ Item {
 
     PlasmaComponents.CheckBox {
         id: addFav
+        checked: isConfigured
+        opacity: !isConfigured ? 1 : 0
         anchors { verticalCenter: folderIcon.verticalCenter; right: parent.right; rightMargin: 12; }
         onClicked: toggle()
+    }
+
+    QtExtraComponents.QIconItem {
+        id: folderConfiguredIcon
+        icon: "dialog-ok-apply"
+        width: 16
+        height: width
+        opacity: isConfigured ? 1 : 0
+        anchors { verticalCenter: folderIcon.verticalCenter; right: parent.right; rightMargin: 12; }
     }
 
     PlasmaComponents.Button {
@@ -119,6 +134,9 @@ Item {
                 owncloudSettings.checkRemoteFolder(remotePath);
             }
         }
+        onFoldersChanged: {
+            isConfigured = owncloudSettings.isConfigured(localPath, remotePath, displayName);
+        }
         onRemoteFolderExists: {
             if (folder == remotePath) {
                 //print( " .. remote exists? " + remotePath + " yesno: " + exists + " index: " + index + " " + favDelegate.displayName);
@@ -129,6 +147,7 @@ Item {
                     favoritesModel.setProperty(index, "folderVerified", (errorMessage == ""));
                 }
             }
+            //isConfigured = owncloudSettings.isConfigured(localPath, remotePath, displayName);
         }
     }
     function toggle() {
@@ -143,5 +162,6 @@ Item {
     }
     Component.onCompleted: {
         owncloudSettings.checkRemoteFolder(remotePath);
+        //isConfigured = owncloudSettings.isConfigured(localPath, remotePath, displayName);
     }
 }
