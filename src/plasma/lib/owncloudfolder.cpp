@@ -82,7 +82,6 @@ void OwncloudFolder::slotDelayedSuccess()
     if (d->status == Running) {
         d->status = Idle;
         emit folderStatusChanged();
-        qDebug() << "======= OC Folderstatus delay";
     }
 }
 

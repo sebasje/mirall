@@ -244,7 +244,7 @@ void OwncloudSettings::setFolder(const QVariantMap& m)
         }
     }
     if (exists) {
-        kDebug() << "OC Updating existing folder" << alias;
+//         kDebug() << "OC Updating existing folder" << alias;
     } else {
         kDebug() << "OC New Folder" << alias;
         folder = new OwncloudFolder(this);

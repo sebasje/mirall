@@ -109,8 +109,13 @@ Item {
     }
     PlasmaExtras.Paragraph {
         id: favInfo
-        text: i18n("Choose the local directories you would like to synchronize. \
-        Click \"Finish\" to set up your folders and start the initial synchronization.")
+        text: {
+            if (setupWizard.isFirstRun) {
+                return i18n("Choose the local directories you would like to synchronize. Click \"Finish\" to set up your folders and start the initial synchronization.");
+            } else {
+                return i18n("Choose the local directories you would like to synchronize.");
+            }
+        }
         anchors { left: parent.left; right: parent.right; top: favHeading.bottom; rightMargin: 12; topMargin: 12 }
     }
 
@@ -123,6 +128,22 @@ Item {
         clip: true
 
         delegate: FavoriteDelegate {}
+
+        footer: Item {
+            //Rectangle { color: "orange"; opacity: 0.5; anchors.fill: parent; }
+            width: parent.width
+            height: 32
+            PlasmaComponents.ToolButton {
+                id: addSyncFolderButton2
+                text: i18n("Add Folder")
+                iconSource: "list-add"
+                anchors { bottom: parent.bottom; right: parent.right; rightMargin: 12; }
+                onClicked: {
+                    setupWizard.state = "addSyncFolder";
+                    addSyncFolder.state = "localFolder";
+                }
+            }
+        }
     }
 
 

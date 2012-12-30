@@ -65,9 +65,9 @@ OwncloudSync::OwncloudSync(QObject *parent)
     d->ocStatus = OwncloudSettings::Disconnected;
     d->ocError = OwncloudSettings::NoError;
     d->ocInfo = Mirall::ownCloudInfo::instance();
-//     KIO::AccessManager *nam = new KIO::AccessManager(this);
-//     kDebug() << "OC Seetting KIO::NAM";
-//     d->ocInfo->setNetworkAccessManager(nam);
+// //     KIO::AccessManager *nam = new KIO::AccessManager(this);
+// //     kDebug() << "OC Seetting KIO::NAM";
+// //     d->ocInfo->setNetworkAccessManager(nam);
     init();
 
 }

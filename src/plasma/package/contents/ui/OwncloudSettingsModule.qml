@@ -132,12 +132,13 @@ PlasmaComponents.PageStack {
         }
         PlasmaComponents.ToolButton {
             id: addSyncFolderButton
-            text: i18n("Add Folder")
-            iconSource: "list-add"
+            text: i18n("Setup folders")
+            iconSource: "folder-sync"
             opacity: folderList.opacity
             anchors { bottom: parent.bottom; right: parent.right; rightMargin: 12; }
             onClicked: {
                 //owncloudSettings.checkRemoteFolder("testfoo");
+                setupWizard.isFirstRun = false;
                 addFolder();
 /*
                 addSyncFolder.state = "localFolder";
@@ -189,6 +190,7 @@ PlasmaComponents.PageStack {
     function addFolder() {
 
         print("addFolder");
+
         owncloudModule.state = "setup";
     }
 

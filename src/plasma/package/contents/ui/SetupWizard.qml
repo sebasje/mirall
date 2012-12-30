@@ -29,21 +29,32 @@ Item {
     objectName: "setupWizard"
     state: "login"
     property int maxWidth: 600
+    property bool isFirstRun: true
     states: [
         State {
             name: "login"
+            PropertyChanges { target: addSyncFolder; opacity: 0; }
             PropertyChanges { target: loginWidget; opacity: 1; }
             PropertyChanges { target: favoritesWidget; opacity: 0; }
             PropertyChanges { target: errorWidget; opacity: 0; }
         },
         State {
             name: "favorites"
+            PropertyChanges { target: addSyncFolder; opacity: 0; }
             PropertyChanges { target: loginWidget; opacity: 0; }
             PropertyChanges { target: favoritesWidget; opacity: 1; }
             PropertyChanges { target: errorWidget; opacity: 0; }
         },
         State {
+            name: "addSyncFolder"
+            PropertyChanges { target: addSyncFolder; opacity: 1; }
+            PropertyChanges { target: loginWidget; opacity: 0; }
+            PropertyChanges { target: favoritesWidget; opacity: 0; }
+            PropertyChanges { target: errorWidget; opacity: 0; }
+        },
+        State {
             name: "error"
+            PropertyChanges { target: addSyncFolder; opacity: 0; }
             PropertyChanges { target: loginWidget; opacity: 0; }
             PropertyChanges { target: favoritesWidget; opacity: 0; }
             PropertyChanges { target: errorWidget; opacity: 1; }
@@ -131,6 +142,12 @@ Item {
 
     FavoritesWidget {
         id: favoritesWidget
+        anchors { top: parent.top; left: parent.left; bottom: parent.bottom; rightMargin: 12; }
+        width: parent.width > maxWidth ? maxWidth : parent.width
+    }
+
+    AddSyncFolder {
+        id: addSyncFolder
         anchors { top: parent.top; left: parent.left; bottom: parent.bottom; rightMargin: 12; }
         width: parent.width > maxWidth ? maxWidth : parent.width
     }
