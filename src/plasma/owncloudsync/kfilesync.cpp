@@ -32,8 +32,8 @@ KFileSync::KFileSync(QObject *parent)
 {
     d = new KFileSyncPrivate;
 
-    KIO::AccessManager *nam = new KIO::AccessManager(this);
-    ocInfo()->setNetworkAccessManager(nam);
+//     KIO::AccessManager *nam = new KIO::AccessManager(this);
+//     ocInfo()->setNetworkAccessManager(nam);
     if(ocInfo()->isConfigured() ) {
         kDebug() << "OCInfo is configured, checkInstallation(), loadFolders()";
 
