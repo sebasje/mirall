@@ -138,6 +138,7 @@ void OwncloudSettings::setDisplay(const QString& n)
 
 void OwncloudSettings::setOwncloud(const QVariantMap& m)
 {
+    kDebug() << " vm " << m;
     d->owncloudInfo = m;
     emit editionChanged();
     emit versionChanged();
@@ -280,7 +281,7 @@ void OwncloudSettings::enableFolder(const QString& name, bool enabled)
 
 void OwncloudSettings::checkRemoteFolder(const QString &folder)
 {
-    //kDebug() << "checkremote folder";
+    kDebug() << "checkremote folder" << folder;
     if (d->client && !folder.isEmpty()) {
         d->client->checkRemoteFolder(folder);
     }

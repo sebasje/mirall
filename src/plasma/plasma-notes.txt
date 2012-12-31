@@ -39,6 +39,7 @@ o Get patches on github upstreamed, ping Klaas after vacation
 o Rename everything in the UI to Synchronization instead of owncloud
 o preprend "Favorites" page with Pictures, Videos, Documents, Music pathes and checkboxen
 
+* new login should connect correctly
 * use mirall's new icons?
 * pre-fill user name from settings, password?
 * remove stuff from plasmoid, start kcmshell or active-settings from it

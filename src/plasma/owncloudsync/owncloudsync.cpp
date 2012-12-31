@@ -28,6 +28,7 @@
 #include <QVariant>
 #include <QTimer>
 
+#include "mirall/credentialstore.h"
 #include "mirall/syncresult.h"
 #include "mirall/folder.h"
 #include "mirall/mirallconfigfile.h"
@@ -70,6 +71,7 @@ OwncloudSync::OwncloudSync(QObject *parent)
 // //     d->ocInfo->setNetworkAccessManager(nam);
     init();
 
+    slotFetchCredentials();
 }
 
 void OwncloudSync::init()
@@ -92,10 +94,13 @@ void OwncloudSync::init()
     connect(d->ocInfo, SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
              SLOT(slotDirCheckReply(QString,QNetworkReply*)));
 
-    if(d->ocInfo->isConfigured() ) {
-        d->ocInfo->checkInstallation();
-        loadFolders();
-    }
+    //QTimer::singleShot( 0, this, SLOT( slotFetchCredentials() ));
+//     if(d->ocInfo->isConfigured() ) {
+//         d->ocInfo->checkInstallation();
+//         loadFolders();
+//     } else {
+//
+//     }
     //qDebug() << "OwncloudSyncDaemon loaded.";
 }
 
@@ -306,6 +311,7 @@ void OwncloudSync::delayedReadConfig()
 
 void OwncloudSync::checkRemoteFolder(const QString& f)
 {
+    qDebug() << "OC checkRemoteFolder" << f;
     if (d->ocStatus == OwncloudSettings::Connected) {
         QNetworkReply* reply = d->ocInfo->getWebDAVPath(f);
         connect(reply, SIGNAL(finished()), SLOT(slotCheckRemoteFolderFinished()));
@@ -352,6 +358,7 @@ void OwncloudSync::slotOwnCloudFound( const QString& url, const QString& version
 {
     qDebug() << "OCD : ownCloud found: " << url << " with version " << versionStr << "(" << version << ")";
     // now check the authentication
+
     Mirall::MirallConfigFile cfgFile(d->configHandle);
     cfgFile.setOwnCloudVersion( version );
     qDebug() << " OC polling interval: " << cfgFile.remotePollInterval();
@@ -364,12 +371,77 @@ void OwncloudSync::slotOwnCloudFound( const QString& url, const QString& version
     d->ocStatus = OwncloudSettings::Disconnected;
     d->ocError = OwncloudSettings::NoError;
 
-    emit owncloudChanged(d->owncloudInfo);
-    emit statusChanged(d->ocStatus);
-    emit errorChanged(d->ocError);
+//     emit owncloudChanged(d->owncloudInfo);
+//     emit statusChanged(d->ocStatus);
+//     emit errorChanged(d->ocError);
 
-    QTimer::singleShot(0, this, SLOT(slotCheckAuthentication()));
 }
+
+void OwncloudSync::slotFetchCredentials()
+{
+    QString trayMessage;
+
+    if( Mirall::CredentialStore::instance()->canTryAgain() ) {
+        connect( Mirall::CredentialStore::instance(), SIGNAL(fetchCredentialsFinished(bool)),
+                 this, SLOT(slotCredentialsFetched(bool)) );
+        Mirall::CredentialStore::instance()->fetchCredentials();
+        if( Mirall::CredentialStore::instance()->state() == Mirall::CredentialStore::TooManyAttempts ) {
+            trayMessage = tr("Too many attempts to get a valid password.");
+        }
+    } else {
+        qDebug() << "OC Can not try again to fetch Credentials.";
+         trayMessage = tr("ownCloud user credentials are wrong. Please check configuration.");
+    }
+    qDebug() << "OC slotFetchCredentials" << trayMessage;
+}
+
+
+void OwncloudSync::slotCredentialsFetched(bool ok)
+{
+    qDebug() << "OC Credentials successfully fetched: " << ok;
+    QString trayMessage;
+    if( ! ok ) {
+        trayMessage = tr("Error: Could not retrieve the password!");
+        if( Mirall::CredentialStore::instance()->state() == Mirall::CredentialStore::UserCanceled ) {
+            trayMessage = tr("Password dialog was canceled!");
+        } else {
+            trayMessage = Mirall::CredentialStore::instance()->errorMessage();
+        }
+
+        if( !trayMessage.isEmpty() ) {
+            //_tray->showMessage(tr("Credentials"), trayMessage);
+        }
+
+        qDebug() << "OC Could not fetch credentials" << trayMessage;
+    } else {
+        // Credential fetched ok.
+        //QTimer::singleShot(0, this, SLOT(slotCheckAuthentication()));
+        const QString _url = d->owncloudInfo["url"].toString();
+        //const QString _url = "http://localhost/owncloud/";
+        const QString _u = Mirall::CredentialStore::instance()->user();
+        const QString _p = Mirall::CredentialStore::instance()->password();
+        //const QString _p = "test";
+        qDebug() << "OC User / password === " << _u << _p << _url;
+        qDebug() << "OC slotCredentialsFetched" << trayMessage;
+        if(d->ocInfo->isConfigured() ) {
+            d->ocInfo->checkInstallation();
+            loadFolders();
+        }
+//         init();
+//         emit owncloudChanged(d->owncloudInfo);
+//         emit statusChanged(d->ocStatus);
+//         emit errorChanged(d->ocError);
+        //setupOwncloud(_url, _u, _p);
+        //slotCheckAuthentication();
+            //slotFetchCredentials();
+
+        //setupOwncloud(d->owncloudInfo["url"].toString(), _u, _p);
+        QTimer::singleShot(0, this, SLOT(slotCheckAuthentication()));
+    }
+    disconnect( Mirall::CredentialStore::instance(), SIGNAL(fetchCredentialsFinished(bool)) );
+}
+
+
 
 void OwncloudSync::slotNoOwnCloudFound(QNetworkReply* reply)
 {
@@ -381,12 +453,13 @@ void OwncloudSync::slotNoOwnCloudFound(QNetworkReply* reply)
 
 void OwncloudSync::slotCheckAuthentication()
 {
+    kDebug() << "OwncloudSync::slotCheckAuthentication()";
     d->ocInfo->getRequest("/", true ); // this call needs to be authenticated.
 }
 
 void OwncloudSync::slotAuthCheck( const QString& ,QNetworkReply *reply )
 {
-    //qDebug() << "OC slotAuthCheck :: error code: " << reply->error();
+    qDebug() << "OC slotAuthCheck :: error code: " << reply->error();
     if( reply->error() == QNetworkReply::AuthenticationRequiredError ) { // returned if the user is wrong.
         if (d->ocStatus != OwncloudSettings::Error ||
                             d->ocError != OwncloudSettings::AuthenticationError) {
@@ -409,7 +482,7 @@ void OwncloudSync::slotAuthCheck( const QString& ,QNetworkReply *reply )
     } else {
 //         qDebug() << "OC ######## Credentials are ok!";
         if (d->ocStatus != OwncloudSettings::Connected) {
-            qDebug() << "OC changing to Connected/NoError!";
+            qDebug() << "OC ****** changing to Connected/NoError! :-)";
             d->ocStatus = OwncloudSettings::Connected;
             d->ocError = OwncloudSettings::NoError;
             emit statusChanged(d->ocStatus);
@@ -422,13 +495,20 @@ void OwncloudSync::slotAuthCheck( const QString& ,QNetworkReply *reply )
 
 void OwncloudSync::setupOwncloud(const QString &server, const QString &user, const QString &password)
 {
+    qDebug() << " OC  OwncloudSync::setupOwncloud .";
     Mirall::MirallConfigFile cfgFile(d->configHandle);
     cfgFile.setRemotePollIntval(600000); // ten minutes for now
 
     bool https = server.startsWith("https");
 
-    cfgFile.writeOwncloudConfig(QLatin1String("ownCloud"), server, user, password, https, false);
-    kDebug() << "OC Setting up: " << server << user << password << https;
+    QString _srv = server;
+    if (!server.endsWith('/')) {
+        _srv.append('/');
+    }
+
+    cfgFile.writeOwncloudConfig(QLatin1String("ownCloud"), _srv, user, password, https, false);
+    Mirall::CredentialStore::instance()->saveCredentials();
+    kDebug() << "OC - - - --  Setting up: " << _srv << user << password << https;
     cfgFile.acceptCustomConfig();
 
     if( d->folderMan ) {
@@ -443,9 +523,11 @@ void OwncloudSync::setupOwncloud(const QString &server, const QString &user, con
         // reset the SSL Untrust flag to let the SSL dialog appear again.
         d->ocInfo->resetSSLUntrust();
         d->ocInfo->checkInstallation();
+        loadFolders();
     } else {
         kDebug() << " OC  ownCloud seems not configured.";
     }
+    QTimer::singleShot(0, this, SLOT(slotCheckAuthentication()));
 }
 
 

@@ -87,6 +87,8 @@ class OwncloudSync : public QObject
         void slotCreateRemoteFolderFinished();
         void slotDirCheckReply( const QString&, QNetworkReply* );
         void slotCheckRemoteFolderFinished();
+        void slotFetchCredentials();
+        void slotCredentialsFetched( bool );
 
     protected:
         void loadFolders();
