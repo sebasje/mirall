@@ -48,16 +48,20 @@ Item {
     }
     PlasmaComponents.ToolButton {
         id: navFavs
-        text: i18n("Setup folders")
-        iconSource: "folder-sync"
-        opacity: ((owncloudModule.state != "addFolder") || (setupWizard.state == "favorites") || (owncloudSettings.owncloudStatus != OwncloudSettings.Connected)) ? 0 : 1
+        text: i18n("Settings")
+        iconSource: "configure"
+        //opacity: ((owncloudModule.state != "addFolder") || (setupWizard.state == "favorites") || (owncloudSettings.owncloudStatus != OwncloudSettings.Connected)) ? 0 : 1
+        opacity: owncloudModule.state == "default" ? 1 : 0
         Behavior on opacity { FadeAnimation { } }
-        onClicked: setupWizard.state = "favorites"
+        onClicked: {
+            setupWizard.state = "favorites";
+            owncloudModule.state = "setup";
+        }
         anchors { verticalCenter: parent.verticalCenter; right: parent.right; }
     }
     PlasmaComponents.ToolButton {
         id: done
-        text: i18n("Finish")
+        text: i18n("OK")
         iconSource: "dialog-ok-apply"
         opacity: (owncloudModule.state != "default")  && ((setupWizard.state == "favorites") && (owncloudModule.state == "setup")) || ((setupWizard.state == "login" && owncloudSettings.owncloudStatus == OwncloudSettings.Connected))? 1 : 0
         Behavior on opacity { FadeAnimation { } }

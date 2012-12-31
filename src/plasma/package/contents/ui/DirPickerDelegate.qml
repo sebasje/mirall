@@ -72,7 +72,8 @@ PlasmaComponents.ListItem {
             if (fileDelegate.state == "expanded") {
                 dirView.currentIndex = index;
                 var p = currentPath+"/"+name;
-                dirModel.url = p;
+                //dirModel.url = p;
+                open(p);
             } else {
                 fileDelegate.state = "expanded";
             }

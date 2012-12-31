@@ -131,21 +131,21 @@ PlasmaComponents.PageStack {
             anchors { bottom: parent.bottom; left: parent.left; rightMargin: 12 }
             onClicked: owncloudSettings.enableAllFolders(checked)
         }
-        PlasmaComponents.ToolButton {
-            id: addSyncFolderButton
-            text: i18n("Setup folders")
-            iconSource: "folder-sync"
-            opacity: folderList.opacity && owncloudModule.state != "addFolder"
-            anchors { bottom: parent.bottom; right: parent.right; rightMargin: 12; }
-            onClicked: {
-                //owncloudSettings.checkRemoteFolder("testfoo");
-                setupWizard.isFirstRun = false;
-                addFolder();
-/*
-                addSyncFolder.state = "localFolder";
-                owncloudModule.state = "addFolder";*/
-            }
-        }
+//         PlasmaComponents.ToolButton {
+//             id: addSyncFolderButton
+//             text: i18n("Setup folders")
+//             iconSource: "folder-sync"
+//             opacity: folderList.opacity && owncloudModule.state != "addFolder"
+//             anchors { bottom: parent.bottom; right: parent.right; rightMargin: 12; }
+//             onClicked: {
+//                 //owncloudSettings.checkRemoteFolder("testfoo");
+//                 setupWizard.isFirstRun = false;
+//                 addFolder();
+// /*
+//                 addSyncFolder.state = "localFolder";
+//                 owncloudModule.state = "addFolder";*/
+//             }
+//         }
 
         SetupWizard {
             id: setupWizard

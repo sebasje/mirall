@@ -54,12 +54,6 @@ Item {
         tools: PlasmaComponents.ToolBarLayout {
             spacing: 8
             PlasmaComponents.ToolButton {
-                iconSource: "go-previous"
-                onClicked: {
-                    goPrevious();
-                }
-            }
-            PlasmaComponents.ToolButton {
                 iconSource: "go-up"
                 onClicked: {
                     goUp();
@@ -122,10 +116,6 @@ Item {
             np = np + "//";
         }
         open(np);
-    }
-
-    function goBack() {
-        open(previousUrl)
     }
 
     function open(target) {
