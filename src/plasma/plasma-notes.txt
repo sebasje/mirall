@@ -33,21 +33,19 @@ o make sure add remote / local folder buttons appear correctly in delegate
 
 1.0:
 ===
-* make add custom folder work
-* investigate if pre-filling passwords is possible
-* use mirall's new icons?
-* Fix workflow between screens
-
+o make add custom folder work
+o Fix workflow between screens
 o Get patches on github upstreamed, ping Klaas after vacation
-* add folder: check for both, local and remote folder if exists
 o Rename everything in the UI to Synchronization instead of owncloud
-
 o preprend "Favorites" page with Pictures, Videos, Documents, Music pathes and checkboxen
+
+* use mirall's new icons?
 * pre-fill user name from settings, password?
 * remove stuff from plasmoid, start kcmshell or active-settings from it
 
 later:
 =====
+* add folder: check for both, local and remote folder if exists
 * Settings page, with
   * slider-ish widget for polling interval
   * remote version information
