@@ -91,7 +91,6 @@ protected slots:
     void slotCheckAuthentication();
     void slotAuthCheck( const QString& ,QNetworkReply* );
     void slotOpenLogBrowser();
-
     void slotAbout();
     void slotSSLFailed( QNetworkReply *reply, QList<QSslError> errors );
     void slotFetchCredentials();

@@ -176,7 +176,6 @@ Application::Application(int &argc, char **argv) :
 
 Application::~Application()
 {
-    delete _sslErrorDialog;
     delete _tray; // needed, see ctor
     if( _fileItemDialog) delete _fileItemDialog;
     if( _statusDialog )  delete _statusDialog;
@@ -901,7 +900,7 @@ void Application::parseOptions(const QStringList &options)
         } else if (option == QLatin1String("--logflush")) {
             _logFlush = true;
         } else if (option == QLatin1String("--monoicons")) {
-            _theme->setSystrayUseMonoIcons(true);
+            _theme->setSystrayUseMonoIcons(true); 
         }
     }
 }
