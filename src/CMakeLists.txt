@@ -127,11 +127,6 @@ endif()
 
 add_library(mirallsync   SHARED ${libsync_SRCS} ${syncMoc})
 add_library(owncloudsync SHARED ${libsync_SRCS} ${syncMoc})
-#<<<<<<< HEAD
-##set_target_properties( owncloudsync PROPERTIES COMPILE_DEFINITIONS OWNCLOUD_CLIENT)
-#target_link_libraries(mirallsync ${QT_LIBRARIES} ${CSYNC_LIBRARY} )
-#target_link_libraries(owncloudsync ${QT_LIBRARIES} ${CSYNC_LIBRARY} )
-#=======
 set_target_properties( owncloudsync PROPERTIES COMPILE_DEFINITIONS OWNCLOUD_CLIENT)
 
 target_link_libraries(mirallsync ${libsync_LINK_TARGETS} )
@@ -141,7 +136,6 @@ if ( APPLE )
     target_link_libraries(mirallsync /System/Library/Frameworks/CoreServices.framework)
     target_link_libraries(owncloudsync /System/Library/Frameworks/CoreServices.framework)
 endif()
-#>>>>>>> master
 
 if(NOT BUILD_OWNCLOUD_OSX_BUNDLE)
     install(TARGETS mirallsync owncloudsync
@@ -320,5 +314,6 @@ if(KRAZY2_EXECUTABLE)
 )
 endif()
 
-
-add_subdirectory(plasma)
+if(PLASMACLIENT)
+    add_subdirectory(plasma)
+endif()
