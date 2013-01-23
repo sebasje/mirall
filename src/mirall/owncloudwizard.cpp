@@ -34,10 +34,10 @@ namespace Mirall
 
 void setupCustomMedia( QVariant variant, QLabel *label )
 {
-    if( ! label ) return;
+    if( !label ) return;
 
     QPixmap pix = variant.value<QPixmap>();
-    if( ! pix.isNull() ) {
+    if( !pix.isNull() ) {
         label->setPixmap(pix);
         label->setAlignment( Qt::AlignTop | Qt::AlignRight );
         label->setVisible(true);
@@ -65,10 +65,17 @@ OwncloudWelcomePage::OwncloudWelcomePage()
     content->setAlignment(Qt::AlignTop);
     content->setTextFormat(Qt::RichText);
     content->setWordWrap(true);
-    content->setText(tr("<p>In order to connect to your %1 server, you need to provide the server address "
-                        "as well as your credentials.</p><p>This wizard will guide you through the process.<p>"
-                        "<p>If you have not received this information, please contact your %1 hosting provider.</p>")
-                     .arg(Theme::instance()->appName()));
+    Theme *theme = Theme::instance();
+    if (theme->overrideServerUrl().isEmpty()) {
+        content->setText(tr("<p>In order to connect to your %1 server, you need to provide the server address "
+                            "as well as your credentials.</p><p>This wizard will guide you through the process.<p>"
+                            "<p>If you have not received this information, please contact your %1 provider.</p>")
+                         .arg(theme->appName()));
+    } else {
+        content->setText(tr("<p>In order to connect to your %1 server, you need to provide "
+                            "your credentials.</p><p>This wizard will guide you through "
+                            "the setup process.</p>").arg(theme->appName()));
+    }
 }
 
 
@@ -76,7 +83,7 @@ OwncloudSetupPage::OwncloudSetupPage()
 {
     _ui.setupUi(this);
 
-    setTitle(tr("Create the %1 Connection").arg(Theme::instance()->appName()));
+    setTitle(tr("Create Connection to %1").arg(Theme::instance()->appName()));
 
     connect(_ui.leUrl, SIGNAL(textChanged(QString)), SLOT(handleNewOcUrl(QString)));
 
@@ -130,16 +137,15 @@ void OwncloudSetupPage::setupCustomization()
     _ui.topLabel->hide();
     _ui.bottomLabel->hide();
 
-    MirallConfigFile cfg;
-
-    QVariant variant = cfg.customMedia( MirallConfigFile::oCSetupTop );
+    Theme *theme = Theme::instance();
+    QVariant variant = theme->customMedia( Theme::oCSetupTop );
     setupCustomMedia( variant, _ui.topLabel );
-    variant = cfg.customMedia( MirallConfigFile::oCSetupSide );
+    variant = theme->customMedia( Theme::oCSetupSide );
     setupCustomMedia( variant, _ui.sideLabel );
-    variant = cfg.customMedia( MirallConfigFile::oCSetupBottom );
+    variant = theme->customMedia( Theme::oCSetupBottom );
     setupCustomMedia( variant, _ui.bottomLabel );
 
-    QString fixUrl = cfg.customMedia( MirallConfigFile::oCSetupFixUrl ).toString();
+    QString fixUrl = theme->overrideServerUrl();
     if( !fixUrl.isEmpty() ) {
         setOCUrl( fixUrl );
         _ui.leUrl->setEnabled( false );
@@ -458,9 +464,7 @@ void OwncloudWizardResultPage::setupCustomization()
     _ui.topLabel->setText( QString::null );
     _ui.topLabel->hide();
 
-    MirallConfigFile cfg;
-
-    QVariant variant = cfg.customMedia( MirallConfigFile::oCSetupResultTop );
+    QVariant variant = Theme::instance()->customMedia( Theme::oCSetupResultTop );
     setupCustomMedia( variant, _ui.topLabel );
 }
 

@@ -58,6 +58,9 @@ QString SyncResult::statusString() const
         case SetupError:
             re = QLatin1String("SetupError");
             break;
+        case Unavailable:
+            re = QLatin1String("Not availabe");
+            break;
     }
     return re;
 }
@@ -65,6 +68,22 @@ QString SyncResult::statusString() const
 void SyncResult::setStatus( Status stat )
 {
     _status = stat;
+    _syncTime = QDateTime::currentDateTime();
+}
+
+void SyncResult::setSyncFileItemVector( const SyncFileItemVector& items )
+{
+    _syncItems = items;
+}
+
+SyncFileItemVector SyncResult::syncFileItemVector() const
+{
+    return _syncItems;
+}
+
+QDateTime SyncResult::syncTime() const
+{
+    return _syncTime;
 }
 
 void SyncResult::setErrorStrings( const QStringList& list )
@@ -91,16 +110,6 @@ QString SyncResult::errorString() const
 void SyncResult::clearErrors()
 {
     _errors.clear();
-}
-
-void SyncResult::setSyncChanges(const QHash< QString, QStringList >& changes)
-{
-    _syncChanges = changes;
-}
-
-QHash< QString, QStringList > SyncResult::syncChanges() const
-{
-    return _syncChanges;
 }
 
 bool SyncResult::localRunOnly() const

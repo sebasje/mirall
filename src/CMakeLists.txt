@@ -3,7 +3,13 @@ include(${QT_USE_FILE})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 QT4_ADD_RESOURCES ( MIRALL_RC_SRC ../mirall.qrc)
-QT4_ADD_RESOURCES ( MIRALL_RC_SRC ../theme.qrc)
+if ( DEFINED OEM_THEME_DIR)
+    QT4_ADD_RESOURCES ( MIRALL_RC_SRC ${OEM_THEME_DIR}/theme.qrc)
+    set(theme_dir ${OEM_THEME_DIR}/theme)
+else()
+    QT4_ADD_RESOURCES ( MIRALL_RC_SRC ../theme.qrc)
+    set(theme_dir ${CMAKE_CURRENT_SOURCE_DIR}/../theme)
+endif()
 
 set(mirall_UI
 mirall/folderwizardsourcepage.ui
@@ -19,6 +25,7 @@ mirall/owncloudwizardresultpage.ui
 mirall/owncloudcredentialspage.ui
 mirall/sslerrordialog.ui
 mirall/proxydialog.ui
+mirall/fileitemdialog.ui
 )
 
 set(3rdparty_SRC
@@ -142,6 +149,11 @@ if(NOT BUILD_OWNCLOUD_OSX_BUNDLE)
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
+    if(NOT WIN32)
+        configure_file(${CMAKE_SOURCE_DIR}/mirall.desktop.in
+                       ${APPLICATION_SHORTNAME}.desktop)
+        install(FILES  ${CMAKE_CURRENT_BINARY_DIR}/${APPLICATION_SHORTNAME}.desktop DESTINATION share/applications )
+    endif()
 else()
     install(TARGETS mirallsync owncloudsync DESTINATION ${OWNCLOUD_OSX_BUNDLE}/Contents/MacOS)
 endif()
@@ -157,6 +169,7 @@ set(mirall_SRCS
     mirall/sslerrordialog.cpp
     mirall/logbrowser.cpp
     mirall/proxydialog.cpp
+    mirall/fileitemdialog.cpp
 )
 
 set(mirall_HEADERS
@@ -169,6 +182,7 @@ set(mirall_HEADERS
     mirall/sslerrordialog.h
     mirall/logbrowser.h
     mirall/proxydialog.h
+    mirall/fileitemdialog.h
 )
 
 if( UNIX AND NOT APPLE)
@@ -200,15 +214,21 @@ set( final_src
 # add executable icon on windows and osx
 include( AddAppIconMacro )
 set(ownCloud_old ${ownCloud})
-kde4_add_app_icon( ownCloud "${CMAKE_CURRENT_SOURCE_DIR}/../resources/owncloud-icon-*.png") 
+
+kde4_add_app_icon( ownCloud "${theme_dir}/colored/${APPLICATION_SHORTNAME}-icon*.png")
 list(APPEND final_src ${ownCloud})
 set(ownCloud ${ownCloud_old})
 
 if(NOT BUILD_OWNCLOUD_OSX_BUNDLE)
     set(BIN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-    install(FILES ${CMAKE_SOURCE_DIR}/resources/mirall-48.png DESTINATION share/icons/hicolor/48x48/apps/ RENAME mirall.png)
-    install(FILES ${CMAKE_SOURCE_DIR}/resources/owncloud-icon-48.png DESTINATION share/icons/hicolor/48x48/apps/ RENAME owncloud.png)
+if(NOT WIN32)
+    install(FILES ${CMAKE_SOURCE_DIR}/resources/mirall-48.png 
+        DESTINATION share/icons/hicolor/48x48/apps/ RENAME mirall.png)
+    install(FILES
+        ${theme_dir}/colored/${APPLICATION_SHORTNAME}-icon-48.png 
+        DESTINATION share/icons/hicolor/48x48/apps/ RENAME ${APPLICATION_SHORTNAME}.png)
+endif(NOT WIN32)
 
     install(FILES ${mirall_I18N} DESTINATION share/mirall/i18n)
 

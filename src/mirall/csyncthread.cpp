@@ -18,6 +18,7 @@
 #include "mirall/theme.h"
 #include "mirall/logger.h"
 #include "mirall/utility.h"
+#include "mirall/owncloudinfo.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -26,6 +27,7 @@
 #endif
 
 #include <QDebug>
+#include <QSslSocket>
 #include <QDir>
 #include <QMutexLocker>
 #include <QThread>
@@ -186,25 +188,111 @@ const char* CSyncThread::proxyTypeToCStr(QNetworkProxy::ProxyType type)
         return "DefaultProxy";
     case QNetworkProxy::Socks5Proxy:
         return "Socks5Proxy";
-    case  QNetworkProxy::HttpProxy:
+    case QNetworkProxy::HttpProxy:
         return "HttpProxy";
-    case  QNetworkProxy::HttpCachingProxy:
+    case QNetworkProxy::HttpCachingProxy:
         return "HttpCachingProxy";
-    case  QNetworkProxy::FtpCachingProxy:
+    case QNetworkProxy::FtpCachingProxy:
         return "FtpCachingProxy";
     default:
         return "NoProxy";
     }
 }
 
+int CSyncThread::treewalkLocal( TREE_WALK_FILE* file, void *data )
+{
+    return static_cast<CSyncThread*>(data)->treewalkFile( file, false );
+}
+
+int CSyncThread::treewalkRemote( TREE_WALK_FILE* file, void *data )
+{
+    return static_cast<CSyncThread*>(data)->treewalkFile( file, true );
+}
+
+int CSyncThread::walkFinalize(TREE_WALK_FILE* file, void *data )
+{
+    return static_cast<CSyncThread*>(data)->treewalkError( file);
+}
+
+int CSyncThread::treewalkFile( TREE_WALK_FILE *file, bool remote )
+{
+    if( ! file ) return -1;
+    SyncFileItem item;
+    item._file = QString::fromUtf8( file->path );
+    item._instruction = file->instruction;
+    item._dir = SyncFileItem::None;
+
+    SyncFileItem::Direction dir;
+
+    int re = 0;
+
+    switch(file->instruction) {
+    case CSYNC_INSTRUCTION_NONE:
+        // No need to do anything.
+        return re;
+        break;
+    case CSYNC_INSTRUCTION_RENAME:
+        dir = !remote ? SyncFileItem::Down : SyncFileItem::Up;
+        item._renameTarget = QString::fromUtf8( file->rename_path );
+        break;
+    case CSYNC_INSTRUCTION_REMOVE:
+        dir = !remote ? SyncFileItem::Down : SyncFileItem::Up;
+        break;
+    case CSYNC_INSTRUCTION_CONFLICT:
+    case CSYNC_INSTRUCTION_IGNORE:
+    case CSYNC_INSTRUCTION_ERROR:
+        dir = SyncFileItem::None;
+        break;
+    case CSYNC_INSTRUCTION_EVAL:
+    case CSYNC_INSTRUCTION_NEW:
+    case CSYNC_INSTRUCTION_SYNC:
+    case CSYNC_INSTRUCTION_STAT_ERROR:
+    case CSYNC_INSTRUCTION_DELETED:
+    case CSYNC_INSTRUCTION_UPDATED:
+    default:
+        dir = remote ? SyncFileItem::Down : SyncFileItem::Up;
+        break;
+    }
+
+    item._dir = dir;
+    _mutex.lock();
+    _syncedItems.append(item);
+    _mutex.unlock();
+
+    return re;
+}
+
+int CSyncThread::treewalkError(TREE_WALK_FILE* file)
+{
+    SyncFileItem item;
+    item._file= QString::fromUtf8(file->path);
+    int indx = _syncedItems.indexOf(item);
+
+    if ( indx == -1 )
+        return 0;
+
+    if( item._instruction == CSYNC_INSTRUCTION_STAT_ERROR ||
+            item._instruction == CSYNC_INSTRUCTION_ERROR ) {
+        _mutex.lock();
+        _syncedItems[indx]._instruction = item._instruction;
+        _mutex.unlock();
+    }
+
+    return 0;
+}
+
+
 void CSyncThread::startSync()
 {
     qDebug() << "starting to sync " << qApp->thread() << QThread::currentThread();
     CSYNC *csync;
+    bool doTreeWalk = true;
+    int proxyPort = _proxy.port();
 
     emit(started());
 
     _mutex.lock();
+    _syncedItems.clear();
 
     if( csync_create(&csync,
                      _source.toUtf8().data(),
@@ -250,6 +338,7 @@ void CSyncThread::startSync()
     csync_set_module_property(csync, "csync_context", csync);
     csync_set_module_property(csync, "proxy_type", (char*) proxyTypeToCStr(_proxy.type()) );
     csync_set_module_property(csync, "proxy_host", _proxy.hostName().toUtf8().data() );
+    csync_set_module_property(csync, "proxy_port", &proxyPort );
     csync_set_module_property(csync, "proxy_user", _proxy.user().toUtf8().data()     );
     csync_set_module_property(csync, "proxy_pwd" , _proxy.password().toUtf8().data() );
 
@@ -259,10 +348,15 @@ void CSyncThread::startSync()
         const char *errMsg = csync_get_error_string( csync );
         QString errStr = csyncErrorToString(err, errMsg);
         qDebug() << " #### ERROR csync_update: " << errStr;
-        emit csyncError(errStr);
+        if (err == CSYNC_ERR_SERVICE_UNAVAILABLE)
+            emit csyncUnavailable();
+        else
+            emit csyncError(errStr);
         goto cleanup;
     }
     qDebug() << "<<#### Update end ###########################################################";
+
+
 
     if( csync_reconcile(csync) < 0 ) {
         CSYNC_ERROR_CODE err = csync_get_error( csync );
@@ -272,14 +366,36 @@ void CSyncThread::startSync()
         emit csyncError(errStr);
         goto cleanup;
     }
+
+    if( csync_walk_local_tree(csync, &treewalkLocal, 0) < 0 ) {
+         qDebug() << "Error in local treewalk.";
+         doTreeWalk = false;
+    }
+    if( doTreeWalk && csync_walk_remote_tree(csync, &treewalkRemote, 0) < 0 ) {
+         qDebug() << "Error in remote treewalk.";
+         doTreeWalk = false;
+    }
+
     if( csync_propagate(csync) < 0 ) {
         CSYNC_ERROR_CODE err = csync_get_error( csync );
         const char *errMsg = csync_get_error_string( csync );
         QString errStr = csyncErrorToString(err, errMsg);
         qDebug() << " #### ERROR csync_propagate: " << errStr;
-        emit csyncError(errStr);
+        if (err == CSYNC_ERR_SERVICE_UNAVAILABLE)
+            emit csyncUnavailable();
+        else
+            emit csyncError(errStr);
         goto cleanup;
     }
+
+    if( csync_walk_local_tree(csync, &walkFinalize, 0) < 0 ||
+            csync_walk_remote_tree( csync, &walkFinalize, 0 ) < 0 ) {
+        qDebug() << "Error in finalize treewalk.";
+    } else {
+        // emit the treewalk results.
+        emit treeWalkResult(_syncedItems);
+    }
+
 cleanup:
     csync_destroy(csync);
 
@@ -324,22 +440,23 @@ int CSyncThread::getauth(const char *prompt,
     } else {
         if( qPrompt.startsWith( QLatin1String("There are problems with the SSL certificate:"))) {
             // SSL is requested. If the program came here, the SSL check was done by mirall
-            // the answer is simply yes here.
+            // It needs to be checked if the  chain is still equal to the one which
+            // was verified by the user.
             QRegExp regexp("fingerprint: ([\\w\\d:]+)");
             bool certOk = false;
 
             int pos = 0;
-            MirallConfigFile cfg;
-            QByteArray ba = cfg.caCerts();
 
-            QList<QSslCertificate> certs = QSslCertificate::fromData(ba);
-            Utility util;
+
+            // This is the set of certificates which QNAM accepted, so we should accept
+            // them as well
+            QList<QSslCertificate> certs = ownCloudInfo::instance()->certificateChain();
 
             while (!certOk && (pos = regexp.indexIn(qPrompt, 1+pos)) != -1) {
                 QString neon_fingerprint = regexp.cap(1);
 
                 foreach( const QSslCertificate& c, certs ) {
-                    QString verified_shasum = util.formatFingerprint(c.digest(QCryptographicHash::Sha1).toHex());
+                    QString verified_shasum = Utility::formatFingerprint(c.digest(QCryptographicHash::Sha1).toHex());
                     qDebug() << "SSL Fingerprint from neon: " << neon_fingerprint << " compared to verified: " << verified_shasum;
                     if( verified_shasum == neon_fingerprint ) {
                         certOk = true;

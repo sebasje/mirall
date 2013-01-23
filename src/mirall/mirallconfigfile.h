@@ -30,13 +30,13 @@ class MirallConfigFile
 public:
     MirallConfigFile( const QString& appendix = QString() );
 
-    enum customMediaType {
-        oCSetupTop,      // ownCloud connect page
-        oCSetupSide,
-        oCSetupBottom,
-        oCSetupFixUrl,
-        oCSetupResultTop // ownCloud connect result page
-    };
+//    enum customMediaType {
+//        oCSetupTop,      // ownCloud connect page
+//        oCSetupSide,
+//        oCSetupBottom,
+//        oCSetupFixUrl,
+//        oCSetupResultTop // ownCloud connect result page
+//    };
 
     QString configPath() const;
     QString configFile() const;
@@ -68,18 +68,14 @@ public:
     QString ownCloudVersion() const;
     void setOwnCloudVersion( const QString& );
 
-    QVariant customMedia( customMediaType );
-
     // max count of lines in the log window
     int  maxLogLines() const;
 
     bool ownCloudSkipUpdateCheck( const QString& connection = QString() ) const;
 
-    /* Poll intervals in milliseconds */
-    int localPollInterval ( const QString& connection = QString() ) const;
-    void setRemotePollIntval(int interval, const QString& connection = QString() );
+    /* Server poll interval in milliseconds */
     int remotePollInterval( const QString& connection = QString() ) const;
-    int pollTimerExceedFactor( const QString& connection = QString() ) const;
+    void setRemotePollInterval(int interval, const QString& connection = QString() );
 
     // Custom Config: accept the custom config to become the main one.
     void acceptCustomConfig();

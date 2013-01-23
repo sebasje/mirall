@@ -472,7 +472,7 @@ void OwncloudSync::slotAuthCheck( const QString& ,QNetworkReply *reply )
 void OwncloudSync::setupOwncloud(const QString &server, const QString &user, const QString &password)
 {
     Mirall::MirallConfigFile cfgFile(d->configHandle);
-    cfgFile.setRemotePollIntval(600000); // ten minutes for now
+    cfgFile.setRemotePollInterval(600000); // ten minutes for now
 
     bool https = server.startsWith("https");
 

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Categories=Utility;X-SuSE-SyncUtility;
+Type=Application
+Exec=@APPLICATION_EXECUTABLE@
+Name=@APPLICATION_NAME@ desktop sync client 
+GenericName=Folder Sync
+Icon=@APPLICATION_SHORTNAME@

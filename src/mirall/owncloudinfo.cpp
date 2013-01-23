@@ -275,6 +275,11 @@ QString ownCloudInfo::configHandle(QNetworkReply *reply)
     return configHandle;
 }
 
+QList<QSslCertificate> ownCloudInfo::certificateChain() const
+{
+    return _certificateChain;
+}
+
 QUrl ownCloudInfo::redirectUrl(const QUrl& possibleRedirectUrl,
                                const QUrl& oldRedirectUrl) const {
     QUrl redirectUrl;
@@ -297,6 +302,10 @@ QUrl ownCloudInfo::redirectUrl(const QUrl& possibleRedirectUrl,
 void ownCloudInfo::slotReplyFinished()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    QSslConfiguration sslConfig = reply->sslConfiguration();
+    if (!sslConfig.isNull()) {
+        _certificateChain = sslConfig.peerCertificateChain();
+    }
 
     if( ! reply ) {
         qDebug() << "ownCloudInfo: Reply empty!";

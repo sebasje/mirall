@@ -63,8 +63,6 @@ CredentialStore::CredState CredentialStore::state()
 
 bool CredentialStore::canTryAgain()
 {
-    MirallConfigFile cfgFile;
-
     bool canDoIt = false;
 
     if( _tries > MAX_LOGIN_ATTEMPTS ) {
@@ -93,24 +91,33 @@ bool CredentialStore::canTryAgain()
 
 void CredentialStore::fetchCredentials()
 {
-    _state = Fetching;
     MirallConfigFile cfgFile;
-
     if( ++_tries > MAX_LOGIN_ATTEMPTS ) {
         qDebug() << "Too many attempts to enter password!";
         _state = TooManyAttempts;
+        emit( fetchCredentialsFinished(false) );
         return;
     }
 
     bool ok = false;
     QString pwd;
-    _state = Fetching;
     _user = cfgFile.ownCloudUser();
+    _url  = cfgFile.ownCloudUrl();
+
+    QString key = keyChainKey(_url);
+
+    if( key.isNull() ) {
+        qDebug() << "Can not fetch credentials, url is zero!";
+        _state = Error;
+        emit( fetchCredentialsFinished(false) );
+        return;
+    }
 
     switch( _type ) {
     case CredentialStore::User: {
         /* Ask the user for the password */
         /* Fixme: Move user interaction out here. */
+        _state = Fetching;
         pwd = QInputDialog::getText(0, QApplication::translate("MirallConfigFile","Password Required"),
                                     QApplication::translate("MirallConfigFile","Please enter your %1 password:")
                                     .arg(Theme::instance()->appName()),
@@ -123,18 +130,23 @@ void CredentialStore::fetchCredentials()
     }
     case CredentialStore::Settings: {
         /* Read from config file. */
+        _state = Fetching;
         pwd = cfgFile.ownCloudPasswd();
         ok = true;
         break;
     }
     case CredentialStore::KeyChain: {
+        // If the credentials are here already, return.
+        if( _state == Ok ) {
+            emit(fetchCredentialsFinished(true));
+            return;
+        }
+        // otherwise fetch asynchronious.
 #ifdef WITH_QTKEYCHAIN
         _state = AsyncFetching;
         if( !_user.isEmpty() ) {
             ReadPasswordJob *job = new ReadPasswordJob(Theme::instance()->appName());
-            // job->setAutoDelete( false );
-            // job->setSettings( )
-            job->setKey( keyChainKey( cfgFile.ownCloudUrl() ) );
+            job->setKey( key );
 
             connect( job, SIGNAL(finished(QKeychain::Job*)), this,
                      SLOT(slotKeyChainReadFinished(QKeychain::Job*)));
@@ -177,7 +189,21 @@ void CredentialStore::reset()
 
 QString CredentialStore::keyChainKey( const QString& url ) const
 {
-    QString key = _user+QLatin1Char(':')+url;
+    QString u(url);
+    if( u.isEmpty() ) {
+        qDebug() << "Empty url in keyChain, error!";
+        return QString::null;
+    }
+    if( _user.isEmpty() ) {
+        qDebug() << "Error: User is emty!";
+        return QString::null;
+    }
+
+    if( !u.endsWith(QChar('/')) ) {
+        u.append(QChar('/'));
+    }
+
+    QString key = _user+QLatin1Char(':')+u;
     return key;
 }
 
@@ -189,6 +215,14 @@ void CredentialStore::slotKeyChainReadFinished(QKeychain::Job* job)
         switch( pwdJob->error() ) {
         case QKeychain::NoError:
             _passwd = pwdJob->textData();
+#ifdef Q_OS_LINUX
+            // Currently there is a bug in the keychain on linux that if no
+            // entry is there, an empty password comes back, but no error.
+            if( _passwd.isEmpty() ) {
+                _state = EntryNotFound;
+                _errorMsg = tr("No password entry found in keychain. Please reconfigure.");
+            } else
+#endif
             _state = Ok;
             break;
         case QKeychain::EntryNotFound:
@@ -228,7 +262,7 @@ void CredentialStore::slotKeyChainReadFinished(QKeychain::Job* job)
 
         if( _state != Ok ) {
             qDebug() << "Error with keychain: " << pwdJob->errorString();
-            _errorMsg = pwdJob->errorString();
+            if(_errorMsg.isEmpty()) _errorMsg = pwdJob->errorString();
         } else {
             _errorMsg = QString::null;
         }
@@ -267,21 +301,24 @@ void CredentialStore::setCredentials( const QString& url, const QString& user, c
 void CredentialStore::saveCredentials( )
 {
     MirallConfigFile cfgFile;
-
+    QString key = keyChainKey(_url);
+    if( key.isNull() ) {
+        qDebug() << "Error: Can not save credentials, URL is zero!";
+        return;
+    }
 #ifdef WITH_QTKEYCHAIN
     WritePasswordJob *job = NULL;
 #endif
 
     switch( _type ) {
     case CredentialStore::User:
-        deleteKeyChainCredential(keyChainKey( _url ));
+        deleteKeyChainCredential( key );
         break;
     case CredentialStore::KeyChain:
 #ifdef WITH_QTKEYCHAIN
         // Set password in KeyChain
         job = new WritePasswordJob(Theme::instance()->appName());
-        // job->setAutoDelete( false );
-        job->setKey( keyChainKey( _url ) );
+        job->setKey( key );
         job->setTextData(_passwd);
 
         connect( job, SIGNAL(finished(QKeychain::Job*)), this,
@@ -297,9 +334,6 @@ void CredentialStore::saveCredentials( )
         // unsupported.
         break;
     }
-    // After saving, reset the internal state.
-
-
 }
 
 void CredentialStore::slotKeyChainWriteFinished( QKeychain::Job *job )
@@ -321,7 +355,6 @@ void CredentialStore::slotKeyChainWriteFinished( QKeychain::Job *job )
             // Try to remove password formerly stored in the config file.
             MirallConfigFile cfgFile;
             cfgFile.clearPasswordFromConfig();
-            reset();
         }
     } else {
         qDebug() << "Error: KeyChain Write Password Job failed!";

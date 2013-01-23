@@ -76,6 +76,7 @@ public:
 
     virtual void wipe();
 
+    /* get status about a singel file. */
     SyncFileStatus fileStatus( const QString& );
 
 public slots:
@@ -84,10 +85,12 @@ public slots:
 
 protected slots:
     void slotLocalPathChanged( const QString& );
+    void slotThreadTreeWalkResult(const SyncFileItemVector& );
 
 private slots:
     void slotCSyncStarted();
     void slotCSyncError(const QString& );
+    void slotCsyncUnavailable();
     void slotCSyncFinished();
 
 private:
@@ -97,7 +100,9 @@ private:
     CSyncThread *_csync;
     QStringList  _errors;
     bool         _csyncError;
+    bool         _csyncUnavail;
     bool         _wipeDb;
+    SyncFileItemVector _items;
 };
 
 }

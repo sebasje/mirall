@@ -22,9 +22,7 @@
 #include <QtCore>
 #include <QtGui>
 
-#define DEFAULT_REMOTE_POLL_INTERVAL 300000 // default remote poll time in milliseconds
-#define DEFAULT_LOCAL_POLL_INTERVAL  100000 // default local poll time in milliseconds
-#define DEFAULT_POLL_TIMER_EXEED     10
+#define DEFAULT_REMOTE_POLL_INTERVAL 30000 // default remote poll time in milliseconds
 
 #define CA_CERTS_KEY QLatin1String("CaCertificates")
 
@@ -299,7 +297,7 @@ QString MirallConfigFile::ownCloudUser( const QString& connection ) const
     return user;
 }
 
-void MirallConfigFile::setRemotePollIntval(int interval, const QString &connection )
+void MirallConfigFile::setRemotePollInterval(int interval, const QString &connection )
 {
     QString con( connection );
     if( connection.isEmpty() ) con = defaultConnection();
@@ -321,52 +319,11 @@ int MirallConfigFile::remotePollInterval( const QString& connection ) const
   settings.beginGroup( con );
 
   int remoteInterval = settings.value( QLatin1String("remotePollInterval"), DEFAULT_REMOTE_POLL_INTERVAL ).toInt();
-  int localInterval  = settings.value(QLatin1String("localPollInterval"), DEFAULT_LOCAL_POLL_INTERVAL ).toInt();
-  if( remoteInterval < 2*localInterval ) {
-    qDebug() << "WARN: remote poll Interval should at least be twice as local poll interval!";
-  }
-  if( remoteInterval < 5000 || remoteInterval < localInterval ) {
-    qDebug() << "Remote Interval is smaller than local Interval";
+  if( remoteInterval < 5000) {
+    qDebug() << "Remote Interval is less than 5 seconds, reverting to" << DEFAULT_REMOTE_POLL_INTERVAL;
     remoteInterval = DEFAULT_REMOTE_POLL_INTERVAL;
   }
   return remoteInterval;
-}
-
-int MirallConfigFile::localPollInterval( const QString& connection ) const
-{
-  QString con( connection );
-  if( connection.isEmpty() ) con = defaultConnection();
-
-  QSettings settings( configFile(), QSettings::IniFormat );
-  settings.setIniCodec( "UTF-8" );
-  settings.beginGroup( con );
-
-  int remoteInterval = settings.value( QLatin1String("remotePollInterval"), DEFAULT_REMOTE_POLL_INTERVAL ).toInt();
-  int localInterval  = settings.value(QLatin1String("localPollInterval"), DEFAULT_LOCAL_POLL_INTERVAL ).toInt();
-  if( remoteInterval < 2*localInterval ) {
-    qDebug() << "WARN: remote poll Interval should at least be twice as local poll interval!";
-  }
-  if( localInterval < 2500 || remoteInterval < localInterval ) {
-    qDebug() << "Remote Interval is smaller than local Interval";
-    localInterval = DEFAULT_LOCAL_POLL_INTERVAL;
-  }
-  return localInterval;
-}
-
-int MirallConfigFile::pollTimerExceedFactor( const QString& connection ) const
-{
-  QString con( connection );
-  if( connection.isEmpty() ) con = defaultConnection();
-
-  QSettings settings( configFile(), QSettings::IniFormat );
-  settings.setIniCodec( "UTF-8" );
-  settings.beginGroup( con );
-
-  int pte = settings.value( QLatin1String("pollTimerExeedFactor"), DEFAULT_POLL_TIMER_EXEED).toInt();
-
-  if( pte < 1 ) pte = DEFAULT_POLL_TIMER_EXEED;
-
-  return pte;
 }
 
 bool MirallConfigFile::passwordStorageAllowed( const QString& connection )
@@ -496,69 +453,6 @@ void MirallConfigFile::acceptCustomConfig()
     CredentialStore::instance()->saveCredentials( );
 }
 
-QVariant MirallConfigFile::customMedia( customMediaType type )
-{
-    QVariant re;
-    QString key;
-
-    if( type == oCSetupTop ) {
-        key = QLatin1String("oCSetupTop");
-    } else if( type == oCSetupSide ) {
-        key = QLatin1String("oCSetupSide");
-    } else if( type == oCSetupBottom) {
-        key = QLatin1String("oCSetupBottom");
-    } else if( type == oCSetupFixUrl ) {
-        key = QLatin1String("oCSetupFixUrl");
-    } else if( type == oCSetupResultTop ) {
-        key = QLatin1String("oCSetupResultTop");
-    } else {
-        qDebug() << "Wrong media type.";
-    }
-
-    if( !key.isEmpty() ) {
-        const QString customFile("custom.ini");
-        QFileInfo fi;
-
-#ifdef Q_OS_WIN32
-        fi.setFile( QApplication::applicationDirPath(), customFile );
-#endif
-#ifdef Q_OS_MAC
-        // exec path is inside the bundle
-        fi.setFile( QApplication::applicationDirPath(),
-                    QLatin1String("../Resources/") + customFile );
-#endif
-#ifdef Q_OS_LINUX
-        fi.setFile( QString("/etc/%1").arg(Theme::instance()->appName()), customFile );
-#endif
-        QSettings settings( fi.absoluteFilePath(), QSettings::IniFormat );
-
-        QString cfg = settings.fileName();
-        qDebug() << "Trying to read config ini file at " << cfg;
-
-        settings.setIniCodec( "UTF-8" );
-        settings.beginGroup(QLatin1String("GUICustomize"));
-        QString val = settings.value( key ).toString();
-
-        // if file is relative, prepend the application dir path.
-        QFileInfo checkFi(val);
-        if( !val.isEmpty() && checkFi.isRelative() ) {
-            checkFi.setFile( QApplication::applicationDirPath(), val );
-            val = checkFi.absoluteFilePath();
-        }
-
-        if( !val.isEmpty() ) {
-            QPixmap pix( val );
-            if( pix.isNull() ) {
-                // pixmap loading hasn't succeeded. We take the text instead.
-                re.setValue( val );
-            } else {
-                re.setValue( pix );
-            }
-        }
-    }
-    return re;
-}
-
 void MirallConfigFile::setProxyType(int proxyType,
                   const QString& host,
                   int port,
@@ -573,7 +467,7 @@ void MirallConfigFile::setProxyType(int proxyType,
     settings.setValue(QLatin1String("host"), host);
     settings.setValue(QLatin1String("port"), port);
     settings.setValue(QLatin1String("user"), user);
-    settings.setValue(QLatin1String("pass"), pass);
+    settings.setValue(QLatin1String("pass"), pass.toUtf8().toBase64());
 
     settings.sync();
 }

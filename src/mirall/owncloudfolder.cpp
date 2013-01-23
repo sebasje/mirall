@@ -58,6 +58,7 @@ ownCloudFolder::ownCloudFolder(const QString &alias,
     , _thread(0)
     , _csync(0)
     , _csyncError(false)
+    , _csyncUnavail(false)
     , _wipeDb(false)
 {
     _notifier = new DownloadNotifier(QDir::fromNativeSeparators(path),
@@ -114,6 +115,7 @@ void ownCloudFolder::startSync(const QStringList &pathList)
     delete _thread;
     _errors.clear();
     _csyncError = false;
+    _csyncUnavail = false;
     _wipeDb = false;
 
     MirallConfigFile cfgFile;
@@ -138,10 +140,14 @@ void ownCloudFolder::startSync(const QStringList &pathList)
     _csync->setConnectionDetails( CredentialStore::instance()->user(),
                                   CredentialStore::instance()->password(),
                                   proxy );
+    qRegisterMetaType<SyncFileItemVector>("SyncFileItemVector");
+    connect( _csync, SIGNAL(treeWalkResult(const SyncFileItemVector&)),
+              this, SLOT(slotThreadTreeWalkResult(const SyncFileItemVector&)), Qt::QueuedConnection);
 
     connect(_csync, SIGNAL(started()),  SLOT(slotCSyncStarted()), Qt::QueuedConnection);
     connect(_csync, SIGNAL(finished()), SLOT(slotCSyncFinished()), Qt::QueuedConnection);
     connect(_csync, SIGNAL(csyncError(QString)), SLOT(slotCSyncError(QString)), Qt::QueuedConnection);
+    connect(_csync, SIGNAL(csyncUnavailable()), SLOT(slotCsyncUnavailable()), Qt::QueuedConnection);
     connect(_csync, SIGNAL(fileReceived(QString)),
             _notifier, SLOT(slotFileReceived(QString)), Qt::QueuedConnection);
 
@@ -162,6 +168,11 @@ void ownCloudFolder::slotCSyncError(const QString& err)
     _csyncError = true;
 }
 
+void ownCloudFolder::slotCsyncUnavailable()
+{
+    _csyncUnavail = true;
+}
+
 void ownCloudFolder::slotCSyncFinished()
 {
     qDebug() << "-> CSync Finished slot with error " << _csyncError;
@@ -173,6 +184,8 @@ void ownCloudFolder::slotCSyncFinished()
         _syncResult.setErrorStrings( _errors );
         qDebug() << "    * owncloud csync thread finished with error";
         if( _wipeDb ) wipe();
+    } else if (_csyncUnavail) {
+        _syncResult.setStatus(SyncResult::Unavailable);
     } else {
         _syncResult.setStatus(SyncResult::Success);
     }
@@ -181,6 +194,11 @@ void ownCloudFolder::slotCSyncFinished()
         _thread->quit();
     }
     emit syncFinished( _syncResult );
+}
+
+void ownCloudFolder::slotThreadTreeWalkResult(const SyncFileItemVector& items)
+{
+    _syncResult.setSyncFileItemVector(items);
 }
 
 void ownCloudFolder::slotTerminateSync()

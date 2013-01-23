@@ -26,6 +26,7 @@
 #include "mirall/folder.h"
 #include "mirall/logbrowser.h"
 #include "mirall/folderman.h"
+#include "mirall/fileitemdialog.h"
 
 class QAction;
 class QMenu;
@@ -99,6 +100,7 @@ protected slots:
 
 private:
     void showHelp();
+    void raiseDialog( QWidget* );
 
     // configuration file -> folder
     QSystemTrayIcon *_tray;
@@ -121,6 +123,7 @@ private:
     // tray's menu
     QMenu *_contextMenu;
     StatusDialog *_statusDialog;
+    FileItemDialog *_fileItemDialog;
 
     FolderMan *_folderMan;
     Theme *_theme;
