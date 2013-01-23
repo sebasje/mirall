@@ -13,14 +13,7 @@ mark_as_advanced(INOTIFY_INCLUDE_DIR)
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(INOTIFY DEFAULT_MSG INOTIFY_INCLUDE_DIR)
 
-
 IF(INOTIFY_FOUND)
   SET(INotify_INCLUDE_DIRS ${INOTIFY_INCLUDE_DIR})
-  MESSAGE("-- INotify Found.")
-ELSE()
-  set(INOTIFY_INCLUDE_DIR "/usr/include/x86_64-linux-gnu/")
-  set(INOTIFY_FOUND TRUE)
-  SET(INotify_INCLUDE_DIRS ${INOTIFY_INCLUDE_DIR})
-  MESSAGE("-- INotify FORCED in !!!")
 ENDIF(INOTIFY_FOUND)
 
