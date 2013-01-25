@@ -305,7 +305,7 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="357"/>
+        <location filename="../src/mirall/application.cpp" line="358"/>
         <source>Sync started for %1 configured sync folder(s).</source>
         <translation>開始同步 %1 已組態的同步資料夾</translation>
     </message>
@@ -314,27 +314,27 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="419"/>
+        <location filename="../src/mirall/application.cpp" line="420"/>
         <source>Open status...</source>
         <translation>查看狀態...</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="422"/>
+        <location filename="../src/mirall/application.cpp" line="423"/>
         <source>Add folder...</source>
         <translation>添加資料夾...</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="424"/>
+        <location filename="../src/mirall/application.cpp" line="425"/>
         <source>Configure...</source>
         <translation>配置...</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="426"/>
+        <location filename="../src/mirall/application.cpp" line="427"/>
         <source>Configure proxy...</source>
         <translation>設定代理伺服器...</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="430"/>
+        <location filename="../src/mirall/application.cpp" line="431"/>
         <source>Quit</source>
         <translation>離開</translation>
     </message>
@@ -369,88 +369,83 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../src/mirall/application.cpp" line="275"/>
-        <source>ownCloud user credentials are wrong. Please check configuration.</source>
-        <translation>ownCloud 使用者認證錯誤, 請檢查設定</translation>
+        <source>%1 user credentials are wrong. Please check configuration.</source>
+        <translation>%1 使用者登入資訊是錯的，請檢查設定。</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="279"/>
-        <location filename="../src/mirall/application.cpp" line="298"/>
+        <location filename="../src/mirall/application.cpp" line="280"/>
+        <location filename="../src/mirall/application.cpp" line="299"/>
         <source>Credentials</source>
         <translation>認證</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="290"/>
+        <location filename="../src/mirall/application.cpp" line="291"/>
         <source>Error: Could not retrieve the password!</source>
         <translation>錯誤. 無法取得密碼</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="292"/>
+        <location filename="../src/mirall/application.cpp" line="293"/>
         <source>Password dialog was canceled!</source>
         <translation>密碼對話框被取消!</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="328"/>
-        <location filename="../src/mirall/application.cpp" line="337"/>
+        <location filename="../src/mirall/application.cpp" line="329"/>
+        <location filename="../src/mirall/application.cpp" line="338"/>
         <source>No %1 Connection</source>
         <translation>無%1 連線</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="329"/>
+        <location filename="../src/mirall/application.cpp" line="330"/>
         <source>&lt;p&gt;Your %1 credentials are not correct.&lt;/p&gt;&lt;p&gt;Please correct them by starting the configuration dialog from the tray!&lt;/p&gt;</source>
         <translation>&lt;p&gt;您的%1 帳號密碼不正確&lt;/P&gt; &lt;p&gt;請藉由右下角ownCloud圖示去更正&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="338"/>
+        <location filename="../src/mirall/application.cpp" line="339"/>
         <source>&lt;p&gt;Either your user name or your password are not correct.&lt;/p&gt;&lt;p&gt;Please correct it by starting the configuration dialog from the tray!&lt;/p&gt;</source>
         <translation>&lt;p&gt;您的帳號或密碼錯誤&lt;/p&gt;&lt;p&gt;請藉由右下角ownCloud圖示去更正&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="356"/>
+        <location filename="../src/mirall/application.cpp" line="357"/>
         <source>%1 Sync Started</source>
         <translation>%1同步已經開始</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="417"/>
+        <location filename="../src/mirall/application.cpp" line="418"/>
         <source>Open %1 in browser...</source>
         <translation>瀏覽器中開啟%1</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="428"/>
+        <location filename="../src/mirall/application.cpp" line="429"/>
         <source>About...</source>
         <translation>關於...</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="484"/>
+        <location filename="../src/mirall/application.cpp" line="485"/>
         <source>Open %1 folder</source>
         <translation>開啟%1資料夾</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="497"/>
+        <location filename="../src/mirall/application.cpp" line="498"/>
         <source>Managed Folders:</source>
         <translation>管理的資料夾:</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="742"/>
+        <location filename="../src/mirall/application.cpp" line="746"/>
         <source>&lt;p&gt;&lt;small&gt;Built from Git revision &lt;a href=&quot;%1&quot;&gt;%2&lt;/a&gt; on %3, %4&lt;br&gt;using OCsync %5 and Qt %6.&lt;/small&gt;&lt;p&gt;</source>
         <translation>&lt;p&gt;&lt;small&gt;基於 Git 版本 &lt;a href=&quot;%1&quot;&gt;%2&lt;/a&gt; 在 %3, %4&lt;br&gt;使用 OCsync %5 和 Qt %6.&lt;/small&gt;&lt;p&gt;</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="749"/>
+        <location filename="../src/mirall/application.cpp" line="753"/>
         <source>About %1</source>
         <translation>關於 %1</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="750"/>
-        <source>&lt;p&gt;&lt;b&gt;%1 Client Version %2&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;b&gt;Authors&lt;/b&gt;&lt;br&gt;&lt;a href=&quot;mailto:freitag@owncloud.com&quot;&gt;Klaas Freitag&lt;/a&gt;, ownCloud, Inc.&lt;br&gt;&lt;a href=&quot;mailto:danimo@owncloud.com&quot;&gt;Daniel Molkentin&lt;/a&gt;, ownCloud, Inc.&lt;br&gt;&lt;br&gt;Based on Mirall by Duncan Mac-Vicar P.&lt;/p&gt;&lt;p&gt;For more information visit &lt;a href=&quot;%3&quot;&gt;%4&lt;/a&gt;.&lt;/p&gt;%7</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/mirall/application.cpp" line="774"/>
+        <location filename="../src/mirall/application.cpp" line="763"/>
         <source>Confirm Folder Remove</source>
         <translation>確認移除資料夾</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="775"/>
+        <location filename="../src/mirall/application.cpp" line="764"/>
         <source>Do you really want to remove upload folder &lt;i&gt;%1&lt;/i&gt;?</source>
         <translation>你確定要移除上傳資料夾 &lt;i&gt;%1&lt;/i&gt;</translation>
     </message>
@@ -463,32 +458,32 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="935"/>
+        <location filename="../src/mirall/application.cpp" line="924"/>
         <source>Sync is running.</source>
         <translation>同步執行中</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="939"/>
+        <location filename="../src/mirall/application.cpp" line="928"/>
         <source>Server is currently not available.</source>
-        <translation type="unfinished"/>
+        <translation>伺服器目前無法使用。</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="944"/>
+        <location filename="../src/mirall/application.cpp" line="933"/>
         <source>Last Sync was successful.</source>
         <translation>最後一次同步成功</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="950"/>
+        <location filename="../src/mirall/application.cpp" line="939"/>
         <source>Syncing Error.</source>
         <translation>同步失敗</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="956"/>
+        <location filename="../src/mirall/application.cpp" line="945"/>
         <source>Setup Error.</source>
         <translation>安裝失敗</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="959"/>
+        <location filename="../src/mirall/application.cpp" line="948"/>
         <source>Undefined Error State.</source>
         <translation>未知的錯誤狀態</translation>
     </message>
@@ -516,27 +511,27 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="817"/>
+        <location filename="../src/mirall/application.cpp" line="806"/>
         <source>Sync Running</source>
         <translation>同步中</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="818"/>
+        <location filename="../src/mirall/application.cpp" line="807"/>
         <source>The syncing operation is running.&lt;br/&gt;Do you want to terminate it?</source>
         <translation>正在同步中&lt;br/&gt;你真的想要中斷？</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="928"/>
+        <location filename="../src/mirall/application.cpp" line="917"/>
         <source>Undefined State.</source>
         <translation>未知狀態</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="931"/>
+        <location filename="../src/mirall/application.cpp" line="920"/>
         <source>Waits to start syncing.</source>
         <translation>等待啟動同步</translation>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="964"/>
+        <location filename="../src/mirall/application.cpp" line="953"/>
         <source> (Sync is paused)</source>
         <translation>(同步暫停)</translation>
     </message>
@@ -545,7 +540,7 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../src/mirall/application.cpp" line="981"/>
+        <location filename="../src/mirall/application.cpp" line="970"/>
         <source>No sync folders configured.</source>
         <translation>無已配置的同步資料夾</translation>
     </message>
@@ -647,62 +642,62 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../src/mirall/csyncthread.cpp" line="136"/>
         <source>CSync failed to connect through a proxy.</source>
-        <translation type="unfinished"/>
+        <translation>CSync 透過代理伺服器連線失敗。</translation>
     </message>
     <message>
         <location filename="../src/mirall/csyncthread.cpp" line="139"/>
         <source>CSync failed to lookup proxy or server.</source>
-        <translation type="unfinished"/>
+        <translation>CSync 查詢代理伺服器或伺服器失敗。</translation>
     </message>
     <message>
         <location filename="../src/mirall/csyncthread.cpp" line="142"/>
         <source>CSync failed to authenticate at the %1 server.</source>
-        <translation type="unfinished"/>
+        <translation>CSync 於伺服器 %1 認證失敗。</translation>
     </message>
     <message>
         <location filename="../src/mirall/csyncthread.cpp" line="145"/>
         <source>CSync failed to authenticate at the proxy.</source>
-        <translation type="unfinished"/>
+        <translation>CSync 於代理伺服器認證失敗。</translation>
     </message>
     <message>
         <location filename="../src/mirall/csyncthread.cpp" line="148"/>
         <source>CSync failed to connect to the network.</source>
-        <translation type="unfinished"/>
+        <translation>CSync 無法連接到網路。</translation>
     </message>
     <message>
         <location filename="../src/mirall/csyncthread.cpp" line="151"/>
         <source>A network connection timeout happend.</source>
-        <translation type="unfinished"/>
+        <translation>網路連線逾時。</translation>
     </message>
     <message>
         <location filename="../src/mirall/csyncthread.cpp" line="154"/>
         <source>A HTTP transmission error happened.</source>
-        <translation type="unfinished"/>
+        <translation>HTTP 傳輸錯誤。</translation>
     </message>
     <message>
         <location filename="../src/mirall/csyncthread.cpp" line="157"/>
         <source>CSync failed due to not handled permission deniend.</source>
-        <translation type="unfinished"/>
+        <translation>CSync 失敗，由於未處理的存取被拒。</translation>
     </message>
     <message>
         <location filename="../src/mirall/csyncthread.cpp" line="160"/>
         <source>CSync failed to find a specific file.</source>
-        <translation type="unfinished"/>
+        <translation>CSync 沒辦法找到某一個檔案。</translation>
     </message>
     <message>
         <location filename="../src/mirall/csyncthread.cpp" line="163"/>
         <source>CSync tried to create a directory that already exists.</source>
-        <translation type="unfinished"/>
+        <translation>CSync 試圖建立一個已經存在的目錄。</translation>
     </message>
     <message>
         <location filename="../src/mirall/csyncthread.cpp" line="166"/>
         <source>CSync: No space on %1 server available.</source>
-        <translation type="unfinished"/>
+        <translation>CSync：伺服器 %1 沒有可用空間。</translation>
     </message>
     <message>
         <location filename="../src/mirall/csyncthread.cpp" line="169"/>
         <source>CSync unspecified error.</source>
-        <translation type="unfinished"/>
+        <translation>CSync 未知的錯誤。</translation>
     </message>
     <message>
         <location filename="../src/mirall/csyncthread.cpp" line="172"/>
@@ -712,7 +707,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../src/mirall/csyncthread.cpp" line="176"/>
         <source>&lt;br/&gt;Backend Message: </source>
-        <translation type="unfinished"/>
+        <translation>&lt;br/&gt;後端訊息：</translation>
     </message>
     <message>
         <source>CSync Update failed.</source>
@@ -755,7 +750,7 @@ Please write a bug report.</source>
 <context>
     <name>Mirall::CreateAnOwncloudPage</name>
     <message>
-        <location filename="../src/mirall/owncloudwizard.cpp" line="369"/>
+        <location filename="../src/mirall/owncloudwizard.cpp" line="370"/>
         <source>mydomain.org</source>
         <translation>mydomain.org</translation>
     </message>
@@ -765,7 +760,7 @@ Please write a bug report.</source>
     <message>
         <location filename="../src/mirall/credentialstore.cpp" line="223"/>
         <source>No password entry found in keychain. Please reconfigure.</source>
-        <translation type="unfinished"/>
+        <translation>在鑰匙圈當中找不到密碼資訊，請重新設定。</translation>
     </message>
 </context>
 <context>
@@ -801,107 +796,107 @@ Please write a bug report.</source>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="42"/>
         <source>File Count</source>
-        <translation type="unfinished"/>
+        <translation>檔案數目</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="50"/>
         <source>Copy</source>
-        <translation type="unfinished"/>
+        <translation>複製</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="53"/>
         <source>Sync Protocol</source>
-        <translation type="unfinished"/>
+        <translation>同步協定</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="64"/>
         <source>Undefined Folder State</source>
-        <translation type="unfinished"/>
+        <translation>未定義的資料夾狀態</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="67"/>
         <source>The folder waits to start syncing.</source>
-        <translation type="unfinished"/>
+        <translation>資料夾等待同步開始。</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="70"/>
         <source>Server is currently not available.</source>
-        <translation type="unfinished"/>
+        <translation>伺服器目前無法使用。</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="73"/>
         <source>Sync is running.</source>
-        <translation type="unfinished"/>
+        <translation>同步中。</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="76"/>
         <source>Last Sync was successful.</source>
-        <translation type="unfinished"/>
+        <translation>上次的同步成功。</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="79"/>
         <source>Syncing Error.</source>
-        <translation type="unfinished"/>
+        <translation>同步錯誤。</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="82"/>
         <source>Setup Error.</source>
-        <translation type="unfinished"/>
+        <translation>設定錯誤。</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="85"/>
         <source>Undefined Error State.</source>
-        <translation type="unfinished"/>
+        <translation>未定義的錯誤狀態。</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="121"/>
         <source>%1  (finished %2 sec. ago)</source>
-        <translation type="unfinished"/>
+        <translation>%1 ( %2 秒前完成)</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="166"/>
         <source>Synced Files</source>
-        <translation type="unfinished"/>
+        <translation>已同步的檔案</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="172"/>
         <source>New Files</source>
-        <translation type="unfinished"/>
+        <translation>新檔案</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="178"/>
         <source>Deleted Files</source>
-        <translation type="unfinished"/>
+        <translation>已刪除的檔案</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="184"/>
         <source>Renamed Files</source>
-        <translation type="unfinished"/>
+        <translation>已更名的檔案</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="190"/>
         <source>Ignored Files</source>
-        <translation type="unfinished"/>
+        <translation>忽略的檔案</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="196"/>
         <source>Errors</source>
-        <translation type="unfinished"/>
+        <translation>錯誤</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="202"/>
         <source>Conflicts</source>
-        <translation type="unfinished"/>
+        <translation>衝突</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="222"/>
         <source>Up</source>
-        <translation type="unfinished"/>
+        <translation>上</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.cpp" line="223"/>
         <source>Down</source>
-        <translation type="unfinished"/>
+        <translation>下</translation>
     </message>
 </context>
 <context>
@@ -1116,7 +1111,7 @@ Please write a bug report.</source>
 <context>
     <name>Mirall::OwncloudFTPAccessPage</name>
     <message>
-        <location filename="../src/mirall/owncloudwizard.cpp" line="327"/>
+        <location filename="../src/mirall/owncloudwizard.cpp" line="328"/>
         <source>ftp.mydomain.org</source>
         <translation>ftp.mydomain.org</translation>
     </message>
@@ -1142,7 +1137,7 @@ Please write a bug report.</source>
     <message>
         <location filename="../src/mirall/owncloudwizard.cpp" line="86"/>
         <source>Create Connection to %1</source>
-        <translation type="unfinished"/>
+        <translation>建立到 %1 的連線</translation>
     </message>
 </context>
 <context>
@@ -1324,12 +1319,12 @@ Setup can not be done.</source>
     <message>
         <location filename="../src/mirall/owncloudwizard.cpp" line="70"/>
         <source>&lt;p&gt;In order to connect to your %1 server, you need to provide the server address as well as your credentials.&lt;/p&gt;&lt;p&gt;This wizard will guide you through the process.&lt;p&gt;&lt;p&gt;If you have not received this information, please contact your %1 provider.&lt;/p&gt;</source>
-        <translation type="unfinished"/>
+        <translation>&lt;p&gt;您必須提供伺服器位址及登入資訊以連接到伺服器 %1 。&lt;/p&gt;&lt;p&gt;本精靈會導引您完成設定。&lt;/p&gt;&lt;p&gt;如果您不知道以上所需的資訊，請聯絡您的 %1 服務提供者。&lt;/p&gt;</translation>
     </message>
     <message>
         <location filename="../src/mirall/owncloudwizard.cpp" line="75"/>
         <source>&lt;p&gt;In order to connect to your %1 server, you need to provide your credentials.&lt;/p&gt;&lt;p&gt;This wizard will guide you through the setup process.&lt;/p&gt;</source>
-        <translation type="unfinished"/>
+        <translation>&lt;p&gt;您必須提供伺服器位址及登入資訊以連接到伺服器 %1 。&lt;/p&gt;&lt;p&gt;本精靈會導引您完成設定。&lt;/p&gt;</translation>
     </message>
 </context>
 <context>
@@ -1339,7 +1334,7 @@ Setup can not be done.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../src/mirall/owncloudwizard.cpp" line="450"/>
+        <location filename="../src/mirall/owncloudwizard.cpp" line="451"/>
         <source>Congratulations! Your &lt;a href=&quot;%1&quot; title=&quot;%1&quot;&gt;new %2&lt;/a&gt; is now up and running!</source>
         <translation>恭喜!您的 &lt;a href=&quot;%1&quot; title=&quot;%1&quot;&gt;new %2&lt;/a&gt;啟用並執行中!</translation>
     </message>
@@ -1347,7 +1342,7 @@ Setup can not be done.</source>
 <context>
     <name>Mirall::OwncloudWizardSelectTypePage</name>
     <message>
-        <location filename="../src/mirall/owncloudwizard.cpp" line="233"/>
+        <location filename="../src/mirall/owncloudwizard.cpp" line="234"/>
         <source>http://owncloud.mydomain.org</source>
         <translation>http://owncloud.mydomain.org</translation>
     </message>
@@ -1913,18 +1908,18 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../src/mirall/fileitemdialog.ui" line="14"/>
         <source>Form</source>
-        <translation type="unfinished"/>
+        <translation>表單</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.ui" line="27"/>
         <source>Detailed Sync Protocol</source>
-        <translation type="unfinished"/>
+        <translation>同步協定細節</translation>
     </message>
     <message>
         <location filename="../src/mirall/fileitemdialog.ui" line="63"/>
         <location filename="../src/mirall/fileitemdialog.ui" line="70"/>
         <source>TextLabel</source>
-        <translation type="unfinished"/>
+        <translation>TextLabel</translation>
     </message>
 </context>
 <context>
@@ -1932,6 +1927,19 @@ p, li { white-space: pre-wrap; }
     <message>
         <source>ownCloud</source>
         <translation type="unfinished"/>
+    </message>
+</context>
+<context>
+    <name>ownCloudTheme::about()</name>
+    <message>
+        <location filename="../src/mirall/owncloudtheme.cpp" line="55"/>
+        <source>&lt;p&gt;&lt;small&gt;Built from Git revision &lt;a href=&quot;%1&quot;&gt;%2&lt;/a&gt; on %3, %4&lt;br&gt;using OCsync %5 and Qt %6.&lt;/small&gt;&lt;p&gt;</source>
+        <translation>&lt;p&gt;&lt;small&gt;基於 Git 版本 &lt;a href=&quot;%1&quot;&gt;%2&lt;/a&gt; 在 %3, %4&lt;br&gt;使用 OCsync %5 和 Qt %6.&lt;/small&gt;&lt;p&gt;</translation>
+    </message>
+    <message>
+        <location filename="../src/mirall/owncloudtheme.cpp" line="63"/>
+        <source>&lt;p&gt;&lt;b&gt;%1 Client Version %2&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;b&gt;Authors&lt;/b&gt;&lt;br&gt;&lt;a href=&quot;mailto:freitag@owncloud.com&quot;&gt;Klaas Freitag&lt;/a&gt;, ownCloud, Inc.&lt;br&gt;&lt;a href=&quot;mailto:danimo@owncloud.com&quot;&gt;Daniel Molkentin&lt;/a&gt;, ownCloud, Inc.&lt;br&gt;&lt;br&gt;Based on Mirall by Duncan Mac-Vicar P.&lt;/p&gt;&lt;p&gt;For more information visit &lt;a href=&quot;%3&quot;&gt;%4&lt;/a&gt;.&lt;/p&gt;%7</source>
+        <translation>&lt;p&gt;&lt;b&gt;%1 用戶端版本 %2&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;b&gt;作者&lt;/b&gt;&lt;br&gt;&lt;a href=&quot;mailto:freitag@owncloud.com&quot;&gt;Klaas Freitag&lt;/a&gt;, ownCloud, Inc.&lt;br&gt;&lt;a href=&quot;mailto:danimo@owncloud.com&quot;&gt;Daniel Molkentin&lt;/a&gt;, ownCloud, Inc.&lt;br&gt;&lt;br&gt;基於 Duncan Mac-Vicar P. 的 Mirall&lt;/p&gt;&lt;p&gt;更多資訊請造訪 &lt;a href=&quot;%3&quot;&gt;%4&lt;/a&gt; 。&lt;/p&gt;%7</translation>
     </message>
 </context>
 <context>
