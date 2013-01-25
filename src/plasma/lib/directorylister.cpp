@@ -104,7 +104,6 @@ void DirectoryLister::setFilter(const QString &f)
 
 QString DirectoryLister::homePath() const
 {
-    return "/home/sebas/ownCloud/";
     return QDir::homePath();
 }
 

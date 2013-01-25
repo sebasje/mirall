@@ -56,9 +56,7 @@ DirModel::DirModel(QObject *parent)
     d->dirLister->setAutoErrorHandlingEnabled(false, 0);
 
     setDirLister(d->dirLister);
-
-    //d->url = KUrl("file:///home/sebas");
-    setUrl("file:///home/sebas/ownCloud");
+    setUrl(QDir::homePath());
 }
 
 DirModel::~DirModel()
