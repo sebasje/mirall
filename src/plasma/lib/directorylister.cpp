@@ -104,7 +104,7 @@ void DirectoryLister::setFilter(const QString &f)
 
 QString DirectoryLister::homePath() const
 {
-    return QDir::homePath();
+    return QDir::homePath() + "/";
 }
 
 QString DirectoryLister::documentPath() const
