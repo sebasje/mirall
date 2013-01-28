@@ -27,8 +27,10 @@
 #include "../applet/owncloud_interface.h"
 
 #include <kdebug.h>
-#include <KProcess>
 #include <KLocale>
+#include <KProcess>
+#include <KRun>
+#include <KStandardDirs>
 
 #include <QTimer>
 #include <QVariant>
@@ -460,8 +462,13 @@ MiniJob* OwncloudSettings::createMiniJob()
 
 void OwncloudSettings::openConfig()
 {
-//     KConfig
-    kDebug() << "Opening configuration";
+    if (KStandardDirs::findExe("active-settings") != QString()) {
+        kDebug() << "Found active-settings, using that as shell: active-settings org.kde.active.settings.owncloud";
+        KRun::runCommand("active-settings org.kde.active.settings.owncloud", 0);
+    } else {
+        kDebug() << "Opening kcmshell4 owncloudconfig";
+        KRun::runCommand("kcmshell4 owncloudconfig", 0);
+    }
 }
 
 void OwncloudSettings::slotRemoteFolderExists(const QString &folder, bool exists)
