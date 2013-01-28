@@ -29,6 +29,9 @@ PlasmaComponents.PageStack {
     id: owncloudModule
     objectName: "owncloudModule"
 
+    property bool webdavInFileManager: false
+    property bool showRemoveFolder: true
+
     OwncloudSettings {
         id: owncloudSettings
     }
@@ -173,6 +176,7 @@ PlasmaComponents.PageStack {
     }
 
     function updateState() {
+        print("  + + + + + + updateState() + + + + + + + ");
         if (owncloudSettings.owncloudStatus == OwncloudSettings.Disconnected) {
             owncloudModule.state = "setup";
             setupWizard.state = "login";

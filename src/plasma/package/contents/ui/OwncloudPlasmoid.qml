@@ -1,6 +1,6 @@
 /***************************************************************************
  *                                                                         *
- *   Copyright 2012 Sebastian Kügler <sebas@kde.org>                       *
+ *   Copyright 2012-2013 Sebastian Kügler <sebas@kde.org>                       *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -28,6 +28,9 @@ import org.kde.plasma.owncloud 0.1
 Item {
     id: owncloudModule
     objectName: "owncloudModule"
+
+    property bool webdavInFileManager: false
+    property bool showRemoveFolder: false
 
     anchors.margins: 24
 

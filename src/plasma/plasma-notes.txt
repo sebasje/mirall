@@ -18,11 +18,6 @@ o start daemon machinery
 
 TODO:
 
-* login -> add folders when no folder are found
-* no text in button in folder delegates
-* remove only shown in settings
-
-
 o start daemon automatically
 o applet launches Settings or kcmshell4 when unconfigured
 o fix up layout in add folder
@@ -46,11 +41,16 @@ o Fix workflow between screens
 o Get patches on github upstreamed, ping Klaas after vacation
 o Rename everything in the UI to Synchronization instead of owncloud
 o preprend "Favorites" page with Pictures, Videos, Documents, Music pathes and checkboxen
+o remove stuff from plasmoid, start kcmshell or active-settings from it
 
 * new login should connect correctly
+* login -> add folders when no folder are found
 * use mirall's new icons?
 * pre-fill user name from settings, password?
-* remove stuff from plasmoid, start kcmshell or active-settings from it
+* no text in button in folder delegates
+* remove only shown in settings
+* UI to handle ssl errors
+* links (in active-settings?) should point webbrowser
 
 later:
 =====
