@@ -26,8 +26,8 @@ import org.kde.active.settings 0.1
 import org.kde.plasma.owncloud 0.1
 
 PlasmaComponents.PageStack {
-    id: owncloudModule
-    objectName: "owncloudModule"
+    id: root
+    objectName: "root"
 
     property bool webdavInFileManager: false
     property bool showRemoveFolder: true
@@ -54,7 +54,6 @@ PlasmaComponents.PageStack {
             id: descriptionLabel
             //text: owncloudSettings.description
             opacity: .4
-            //anchors.bottomMargin: 20
         }
     }
 
@@ -85,13 +84,6 @@ PlasmaComponents.PageStack {
         }
     ]
 
-//     PlasmaComponents.Button {
-//         checkable: true
-//         iconSource: "kolf"
-//         checked: owncloudModule.state == "setup"
-//         onCheckedChanged: checked ? owncloudModule.state = "setup" : owncloudModule.state = "default"
-//         anchors { top: parent.top; right: parent.right; }
-//     }
     Item {
         id: owncloudItem
         anchors { left: parent.left; right: parent.right; top: titleCol.bottom; bottom: parent.bottom; margins: 12; }
@@ -121,10 +113,7 @@ PlasmaComponents.PageStack {
             anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: enabledSwitch.top; }
             Behavior on opacity { FadeAnimation { } }
         }
-//         MiniJobItem {
-//             anchors { left: folderList.left; right: folderList.right; bottom: folderList.bottom; }
-//             height: 64
-//         }
+
         PlasmaComponents.CheckBox {
             id: enabledSwitch
             text: i18n("Enable All")
@@ -134,21 +123,6 @@ PlasmaComponents.PageStack {
             anchors { bottom: parent.bottom; left: parent.left; rightMargin: 12 }
             onClicked: owncloudSettings.enableAllFolders(checked)
         }
-//         PlasmaComponents.ToolButton {
-//             id: addSyncFolderButton
-//             text: i18n("Setup folders")
-//             iconSource: "folder-sync"
-//             opacity: folderList.opacity && owncloudModule.state != "addFolder"
-//             anchors { bottom: parent.bottom; right: parent.right; rightMargin: 12; }
-//             onClicked: {
-//                 //owncloudSettings.checkRemoteFolder("testfoo");
-//                 setupWizard.isFirstRun = false;
-//                 addFolder();
-// /*
-//                 addSyncFolder.state = "localFolder";
-//                 owncloudModule.state = "addFolder";*/
-//             }
-//         }
 
         SetupWizard {
             id: setupWizard
@@ -177,33 +151,32 @@ PlasmaComponents.PageStack {
 
     function updateState() {
         if (owncloudSettings.owncloudStatus == OwncloudSettings.Disconnected) {
-            owncloudModule.state = "setup";
+            root.state = "setup";
             setupWizard.state = "login";
             print(" ------> disconnected");
         } else {
             print(" -----> connected. Folders: " + owncloudSettings.folders.length);
             if (owncloudSettings.folders.length) {
-                owncloudModule.state = "default";
+                root.state = "default";
             } else {
-                owncloudModule.state = "setup";
+                root.state = "setup";
             }
             setupWizard.state = "favorites";
         }
         if (owncloudSettings.owncloudStatus == OwncloudSettings.Error) {
             if (owncloudSettings.error == OwncloudSettings.NoDaemonError) {
-                owncloudModule.state = "setup";
+                root.state = "setup";
                 setupWizard.state = "error";
                 print("------ > No Daemon Error!")
-                print(" error daemon ");
             } else if (owncloudSettings.error == OwncloudSettings.NoConfigurationError ||
                 owncloudSettings.error == OwncloudSettings.AuthenticationError) {
-                owncloudModule.state = "setup";
+                root.state = "setup";
                 setupWizard.state = "login";
                 print(" -----> error to login ");
             } else {
                 print(" -----> all good ");
                 // FIXME: remove
-                owncloudModule.state = "default";
+                root.state = "default";
                 setupWizard.state = "default";
             }
         }
@@ -211,10 +184,8 @@ PlasmaComponents.PageStack {
     }
 
     function addFolder() {
-
         print("setup");
-
-        owncloudModule.state = "setup";
+        root.state = "setup";
     }
 
     Component.onCompleted: {

@@ -26,8 +26,8 @@ import org.kde.plasma.owncloud 0.1
 
 
 Item {
-    id: owncloudModule
-    objectName: "owncloudModule"
+    id: root
+    objectName: "root"
 
     property bool webdavInFileManager: false
     property bool showRemoveFolder: false

@@ -93,8 +93,15 @@ MouseArea {
             }
             if (expanded) {
                 var lurl = "file://"+localPath;
-                var rurl = owncloudSettings.url+"/files/webdav.php/"+remotePath;
-                rurl = rurl.replace("http", "webdav");
+                var rurl = "";
+                if (root.webdavInFileManager) {
+                    // Dolphin (or rather KIO) understands webdav URLs
+                    rurl = owncloudSettings.url+"/files/webdav.php/"+remotePath;
+                    rurl = rurl.replace("http", "webdav");
+                } else {
+                    // point to owncloud files app
+                    rurl = owncloudSettings.url+"/?app=files&dir="+remotePath;
+                }
                 var lp = localPath.replace(dir.homePath, "~/");
                 out = out + i18n("<br />Local folder: <a href=\"%1\">%2</a>", lurl, lp);
                 out = out + i18n("<br />Remote folder: <a href=\"%1\">%2</a>", rurl, "/"+remotePath);
@@ -120,11 +127,11 @@ MouseArea {
 
     PlasmaComponents.ToolButton {
         id: syncFolderButton
-        text: i18n("Sync Now")
+        //text: i18n("Sync Now")
         iconSource: "view-refresh"
         enabled: OwncloudFolder.Running != folderStatus
         opacity: OwncloudFolder.Disabled != folderStatus && expanded ? 1 : 0
-        anchors { right: removeFolderButton.left; rightMargin: 12; bottom: parent.bottom; bottomMargin: 12; }
+        anchors { right: parent.right; rightMargin: 24; bottom: parent.bottom; bottomMargin: 12; }
         Behavior on opacity { FadeAnimation { duration: expanded ? 400 : 150 } }
         onClicked: {
             print("Sync folder " + displayName);
@@ -137,7 +144,8 @@ MouseArea {
         text: i18n("Remove")
         iconSource: "list-remove"
         opacity: expanded ? 1 : 0
-        anchors { right: parent.right; rightMargin: 12; bottom: parent.bottom; bottomMargin: 12; }
+        visible: root.showRemoveFolder
+        anchors { right: syncFolderButton.left; rightMargin: 12; bottom: parent.bottom; bottomMargin: 12; }
         Behavior on opacity { FadeAnimation { duration: expanded ? 400 : 150 } }
         onClicked: {
             print("Remove folder " + displayName);

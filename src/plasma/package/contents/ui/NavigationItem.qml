@@ -38,11 +38,11 @@ Item {
         id: navLogin
         text: i18n("Sign in")
         iconSource: "dialog-password"
-        opacity: (owncloudModule.state != "default" && owncloudModule.state != "addFolder" && setupWizard.state != "login") ? 1 : 0
+        opacity: (root.state != "default" && root.state != "addFolder" && setupWizard.state != "login") ? 1 : 0
         Behavior on opacity { FadeAnimation { } }
         onClicked: {
             setupWizard.state = "login"
-            owncloudModule.state = "setup";
+            root.state = "setup";
         }
         anchors { verticalCenter: parent.verticalCenter; left: parent.left; }
     }
@@ -50,12 +50,12 @@ Item {
         id: navFavs
         text: i18n("Settings")
         iconSource: "configure"
-        //opacity: ((owncloudModule.state != "addFolder") || (setupWizard.state == "favorites") || (owncloudSettings.owncloudStatus != OwncloudSettings.Connected)) ? 0 : 1
-        opacity: owncloudModule.state == "default" ? 1 : 0
+        //opacity: ((root.state != "addFolder") || (setupWizard.state == "favorites") || (owncloudSettings.owncloudStatus != OwncloudSettings.Connected)) ? 0 : 1
+        opacity: root.state == "default" ? 1 : 0
         Behavior on opacity { FadeAnimation { } }
         onClicked: {
             setupWizard.state = "favorites";
-            owncloudModule.state = "setup";
+            root.state = "setup";
         }
         anchors { verticalCenter: parent.verticalCenter; right: parent.right; }
     }
@@ -63,13 +63,13 @@ Item {
         id: done
         text: i18n("OK")
         iconSource: "dialog-ok-apply"
-        opacity: (owncloudModule.state != "default")  && ((setupWizard.state == "favorites") && (owncloudModule.state == "setup")) || ((setupWizard.state == "login" && owncloudSettings.owncloudStatus == OwncloudSettings.Connected))? 1 : 0
+        opacity: (root.state != "default")  && ((setupWizard.state == "favorites") && (root.state == "setup")) || ((setupWizard.state == "login" && owncloudSettings.owncloudStatus == OwncloudSettings.Connected))? 1 : 0
         Behavior on opacity { FadeAnimation { } }
         onClicked: {
             if (setupWizard.state == "favorites") {
                 apply();
             }
-            owncloudModule.state = "default";
+            root.state = "default";
             setupWizard.state = "favorites";
         }
         anchors { verticalCenter: parent.verticalCenter; right: parent.right; }

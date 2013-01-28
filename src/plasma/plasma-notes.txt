@@ -42,18 +42,18 @@ o Get patches on github upstreamed, ping Klaas after vacation
 o Rename everything in the UI to Synchronization instead of owncloud
 o preprend "Favorites" page with Pictures, Videos, Documents, Music pathes and checkboxen
 o remove stuff from plasmoid, start kcmshell or active-settings from it
+o new login should connect correctly
+o login -> add folders when no folder are found
+o no text in button in folder delegates
+o remove only shown in settings
+o links (in active-settings?) should point webbrowser
 
-* new login should connect correctly
-* login -> add folders when no folder are found
-* use mirall's new icons?
 * pre-fill user name from settings, password?
-* no text in button in folder delegates
-* remove only shown in settings
 * UI to handle ssl errors
-* links (in active-settings?) should point webbrowser
 
 later:
 =====
+* use mirall's new icons?
 * add folder: check for both, local and remote folder if exists
 * Settings page, with
   * slider-ish widget for polling interval
@@ -84,9 +84,9 @@ later:
 
 
 Sync:
-* investigate polling with the goal to kill it for local folders
-* retrieve list of remote folders in Mirall::ownCloudInfo
-* Set and test KIO::NetworkAccessManager
+o investigate polling with the goal to kill it for local folders
+o retrieve list of remote folders in Mirall::ownCloudInfo
+o Set and test KIO::NetworkAccessManager
 
 Ideas
 * loadable profiles, essentially folder configs with enabled / disabled, polling interval
@@ -117,5 +117,6 @@ Test setup:
 
 # Build with
 
-cmakekde -DCSYNC_INCLUDE_PATH=ocsync/
+cmakekde -DCSYNC_INCLUDE_PATH=ocsync/ -DPLASMACLIENT=ON
 
+or export CSYNC_DIR, pointing to csync.h

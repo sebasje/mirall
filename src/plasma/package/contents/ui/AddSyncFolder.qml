@@ -71,7 +71,7 @@ Item {
         // our folderList. If we use the overlay, fade it out.
         var o = (typeof(addFolderDialog) != "undefined") ? 1 : 0;
         if (state == "default") {
-            if (typeof(owncloudModule) != "undefined") owncloudModule.state = "default";
+            if (typeof(root) != "undefined") root.state = "default";
         } else if (state == "localFolder") {
             //folderList.opacity = o;
         } else if (state == "remoteFolder") {

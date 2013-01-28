@@ -80,7 +80,7 @@ Item {
                     onClicked: {
                         addSyncFolder.state = "default";
                         setupWizard.state = "favorites";
-                        owncloudModule.state = "default";
+                        root.state = "default";
                         if (addFolderDialog && typeof(addFolderDialog) != "undefined") {
                             addFolderDialog.close();
                         }
