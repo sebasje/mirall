@@ -18,11 +18,13 @@ o start daemon machinery
 
 TODO:
 
-* start daemon automatically (~/autostart?, from client?)
-* applet launches Settings or kcmshell4 when unconfigured
 * login -> add folders when no folder are found
+* no text in button in folder delegates
+* remove only shown in settings
 
 
+o start daemon automatically
+o applet launches Settings or kcmshell4 when unconfigured
 o fix up layout in add folder
 o Login.qml - generic log in form w/ title, user, pass, url (line edit or list)
 o kill owncloudsettings::statusmessage and ::errormessage
