@@ -1,5 +1,4 @@
 
-
 OwncloudFolder
 
 o enum Status: Disabled, Waiting, Idle, Error
@@ -7,8 +6,7 @@ o enum Error: TimeSync, Connection, Disk, Other
 
 o enable()
 o disable()
-
-* remove() (OwncloudFolder::removeSyncFolder)
+o remove() (OwncloudFolder::removeSyncFolder)
 
 OwncloudSettings:
 o folders()
@@ -16,6 +14,14 @@ o add()
 o remove()
 o keep an eye on dbus service, update state accordingly
 o start daemon machinery
+
+
+TODO:
+
+* start daemon automatically (~/autostart?, from client?)
+* applet launches Settings or kcmshell4 when unconfigured
+* login -> add folders when no folder are found
+
 
 o fix up layout in add folder
 o Login.qml - generic log in form w/ title, user, pass, url (line edit or list)

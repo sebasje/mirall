@@ -111,6 +111,7 @@ class OwncloudSettings : public QObject
         Q_INVOKABLE void setupOwncloud(const QString &server, const QString &user,
                                        const QString &password);
         Q_INVOKABLE MiniJob* createMiniJob();
+        Q_INVOKABLE void openConfig();
 
     Q_SIGNALS:
         void dataChanged();

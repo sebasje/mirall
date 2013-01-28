@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Service
+Exec=owncloudsyncd
+X-KDE-StartupNotify=false
+OnlyShowIn=KDE;
+X-KDE-autostart-phase=1
+Name=Plasma ownCloud Sync Daemon
+Comment=Daemon to handle data synchronization with ownCloud

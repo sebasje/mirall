@@ -85,36 +85,13 @@ Item {
         }
         PlasmaComponents.ToolButton {
             id: addSyncFolderButton
-            text: i18n("Add Folder")
-            iconSource: "list-add"
+            text: i18n("Settings...")
+            iconSource: "configure"
             visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
             anchors { bottom: parent.bottom; right: parent.right; rightMargin: 12; }
             onClicked: {
-                addFolderDialog.open();
-                addSyncFolder.state = "localFolder"
-            }
-            Behavior on opacity { NumberAnimation { duration: addSyncFolder.fadingDuration; easing.type: Easing.InOutExpo; } }
-        }
-        PlasmaComponents.Dialog {
-            id: addFolderDialog
-            width: 400
-            height: 400
-            content: AddSyncFolder {
-                width: 400
-                height: 400
-                id: addSyncFolder
-                visible: owncloudSettings.owncloudStatus == OwncloudSettings.Connected
-                anchors { fill: parent }
+                owncloudSettings.openConfig();
             }
         }
-    }
-
-    function addFolder() {
-        directoryPickerDialog.open()
-    }
-
-    Component.onCompleted: {
-        addFolderDialog.open();
-        addSyncFolder.state = "localFolder"
     }
 }

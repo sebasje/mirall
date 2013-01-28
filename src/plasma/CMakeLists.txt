@@ -13,3 +13,4 @@ add_subdirectory(kcmodule)
 install(DIRECTORY package/ DESTINATION ${DATA_INSTALL_DIR}/plasma/packages/org.kde.active.settings.owncloud)
 install(FILES package/metadata.desktop DESTINATION ${SERVICES_INSTALL_DIR} RENAME plasma-package-org.kde.active.settings.owncloud.desktop)
 
+install(FILES owncloudsyncd.desktop DESTINATION ${AUTOSTART_INSTALL_DIR})

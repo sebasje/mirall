@@ -458,6 +458,12 @@ MiniJob* OwncloudSettings::createMiniJob()
     return mj;
 }
 
+void OwncloudSettings::openConfig()
+{
+//     KConfig
+    kDebug() << "Opening configuration";
+}
+
 void OwncloudSettings::slotRemoteFolderExists(const QString &folder, bool exists)
 {
     if (d->createFolderJobs.keys().contains(folder)) {
