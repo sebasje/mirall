@@ -176,14 +176,17 @@ PlasmaComponents.PageStack {
     }
 
     function updateState() {
-        print("  + + + + + + updateState() + + + + + + + ");
         if (owncloudSettings.owncloudStatus == OwncloudSettings.Disconnected) {
             owncloudModule.state = "setup";
             setupWizard.state = "login";
             print(" ------> disconnected");
         } else {
-            print(" -----> connected");
-            owncloudModule.state = "default";
+            print(" -----> connected. Folders: " + owncloudSettings.folders.length);
+            if (owncloudSettings.folders.length) {
+                owncloudModule.state = "default";
+            } else {
+                owncloudModule.state = "setup";
+            }
             setupWizard.state = "favorites";
         }
         if (owncloudSettings.owncloudStatus == OwncloudSettings.Error) {

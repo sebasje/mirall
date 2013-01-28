@@ -56,4 +56,11 @@ ListView {
     Behavior on opacity { FadeAnimation { } }
 
     Component.onCompleted: owncloudSettings.refresh()
+
+    PlasmaComponents.Label {
+        text: i18n("No folders are set up for synchronization. Please setup synchronization folders.")
+        anchors.margins: parent.spacing
+        visible: owncloudSettings.folders.length == 0
+
+    }
 }
