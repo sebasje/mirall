@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Service
+X-KDE-ServiceTypes=SystemSettingsCategory
+X-KDE-System-Settings-Category=file-synchronization
+X-KDE-System-Settings-Parent-Category=network-and-connectivity
+Icon=folder-sync
+
+Name=File Synchronization

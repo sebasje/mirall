@@ -62,6 +62,9 @@ public:
 OwncloudConfig::OwncloudConfig(QWidget *parent, const QVariantList &)
     : KCModule( KcmOwncloud::componentData(), parent )
 {
+
+    //setButtons(0);
+
     d = new OwncloudConfigPrivate;
     d->declarativeView = new QDeclarativeView(this);
 
