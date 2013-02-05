@@ -124,8 +124,8 @@ Item {
         model: favoritesModel
         spacing: 12
         anchors { left: parent.left; right: parent.right; top: favInfo.bottom; topMargin: 12; bottom: footerItem.top; }
-        interactive: contentHeight > height
-//         clip: true
+        interactive: contentHeight+48 > height
+        clip: true
 
         delegate: FavoriteDelegate {}
 
@@ -137,6 +137,7 @@ Item {
                     addSyncFolder.state = "localFolder";
                 }
         }
+
 
 //         footer: Item {
 //             //Rectangle { color: "orange"; opacity: 0.5; anchors.fill: parent; }
@@ -153,6 +154,9 @@ Item {
 //                 }
 //             }
 //         }
+    }
+    PlasmaComponents.ScrollBar {
+        flickableItem: favoritesList
     }
 
 
@@ -194,8 +198,8 @@ Item {
 
     Item {
         id: footerItem
-        height: 48
-        anchors { left: parent.left; right: parent.right; bottom: parent.bottom; topMargin: 12; rightMargin: 12; }
+        height: 0
+        anchors { left: parent.left; right: parent.right; bottom: parent.bottom; rightMargin: 12; }
 
     }
     Behavior on opacity { FadeAnimation { } }

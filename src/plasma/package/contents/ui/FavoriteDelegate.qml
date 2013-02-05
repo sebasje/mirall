@@ -36,8 +36,7 @@ Item {
     property bool isConfigured: owncloudSettings.isConfigured(localPath, remotePath, displayName)
 
     height:  expanded ? 84 : 48
-    width: parent.width
-    //opacity: expanded ? 0.6 : 1
+    width: parent.width - folderIcon.width
 
     QtExtraComponents.QIconItem {
         id: folderIcon
