@@ -1,4 +1,4 @@
-
+( * means todo or work in progress, o means done )
 OwncloudFolder
 
 o enum Status: Disabled, Waiting, Idle, Error

@@ -21,7 +21,6 @@
 #ifndef OWNCLOUDSETTINGSPLUGIN_H
 #define OWNCLOUDSETTINGSPLUGIN_H
 
-#include "owncloudsettingsplugin.h"
 #include <QtCore/QObject>
 #include <QtCore/QVariantList>
 

@@ -24,8 +24,6 @@
 #include "minijob.h"
 #include "createfolderjob.h"
 
-#include "../applet/owncloud_interface.h"
-
 #include <kdebug.h>
 #include <KLocale>
 #include <KProcess>
@@ -38,6 +36,10 @@
 #include <QDBusServiceWatcher>
 #include <QtDeclarative/qdeclarative.h>
 #include <QtDeclarative/QDeclarativeItem>
+
+// The DBus interface definition
+#include "../applet/owncloud_interface.h"
+
 
 class OwncloudSettingsPrivate {
 public:
@@ -83,7 +85,7 @@ OwncloudSettings::OwncloudSettings(QObject* parent) :
 
 OwncloudSettings::~OwncloudSettings()
 {
-    kDebug() << "owncloudsettings destroy";
+    //kDebug() << "owncloudsettings destroy";
     delete d;
 }
 
@@ -128,12 +130,6 @@ void OwncloudSettings::serviceUnregistered()
     setOwncloudStatus(OwncloudSettings::Error);
     setError(OwncloudSettings::NoDaemonError);
     emit foldersChanged();
-}
-
-
-void OwncloudSettings::setDisplay(const QString& n)
-{
-    kDebug() << "displayChanged" << n;
 }
 
 // -- owncloud Info handling

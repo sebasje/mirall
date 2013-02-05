@@ -80,8 +80,6 @@ class OwncloudSettings : public QObject
         int globalStatus() const; // Returns OwncloudFolder::Status
         QDeclarativeListProperty<OwncloudFolder> folders();
 
-        void setDisplay(const QString &n);
-
         int owncloudStatus() const; // returns OwncloudSettings::Status
         void setOwncloudStatus(int i);
 
