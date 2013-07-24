@@ -19,7 +19,6 @@
 #include <QtCore>
 #include <QtGui>
 
-#include "mirall/miralltheme.h"
 #include "mirall/owncloudtheme.h"
 
 #ifdef THEME_INCLUDE
@@ -27,8 +26,6 @@
 #  define INCLUDE_FILE(M)  QUOTEME(M)
 #  include INCLUDE_FILE(THEME_INCLUDE)
 #endif
-
-#include "config.h"
 
 namespace Mirall {
 
@@ -71,6 +68,11 @@ QString Theme::statusHeaderText( SyncResult::Status status ) const
     return resultStr;
 }
 
+QString Theme::appNameGUI() const
+{
+    return appName();
+}
+
 QString Theme::version() const
 {
     return QString::fromLocal8Bit( MIRALL_STRINGIFY( MIRALL_VERSION ));
@@ -78,7 +80,8 @@ QString Theme::version() const
 
 QIcon Theme::trayFolderIcon( const QString& backend ) const
 {
-    return folderIcon( backend );
+    Q_UNUSED(backend)
+    return applicationIcon();
 }
 
 /*
@@ -108,14 +111,22 @@ QIcon Theme::themeIcon( const QString& name, bool sysTray ) const
         foreach (int size, sizes) {
             QString pixmapName = QString::fromLatin1(":/mirall/theme/%1/%2-%3.png").arg(flavor).arg(name).arg(size);
             if (QFile::exists(pixmapName)) {
-                icon.addFile(pixmapName, QSize(size, size));
+                QPixmap px(pixmapName);
+                // HACK, get rid of it by supporting FDO icon themes, this is really just emulating ubuntu-mono
+                if (qgetenv("DESKTOP_SESSION") == "ubuntu") {
+                    QBitmap mask = px.createMaskFromColor(Qt::white, Qt::MaskOutColor);
+                    QPainter p(&px);
+                    p.setPen(QColor("#dfdbd2"));
+                    p.drawPixmap(px.rect(), mask, mask.rect());
+                }
+                icon.addPixmap(px);
             }
         }
         if (icon.isNull()) {
             foreach (int size, sizes) {
                 QString pixmapName = QString::fromLatin1(":/mirall/resources/%1-%2.png").arg(name).arg(size);
                 if (QFile::exists(pixmapName)) {
-                    icon.addFile(pixmapName, QSize(size, size));
+                    icon.addFile(pixmapName);
                 }
             }
         }
@@ -131,7 +142,7 @@ bool Theme::singleSyncFolder() const {
 
 QString Theme::defaultServerFolder() const
 {
-    return QLatin1String("clientsync");
+    return QLatin1String("/");
 }
 
 QString Theme::overrideServerUrl() const
@@ -147,6 +158,7 @@ QString Theme::defaultClientFolder() const
 void Theme::setSystrayUseMonoIcons(bool mono)
 {
     _mono = mono;
+    emit systrayUseMonoIconsChanged(mono);
 }
 
 bool Theme::systrayUseMonoIcons() const
@@ -191,6 +203,59 @@ QVariant Theme::customMedia( CustomMediaType type )
         }
     }
     return re;
+}
+
+QIcon Theme::syncStateIcon( SyncResult::Status status, bool sysTray ) const
+{
+    // FIXME: Mind the size!
+    QString statusIcon;
+
+    switch( status ) {
+    case SyncResult::Undefined:
+    case SyncResult::NotYetStarted:
+    case SyncResult::Unavailable:
+        statusIcon = QLatin1String("state-offline");
+        break;
+    case SyncResult::SyncRunning:
+        statusIcon = QLatin1String("state-sync");
+        break;
+    case SyncResult::SyncPrepare:
+    case SyncResult::Success:
+        statusIcon = QLatin1String("state-ok");
+        break;
+    case SyncResult::Error:
+    case SyncResult::SetupError:
+    default:
+        statusIcon = QLatin1String("state-error");
+    }
+
+    return themeIcon( statusIcon, sysTray );
+}
+
+QColor Theme::wizardHeaderTitleColor() const
+{
+    return qApp->palette().text().color();
+}
+
+QColor Theme::wizardHeaderBackgroundColor() const
+{
+    return QColor();
+}
+
+QPixmap Theme::wizardHeaderLogo() const
+{
+    return applicationIcon().pixmap(64);
+}
+
+QPixmap Theme::wizardHeaderBanner() const
+{
+    QColor c = wizardHeaderBackgroundColor();
+    if (!c.isValid())
+        return QPixmap();
+
+    QPixmap pix(QSize(600, 78));
+    pix.fill(wizardHeaderBackgroundColor());
+    return pix;
 }
 
 } // end namespace mirall

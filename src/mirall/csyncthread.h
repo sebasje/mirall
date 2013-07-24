@@ -1,6 +1,3 @@
-#ifndef CSYNCTHREAD_H
-#define CSYNCTHREAD_H
-
 /*
  * Copyright (C) by Duncan Mac-Vicar P. <duncan@kde.org>
  * Copyright (C) by Klaas Freitag <freitag@owncloud.com>
@@ -16,16 +13,21 @@
  * for more details.
  */
 
+#ifndef CSYNCTHREAD_H
+#define CSYNCTHREAD_H
+
 #include <stdint.h>
 
 #include <QMutex>
 #include <QThread>
 #include <QString>
 #include <QNetworkProxy>
+#include <QNetworkCookie>
 
 #include <csync.h>
 
 #include "mirall/syncfileitem.h"
+#include "mirall/progressdispatcher.h"
 
 class QProcess;
 
@@ -35,16 +37,14 @@ class CSyncThread : public QObject
 {
     Q_OBJECT
 public:
-    CSyncThread(const QString &source, const QString &target);
+    CSyncThread(CSYNC *);
     ~CSyncThread();
 
-    static void setConnectionDetails( const QString&, const QString&, const QNetworkProxy& );
-    static QString csyncConfigDir();
-
-    const char* proxyTypeToCStr(QNetworkProxy::ProxyType);
-    QString csyncErrorToString( CSYNC_ERROR_CODE, const char * );
+    static QString csyncErrorToString( CSYNC_ERROR_CODE, const char * );
 
     Q_INVOKABLE void startSync();
+
+    void setLastAuthCookies(QList<QNetworkCookie> c);
 
 signals:
     void fileReceived( const QString& );
@@ -54,17 +54,24 @@ signals:
     void csyncUnavailable();
     void treeWalkResult(const SyncFileItemVector&);
 
+    void fileTransmissionProgress( Progress::Kind, const QString&, qint64, qint64);
+    void overallTransmissionProgress( const QString& file, int file_no, int file_cnt, qint64 o1, qint64 o2 );
     void csyncStateDbFile( const QString& );
     void wipeDb();
 
     void finished();
     void started();
 
+    void aboutToRemoveAllFiles(SyncFileItem::Direction direction, bool *cancel);
+
 private:
-    static void progress(const char *remote_url,
-                    enum csync_notify_type_e kind,
-                    long long o1, long long o2,
-                    void *userdata);
+    void handleSyncError(CSYNC *ctx, const char *state);
+    static void cb_file_progress(const char *remote_url,
+                                 enum csync_notify_type_e kind,
+                                 long long o1, long long o2,
+                                 void *userdata);
+    static void cb_overall_progress(const char *file_name, int file_no,
+                                    int file_cnt, long long o1, long long o2, void *userdata);
 
     static int treewalkLocal( TREE_WALK_FILE*, void *);
     static int treewalkRemote( TREE_WALK_FILE*, void *);
@@ -73,25 +80,20 @@ private:
 
     static int walkFinalize(TREE_WALK_FILE*, void* );
 
-    static int getauth(const char *prompt,
-                char *buf,
-                size_t len,
-                int echo,
-                int verify,
-                void *userdata
-    );
+
 
     static QMutex _mutex;
-    static QString _user;
-    static QString _passwd;
-    static QNetworkProxy _proxy;
-
-    static QString _csyncConfigDir;
-
+    static QMutex _syncMutex;
     SyncFileItemVector _syncedItems;
 
-    QString _source;
-    QString _target;
+    CSYNC *_csync_ctx;
+    bool _needsUpdate;
+
+    bool _hasFiles; // true if there is at least one file that is not ignored or removed
+
+    QList<QNetworkCookie> _lastAuthCookies;
+
+    friend class CSyncRunScopeHelper;
 };
 }
 

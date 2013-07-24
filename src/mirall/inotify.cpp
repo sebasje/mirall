@@ -39,8 +39,10 @@ INotify::INotify(QObject *parent, int mask)
       _mask(mask)
 {
     _fd = inotify_init();
+    if (_fd == -1)
+        qDebug() << Q_FUNC_INFO << "notify_init() failed: " << strerror(errno);
     _notifier = new QSocketNotifier(_fd, QSocketNotifier::Read);
-    QObject::connect(_notifier, SIGNAL(activated(int)), SLOT(slotActivated(int)));
+    connect(_notifier, SIGNAL(activated(int)), SLOT(slotActivated(int)));
     _buffer_size = DEFAULT_READ_BUFFERSIZE;
     _buffer = (char *) malloc(_buffer_size);
 }
@@ -95,8 +97,6 @@ void INotify::slotActivated(int fd)
             foreach (QString path, paths)
                 emit notifyEvent(event->mask, event->cookie, path + "/" + QString::fromUtf8(event->name));
         }
-        else
-            qWarning() << "n is NULL";
 
         // increment counter
         i += sizeof(struct inotify_event) + event->len;
@@ -112,6 +112,7 @@ INotify::~INotify()
 
     close(_fd);
     free(_buffer);
+    delete _notifier;
 }
 
 void INotify::addPath(const QString &path)
@@ -121,7 +122,7 @@ void INotify::addPath(const QString &path)
     if( wd > -1 )
         _wds[path] = wd;
     else
-        qDebug() << "WRN: Could not watch " << path;
+        qDebug() << "WRN: Could not watch " << path << ':' << strerror(errno);
 }
 
 void INotify::removePath(const QString &path)

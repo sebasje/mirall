@@ -31,6 +31,7 @@ public:
     {
       Undefined,
       NotYetStarted,
+      SyncPrepare,
       SyncRunning,
       Success,
       Error,
@@ -56,8 +57,6 @@ public:
     QString statusString() const;
     QDateTime syncTime() const;
 
-    bool localRunOnly() const;
-    void setLocalRunOnly( bool );
 private:
     Status             _status;
     SyncFileItemVector _syncItems;
@@ -66,8 +65,6 @@ private:
      * when the sync tool support this...
      */
     QStringList        _errors;
-
-    bool               _localRunOnly;
 };
 
 }

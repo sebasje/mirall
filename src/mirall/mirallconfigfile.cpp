@@ -15,67 +15,158 @@
 #include "config.h"
 
 #include "mirall/mirallconfigfile.h"
+#include "mirall/owncloudinfo.h"
 #include "mirall/owncloudtheme.h"
-#include "mirall/miralltheme.h"
+#include "mirall/theme.h"
 #include "mirall/credentialstore.h"
 
 #include <QtCore>
 #include <QtGui>
 
 #define DEFAULT_REMOTE_POLL_INTERVAL 30000 // default remote poll time in milliseconds
-
-#define CA_CERTS_KEY QLatin1String("CaCertificates")
+#define DEFAULT_MAX_LOG_LINES 20000
 
 namespace Mirall {
 
+static const char urlC[] = "url";
+static const char userC[] = "user";
+static const char passwdC[] = "passwd";
+
+static const char caCertsKeyC[] = "CaCertificates";
+static const char remotePollIntervalC[] = "remotePollInterval";
+static const char monoIconsC[] = "monoIcons";
+static const char optionalDesktopNoficationsC[] = "optionalDesktopNotifications";
+static const char skipUpdateCheckC[] = "skipUpdateCheck";
+static const char geometryC[] = "geometry";
+
+static const char proxyHostC[] = "Proxy/host";
+static const char proxyTypeC[] = "Proxy/type";
+static const char proxyPortC[] = "Proxy/port";
+static const char proxyUserC[] = "Proxy/user";
+static const char proxyPassC[] = "Proxy/pass";
+static const char proxyNeedsAuthC[] = "Proxy/needsAuth";
+
+static const char useUploadLimitC[]   = "BWLimit/useUploadLimit";
+static const char useDownloadLimitC[] = "BWLimit/useDownloadLimit";
+static const char uploadLimitC[]      = "BWLimit/uploadLimit";
+static const char downloadLimitC[]    = "BWLimit/downloadLimit";
+
+static const char seenVersionC[] = "Updater/seenVersion";
+static const char maxLogLinesC[] = "Logging/maxLogLines";
+
 QString MirallConfigFile::_oCVersion;
+QString MirallConfigFile::_confDir = QString::null;
 bool    MirallConfigFile::_askedUser = false;
 
 MirallConfigFile::MirallConfigFile( const QString& appendix )
     :_customHandle(appendix)
 {
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+}
+
+void MirallConfigFile::setConfDir(const QString &value)
+{
+    if( value.isEmpty() ) return;
+
+    QFileInfo fi(value);
+    if( fi.exists() && fi.isDir() ) {
+        qDebug() << "** Using custom config dir " << value;
+        _confDir=value;
+    }
+}
+
+bool MirallConfigFile::optionalDesktopNotifications() const
+{
+    QSettings settings( configFile(), QSettings::IniFormat );
+    settings.setIniCodec( "UTF-8" );
+    return settings.value(QLatin1String(optionalDesktopNoficationsC), true).toBool();
+}
+
+void MirallConfigFile::setOptionalDesktopNotifications(bool show)
+{
+    QSettings settings( configFile(), QSettings::IniFormat );
+    settings.setIniCodec( "UTF-8" );
+    settings.setValue(QLatin1String(optionalDesktopNoficationsC), show);
+    settings.sync();
+}
+
+QString MirallConfigFile::seenVersion() const
+{
+    QSettings settings( configFile(), QSettings::IniFormat );
+    settings.setIniCodec( "UTF-8" );
+    return settings.value(QLatin1String(seenVersionC)).toString();
+}
+
+void MirallConfigFile::setSeenVersion(const QString &version)
+{
+    QSettings settings( configFile(), QSettings::IniFormat );
+    settings.setIniCodec( "UTF-8" );
+    settings.setValue(QLatin1String(seenVersionC), version);
+    settings.sync();
+}
+
+void MirallConfigFile::saveGeometry(QWidget *w)
+{
+    Q_ASSERT(!w->objectName().isNull());
+    QSettings settings( configFile(), QSettings::IniFormat );
+    settings.setIniCodec( "UTF-8" );
+    settings.beginGroup(w->objectName());
+    settings.setValue(QLatin1String(geometryC), w->saveGeometry());
+    settings.sync();
+}
+
+void MirallConfigFile::restoreGeometry(QWidget *w)
+{
+    w->restoreGeometry(getValue(geometryC, w->objectName()).toByteArray());
 }
 
 QString MirallConfigFile::configPath() const
 {
-    QString dir = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+    QString dir = _confDir;
+    if( _confDir.isEmpty() )
+      _confDir = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+
     if( !dir.endsWith(QLatin1Char('/')) ) dir.append(QLatin1Char('/'));
     return dir;
 }
 
-QString MirallConfigFile::excludeFile() const
+QString MirallConfigFile::excludeFile(Scope scope) const
 {
     // prefer sync-exclude.lst, but if it does not exist, check for
-    // exclude.lst for compatibility reasonsin the user writeable
+    // exclude.lst for compatibility reasons in the user writeable
     // directories.
     const QString exclFile("sync-exclude.lst");
-
     QFileInfo fi;
-    fi.setFile( configPath(), exclFile );
 
-    if( ! fi.isReadable() ) {
-        fi.setFile( configPath(), QLatin1String("exclude.lst") );
+    if (scope != SystemScope) {
+        fi.setFile( configPath(), exclFile );
+
+        if( ! fi.isReadable() ) {
+            fi.setFile( configPath(), QLatin1String("exclude.lst") );
+        }
+        if( ! fi.isReadable() ) {
+            fi.setFile( configPath(), exclFile );
+        }
     }
 
-    // Check alternative places...
-    if( ! fi.isReadable() ) {
-#ifdef Q_OS_WIN32
-        fi.setFile( QApplication::applicationDirPath(), exclFile );
+    if (scope != UserScope) {
+        // Check alternative places...
+        if( ! fi.isReadable() ) {
+#ifdef Q_OS_WIN
+            fi.setFile( QApplication::applicationDirPath(), exclFile );
 #endif
-#ifdef Q_OS_LINUX
-        fi.setFile( QString("/etc/%1").arg(Theme::instance()->appName()), exclFile );
+#ifdef Q_OS_UNIX
+            fi.setFile( QString("/etc/%1").arg(Theme::instance()->appName()), exclFile );
 #endif
 #ifdef Q_OS_MAC
-        // exec path is inside the bundle
-        fi.setFile( QApplication::applicationDirPath(),
-                    QLatin1String("../Resources/") + exclFile );
+            // exec path is inside the bundle
+            fi.setFile( QApplication::applicationDirPath(),
+                        QLatin1String("../Resources/") + exclFile );
 #endif
+        }
     }
-
-    if( fi.isReadable() ) {
-        qDebug() << "  ==> returning exclude file path: " << fi.absoluteFilePath();
-        return fi.absoluteFilePath();
-    }
+    qDebug() << "  ==> returning exclude file path: " << fi.absoluteFilePath();
+    return fi.absoluteFilePath();
     qDebug() << "EMPTY exclude file path!";
     return QString::null;
 }
@@ -83,7 +174,7 @@ QString MirallConfigFile::excludeFile() const
 QString MirallConfigFile::configFile() const
 {
     if( qApp->applicationName().isEmpty() ) {
-        qApp->setApplicationName( Theme::instance()->appName() );
+        qApp->setApplicationName( Theme::instance()->appNameGUI() );
     }
     QString dir = configPath() + Theme::instance()->configFileName();
     if( !_customHandle.isEmpty() ) {
@@ -113,54 +204,41 @@ bool MirallConfigFile::connectionExists( const QString& conn )
     QSettings settings( configFile(), QSettings::IniFormat);
     settings.setIniCodec( "UTF-8" );
 
-    return settings.contains( QString::fromLatin1("%1/url").arg( conn ) );
+    settings.beginGroup(conn);
+    return settings.contains( QLatin1String(urlC) );
 }
 
 
 void MirallConfigFile::writeOwncloudConfig( const QString& connection,
                                             const QString& url,
                                             const QString& user,
-                                            const QString& passwd,
-                                            bool https, bool skipPwd )
+                                            const QString& passwd )
 {
     const QString file = configFile();
-    qDebug() << "*** writing mirall config to " << file << " Skippwd: " << skipPwd;
-    QString pwd( passwd );
+    qDebug() << "*** writing mirall config to " << file;
 
     QSettings settings( file, QSettings::IniFormat);
     settings.setIniCodec( "UTF-8" );
-    QString cloudsUrl( url );
-
-    if( !cloudsUrl.startsWith( QLatin1String("http")) ) {
-        if (https)
-            cloudsUrl.prepend(QLatin1String("https://"));
-        else
-            cloudsUrl.prepend(QLatin1String("http://"));
-    }
 
     settings.beginGroup( connection );
-    settings.setValue( QLatin1String("url"), cloudsUrl );
-    settings.setValue( QLatin1String("user"), user );
-    if( skipPwd ) {
-        pwd.clear();
-    }
+    settings.setValue( QLatin1String(urlC), url );
+    settings.setValue( QLatin1String(userC), user );
+
 
 #ifdef WITH_QTKEYCHAIN
     // Password is stored to QtKeyChain now by default in CredentialStore
     // The CredentialStore calls clearPasswordFromConfig after the creds
     // were successfully wiritten to delete the passwd entry from config.
     qDebug() << "Going to delete the password from settings file.";
-#else
-    if( !skipPwd )
-        writePassword( passwd );
 #endif
-    settings.setValue( QLatin1String("nostoredpassword"), QVariant(skipPwd) );
+    writePassword( passwd );
+
     settings.sync();
     // check the perms, only read-write for the owner.
     QFile::setPermissions( file, QFile::ReadOwner|QFile::WriteOwner );
 
     // Store credentials temporar until the config is finalized.
-    CredentialStore::instance()->setCredentials( cloudsUrl, user, passwd );
+    ownCloudInfo::instance()->setCredentials( user, passwd, _customHandle );
 
 }
 
@@ -176,7 +254,8 @@ void MirallConfigFile::clearPasswordFromConfig( const QString& connection )
     QSettings settings( file, QSettings::IniFormat);
     settings.setIniCodec( "UTF-8" );
     settings.beginGroup( con );
-    settings.remove(QLatin1String("passwd"));
+    settings.remove(QLatin1String(passwdC));
+    // old key name
     settings.remove(QLatin1String("password"));
     settings.sync();
 }
@@ -195,31 +274,17 @@ bool MirallConfigFile::writePassword( const QString& passwd, const QString& conn
     // store password into settings file.
     settings.beginGroup( con );
     QByteArray pwdba = pwd.toUtf8();
-    settings.setValue( QLatin1String("passwd"), QVariant(pwdba.toBase64()) );
+    settings.setValue( QLatin1String(passwdC), QVariant(pwdba.toBase64()) );
     settings.sync();
-}
 
-// set the url, called from redirect handling.
-void MirallConfigFile::setOwnCloudUrl( const QString& connection, const QString & url )
-{
-    const QString file = configFile();
-
-    QSettings settings( file, QSettings::IniFormat);
-    settings.setIniCodec( "UTF-8" );
-    settings.beginGroup( connection );
-    settings.setValue( QLatin1String("url"), url );
-
-    settings.sync();
+    return true;
 }
 
 QByteArray MirallConfigFile::caCerts( )
 {
     QSettings settings( configFile(), QSettings::IniFormat );
     settings.setIniCodec( "UTF-8" );
-
-    QByteArray certs = settings.value( CA_CERTS_KEY ).toByteArray();
-
-    return certs;
+    return settings.value( QLatin1String(caCertsKeyC) ).toByteArray();
 }
 
 void MirallConfigFile::setCaCerts( const QByteArray & certs )
@@ -228,8 +293,7 @@ void MirallConfigFile::setCaCerts( const QByteArray & certs )
 
     QSettings settings( file, QSettings::IniFormat);
     settings.setIniCodec( "UTF-8" );
-    settings.setValue( CA_CERTS_KEY, certs );
-
+    settings.setValue( QLatin1String(caCertsKeyC), certs );
     settings.sync();
 }
 
@@ -242,7 +306,7 @@ void MirallConfigFile::removeConnection( const QString& connection )
     qDebug() << "    removing the config file for connection " << con;
 
     // Currently its just removing the entire config file
-    QSettings settings( configFile(), QSettings::IniFormat);
+    QSettings settings;
     settings.setIniCodec( "UTF-8" );
     settings.beginGroup( con );
     settings.remove(QString::null);  // removes all content from the group
@@ -253,9 +317,8 @@ void MirallConfigFile::removeConnection( const QString& connection )
  * returns the configured owncloud url if its already configured, otherwise an empty
  * string.
  * The returned url always has a trailing hash.
- * If webdav is true, the webdav-server url is returned.
  */
-QString MirallConfigFile::ownCloudUrl( const QString& connection, bool webdav ) const
+QString MirallConfigFile::ownCloudUrl( const QString& connection) const
 {
     QString con( connection );
     if( connection.isEmpty() ) con = defaultConnection();
@@ -264,20 +327,10 @@ QString MirallConfigFile::ownCloudUrl( const QString& connection, bool webdav ) 
     settings.setIniCodec( "UTF-8" );
     settings.beginGroup( con );
 
-    // For the WebDAV connect it is required to know which version the server is running
-    // because the url changed :-/
-    if( webdav && _oCVersion.isEmpty() ) {
-        qDebug() << "######## Config does not yet know the ownCloud server version #########";
-        qDebug() << "###################### THIS SHOULD NOT HAPPEN! ########################";
-    }
-
-    QString url = settings.value( QLatin1String("url") ).toString();
+    QString url = settings.value( QLatin1String(urlC) ).toString();
     if( ! url.isEmpty() ) {
         if( ! url.endsWith(QLatin1Char('/'))) url.append(QLatin1String("/"));
-        if( webdav ) url.append( QLatin1String("remote.php/webdav/") );
     }
-
-    qDebug() << "Returning configured owncloud url: " << url;
 
   return url;
 }
@@ -318,7 +371,7 @@ int MirallConfigFile::remotePollInterval( const QString& connection ) const
   settings.setIniCodec( "UTF-8" );
   settings.beginGroup( con );
 
-  int remoteInterval = settings.value( QLatin1String("remotePollInterval"), DEFAULT_REMOTE_POLL_INTERVAL ).toInt();
+  int remoteInterval = settings.value( QLatin1String(remotePollIntervalC), DEFAULT_REMOTE_POLL_INTERVAL ).toInt();
   if( remoteInterval < 5000) {
     qDebug() << "Remote Interval is less than 5 seconds, reverting to" << DEFAULT_REMOTE_POLL_INTERVAL;
     remoteInterval = DEFAULT_REMOTE_POLL_INTERVAL;
@@ -326,7 +379,23 @@ int MirallConfigFile::remotePollInterval( const QString& connection ) const
   return remoteInterval;
 }
 
-bool MirallConfigFile::passwordStorageAllowed( const QString& connection )
+void MirallConfigFile::setRemotePollInterval(int interval, const QString &connection )
+{
+    QString con( connection );
+    if( connection.isEmpty() ) con = defaultConnection();
+
+    if( interval < 5000 ) {
+        qDebug() << "Remote Poll interval of " << interval << " is below fife seconds.";
+        return;
+    }
+    QSettings settings( configFile(), QSettings::IniFormat );
+    settings.setIniCodec( "UTF-8" );
+    settings.beginGroup( con );
+    settings.setValue(QLatin1String(remotePollIntervalC), interval );
+    settings.sync();
+}
+
+bool MirallConfigFile::ownCloudPasswordExists( const QString& connection ) const
 {
     QString con( connection );
     if( connection.isEmpty() ) con = defaultConnection();
@@ -335,8 +404,11 @@ bool MirallConfigFile::passwordStorageAllowed( const QString& connection )
     settings.setIniCodec( "UTF-8" );
     settings.beginGroup( con );
 
-    bool skipPwd = settings.value( QLatin1String("nostoredpassword"), false ).toBool();
-    return !skipPwd;
+    bool rc = false;
+    if( settings.contains(QLatin1String(passwdC)) ) {
+        rc = true;
+    }
+    return rc;
 }
 
 QString MirallConfigFile::ownCloudPasswd( const QString& connection ) const
@@ -348,26 +420,23 @@ QString MirallConfigFile::ownCloudPasswd( const QString& connection ) const
     settings.setIniCodec( "UTF-8" );
     settings.beginGroup( con );
 
-    QString pwd;
-
-    QByteArray pwdba = settings.value(QLatin1String("passwd")).toByteArray();
-    if( pwdba.isEmpty() ) {
-        // check the password entry, cleartext from before
-        // read it and convert to base64, delete the cleartext entry.
-        QString p = settings.value(QLatin1String("password")).toString();
-
-        if( ! p.isEmpty() ) {
-            // its there, save base64-encoded and delete.
-
-            pwdba = p.toUtf8();
-            settings.setValue( QLatin1String("passwd"), QVariant(pwdba.toBase64()) );
-            settings.remove( QLatin1String("password") );
-            settings.sync();
-        }
+    QByteArray pwdba = settings.value(QLatin1String(passwdC)).toByteArray();
+    if( !pwdba.isEmpty() ) {
+        return QString::fromUtf8( QByteArray::fromBase64(pwdba) );
     }
-    pwd = QString::fromUtf8( QByteArray::fromBase64(pwdba) );
 
-    return pwd;
+    // check the password entry, cleartext from before
+    // read it and convert to base64, delete the cleartext entry.
+    QString p = settings.value(QLatin1String("password")).toString();
+
+    if( ! p.isEmpty() ) {
+        // its there, save base64-encoded and delete.
+        pwdba = p.toUtf8();
+        settings.setValue( QLatin1String(passwdC), QVariant(pwdba.toBase64()) );
+        settings.remove( QLatin1String("password") );
+        settings.sync();
+    }
+    return p;
 }
 
 QString MirallConfigFile::ownCloudVersion() const
@@ -391,18 +460,38 @@ bool MirallConfigFile::ownCloudSkipUpdateCheck( const QString& connection ) cons
     settings.setIniCodec( "UTF-8" );
     settings.beginGroup( con );
 
-    bool skipIt = settings.value( QLatin1String("skipUpdateCheck"), false ).toBool();
+    bool skipIt = settings.value( QLatin1String(skipUpdateCheckC), false ).toBool();
 
     return skipIt;
+}
+
+void MirallConfigFile::setOwnCloudSkipUpdateCheck( bool skip, const QString& connection )
+{
+    QString con( connection );
+    if( connection.isEmpty() ) con = defaultConnection();
+
+    QSettings settings( configFile(), QSettings::IniFormat );
+    settings.setIniCodec( "UTF-8" );
+    settings.beginGroup( con );
+
+    settings.setValue( QLatin1String(skipUpdateCheckC), QVariant(skip) );
+    settings.sync();
+
 }
 
 int MirallConfigFile::maxLogLines() const
 {
     QSettings settings( configFile(), QSettings::IniFormat );
     settings.setIniCodec( "UTF-8" );
-    settings.beginGroup(QLatin1String("Logging"));
-    int logLines = settings.value( QLatin1String("maxLogLines"), 20000 ).toInt();
-    return logLines;
+    return settings.value( QLatin1String(maxLogLinesC), DEFAULT_MAX_LOG_LINES ).toInt();
+}
+
+void MirallConfigFile::setMaxLogLines( int lines )
+{
+    QSettings settings( configFile(), QSettings::IniFormat );
+    settings.setIniCodec( "UTF-8" );
+    settings.setValue(QLatin1String(maxLogLinesC), lines);
+    settings.sync();
 }
 
 // remove a custom config file.
@@ -450,61 +539,140 @@ void MirallConfigFile::acceptCustomConfig()
     QFile::remove( targetBak );
 
     // inform the credential store about the password change.
-    CredentialStore::instance()->saveCredentials( );
+    QString url  = ownCloudUrl();
+    QString user = ownCloudUser();
+    QString pwd  = ownCloudPasswd();
+
+    if( pwd.isEmpty() ) {
+        qDebug() << "Password is empty, skipping to write cred store.";
+    } else {
+        CredentialStore::instance()->setCredentials(url, user, pwd);
+        CredentialStore::instance()->saveCredentials();
+    }
 }
 
 void MirallConfigFile::setProxyType(int proxyType,
                   const QString& host,
-                  int port,
+                  int port, bool needsAuth,
                   const QString& user,
                   const QString& pass)
 {
     QSettings settings( configFile(), QSettings::IniFormat );
     settings.setIniCodec( "UTF-8" );
-    settings.beginGroup(QLatin1String("proxy"));
 
-    settings.setValue(QLatin1String("type"), proxyType);
-    settings.setValue(QLatin1String("host"), host);
-    settings.setValue(QLatin1String("port"), port);
-    settings.setValue(QLatin1String("user"), user);
-    settings.setValue(QLatin1String("pass"), pass.toUtf8().toBase64());
+    settings.setValue(QLatin1String(proxyTypeC), proxyType);
 
+    if (proxyType == QNetworkProxy::HttpProxy ||
+        proxyType == QNetworkProxy::Socks5Proxy) {
+        settings.setValue(QLatin1String(proxyHostC), host);
+        settings.setValue(QLatin1String(proxyPortC), port);
+        settings.setValue(QLatin1String(proxyNeedsAuthC), needsAuth);
+        settings.setValue(QLatin1String(proxyUserC), user);
+        settings.setValue(QLatin1String(proxyPassC), pass.toUtf8().toBase64());
+    }
     settings.sync();
 }
 
-QVariant MirallConfigFile::getValue(const QString& param, const QString& group) const
+QVariant MirallConfigFile::getValue(const QString& param, const QString& group,
+                                    const QVariant& defaultValue) const
 {
     QSettings settings( configFile(), QSettings::IniFormat );
     settings.setIniCodec( "UTF-8" );
-    settings.beginGroup(group);
+    if (!group.isEmpty())
+        settings.beginGroup(group);
 
-    return settings.value(param);
+    return settings.value(param, defaultValue);
+}
+
+void MirallConfigFile::setValue(const QString& key, const QVariant &value)
+{
+    QSettings settings( configFile(), QSettings::IniFormat );
+    settings.setIniCodec( "UTF-8" );
+
+    settings.setValue(key, value);
 }
 
 int MirallConfigFile::proxyType() const
 {
-    return getValue(QLatin1String("type"), QLatin1String("proxy")).toInt();
+    return getValue(QLatin1String(proxyTypeC)).toInt();
 }
 
 QString MirallConfigFile::proxyHostName() const
 {
-    return getValue(QLatin1String("host"), QLatin1String("proxy")).toString();
+    return getValue(QLatin1String(proxyHostC)).toString();
 }
 
 int MirallConfigFile::proxyPort() const
 {
-    return getValue(QLatin1String("port"), QLatin1String("proxy")).toInt();
+    return getValue(QLatin1String(proxyPortC)).toInt();
+}
+
+bool MirallConfigFile::proxyNeedsAuth() const
+{
+    return getValue(QLatin1String(proxyNeedsAuthC)).toBool();
 }
 
 QString MirallConfigFile::proxyUser() const
 {
-    return getValue(QLatin1String("user"), QLatin1String("proxy")).toString();
+    return getValue(QLatin1String(proxyUserC)).toString();
 }
 
 QString MirallConfigFile::proxyPassword() const
 {
-    QByteArray pass = getValue(QLatin1String("pass"), QLatin1String("proxy")).toByteArray();
+    QByteArray pass = getValue(proxyPassC).toByteArray();
     return QString::fromUtf8(QByteArray::fromBase64(pass));
+}
+
+int MirallConfigFile::useUploadLimit() const
+{
+    return getValue(useUploadLimitC, QString::null, -1).toInt();
+}
+
+bool MirallConfigFile::useDownloadLimit() const
+{
+    return getValue(useDownloadLimitC, QString::null, false).toBool();
+}
+
+void MirallConfigFile::setUseUploadLimit(int val)
+{
+    setValue(useUploadLimitC, val);
+}
+
+void MirallConfigFile::setUseDownloadLimit(bool enable)
+{
+    setValue(useDownloadLimitC, enable);
+}
+
+int MirallConfigFile::uploadLimit() const
+{
+    return getValue(uploadLimitC, QString::null, 10).toInt();
+}
+
+int MirallConfigFile::downloadLimit() const
+{
+    return getValue(downloadLimitC, QString::null, 80).toInt();
+}
+
+void MirallConfigFile::setUploadLimit(int kbytes)
+{
+    setValue(uploadLimitC, kbytes);
+}
+
+void MirallConfigFile::setDownloadLimit(int kbytes)
+{
+    setValue(downloadLimitC, kbytes);
+}
+
+bool MirallConfigFile::monoIcons() const
+{
+    QSettings settings( configFile(), QSettings::IniFormat );
+    return settings.value(QLatin1String(monoIconsC), false).toBool();
+}
+
+void MirallConfigFile::setMonoIcons(bool useMonoIcons)
+{
+    QSettings settings( configFile(), QSettings::IniFormat );
+    settings.setValue(QLatin1String(monoIconsC), useMonoIcons);
 }
 
 }

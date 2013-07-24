@@ -18,17 +18,17 @@
 
 #include <QWizard>
 
-#include "ui_owncloudwizardselecttypepage.h"
-#include "ui_createanowncloudpage.h"
-#include "ui_owncloudftpaccesspage.h"
+#include "ui_owncloudsetuppage_ng.h"
 #include "ui_owncloudwizardresultpage.h"
-#include "ui_owncloudcredentialspage.h"
-#include "ui_owncloudsetuppage.h"
 
 class QLabel;
 class QVariant;
+class QProgressIndicator;
 
 namespace Mirall {
+
+class OwncloudSetupPage;
+class OwncloudWizardResultPage;
 
 class OwncloudSetupPage: public QWizardPage
 {
@@ -37,18 +37,62 @@ public:
   OwncloudSetupPage();
   ~OwncloudSetupPage();
 
+  enum SyncMode {
+      SelectiveMode,
+      BoxMode
+  };
+
   virtual bool isComplete() const;
   virtual void initializePage();
   virtual int nextId() const;
-  void setOCUrl( const QString& );
+  void setServerUrl( const QString& );
+  void setOCUser( const QString& );
+  void setAllowPasswordStorage( bool );
+  bool validatePage();
+  QString url() const;
+  QString localFolder() const;
+  void setConnected(bool complete);
+  void setRemoteFolder( const QString& remoteFolder);
+  void setMultipleFoldersExist( bool exist );
+
+  SyncMode syncMode();
+
+public slots:
+  void setErrorString( const QString&  );
+  void setConfigExists(  bool );
+  void stopSpinner();
 
 protected slots:
-  void slotPwdStoreChanged( int );
-  void slotSecureConChanged( int );
-  void handleNewOcUrl(const QString& ocUrl);
+  void slotUrlChanged(const QString&);
+  void slotUserChanged(const QString&);
+
   void setupCustomization();
+  void slotToggleAdvanced(int state);
+  void slotSelectFolder();
+
+signals:
+  void connectToOCUrl( const QString& );
+
+protected:
+    void updateFoldersInfo();
+
+private slots:
+    void slotHandleUserInput();
+
 private:
+    bool urlHasChanged();
+
   Ui_OwncloudSetupPage _ui;
+  QString _oCUrl;
+  QString _ocUser;
+  bool    _connected;
+  bool    _checking;
+  bool    _configExists;
+  bool    _multipleFoldersExist;
+
+  QProgressIndicator *_progressIndi;
+  QButtonGroup       *_selectiveSyncButtons;
+  QString _remoteFolder;
 };
 
 class OwncloudWizard: public QWizard
@@ -57,13 +101,8 @@ class OwncloudWizard: public QWizard
 public:
 
     enum {
-      Page_oCWelcome,
       Page_oCSetup,
-      Page_SelectType,
-      Page_Create_OC,
-      Page_OC_Credentials,
-      Page_FTP,
-      Page_Install
+      Page_Result
     };
 
     enum LogType {
@@ -71,119 +110,49 @@ public:
       LogParagraph
     };
 
-    OwncloudWizard(QWidget *parent = 0L);
+    OwncloudWizard(QWidget *parent = 0);
 
     void setOCUrl( const QString& );
+    void setOCUser( const QString& );
 
     void setupCustomMedia( QVariant, QLabel* );
     QString ocUrl() const;
+    QString localFolder() const;
+
+    void enableFinishOnResultWidget(bool enable);
+
+    void displayError( const QString& );
+    OwncloudSetupPage::SyncMode syncMode();
+    void setMultipleFoldersExist( bool );
+    void setConfigExists( bool );
+    bool configExists();
 
 public slots:
-    void appendToResultWidget( const QString& msg, LogType type = LogParagraph );
+    void setRemoteFolder( const QString& );
+    void appendToConfigurationLog( const QString& msg, LogType type = LogParagraph );
     void slotCurrentPageChanged( int );
-    void showOCUrlLabel( bool );
 
+    void showConnectInfo( const QString& );
+    void successfullyConnected(bool);
 
 signals:
+    void clearPendingRequests();
     void connectToOCUrl( const QString& );
-    void installOCServer();
-    void installOCLocalhost();
 
 private:
+    OwncloudSetupPage *_setupPage;
+    OwncloudWizardResultPage *_resultPage;
+
     QString _configFile;
-    QString _oCUrl;
-};
-
-
-/**
- * page for first launch only
- */
-class OwncloudWelcomePage: public QWizardPage
-{
-    Q_OBJECT
-public:
-  OwncloudWelcomePage();
-
-  virtual int nextId() const  { return OwncloudWizard::Page_oCSetup; }
+    QString _oCUser;
+    QStringList _setupLog;
+    bool _configExists;
 };
 
 
 /**
  * page to ask for the type of Owncloud to connect to
  */
-
-class OwncloudWizardSelectTypePage: public QWizardPage
-{
-    Q_OBJECT
-public:
-  OwncloudWizardSelectTypePage();
-  ~OwncloudWizardSelectTypePage();
-
-  virtual bool isComplete() const;
-  virtual void initializePage();
-  int nextId() const;
-  void setOCUrl( const QString& );
-  void showOCUrlLabel( const QString& );
-
-private:
-  Ui_OwncloudWizardSelectTypePage _ui;
-};
-
-class CreateAnOwncloudPage: public QWizardPage
-{
-    Q_OBJECT
-public:
-  CreateAnOwncloudPage();
-  ~CreateAnOwncloudPage();
-
-  virtual bool isComplete() const;
-  virtual void initializePage();
-  virtual int nextId() const;
-
-  QString domain() const;
-
-private:
-  Ui_CreateAnOwncloudPage _ui;
-
-};
-
-class OwncloudCredentialsPage: public QWizardPage
-{
-    Q_OBJECT
-public:
-  OwncloudCredentialsPage();
-  ~OwncloudCredentialsPage();
-
-  virtual bool isComplete() const;
-  virtual void initializePage();
-  virtual int nextId() const;
-
-protected slots:
-  void slotPwdStoreChanged( int );
-
-private:
-  Ui_OwncloudCredentialsPage _ui;
-
-};
-/**
- * page to ask for the ftp credentials etc. for ftp install
- */
-class OwncloudFTPAccessPage : public QWizardPage
-{
-  Q_OBJECT
-public:
-  OwncloudFTPAccessPage();
-  ~OwncloudFTPAccessPage();
-
-  virtual bool isComplete() const;
-  virtual void initializePage();
-  void setFTPUrl( const QString& );
-  virtual int nextId() const;
-
-private:
-  Ui_OwncloudFTPAccessPage _ui;
-
-};
 
 /**
  * page to display the install result
@@ -195,19 +164,26 @@ public:
   OwncloudWizardResultPage();
   ~OwncloudWizardResultPage();
 
-  virtual bool isComplete() const;
-  virtual void initializePage();
+  bool isComplete() const;
+  void initializePage();
+  void setRemoteFolder( const QString& remoteFolder);
 
 public slots:
-  void appendResultText( const QString&, OwncloudWizard::LogType type = OwncloudWizard::LogParagraph );
-  void showOCUrlLabel( const QString&, bool );
+  void setComplete(bool complete);
+
+protected slots:
+  void slotOpenLocal();
+  void slotOpenServer();
 
 protected:
   void setupCustomization();
 
 private:
-  Ui_OwncloudWizardResultPage _ui;
+  QString _localFolder;
+  QString _remoteFolder;
+  bool _complete;
 
+  Ui_OwncloudWizardResultPage _ui;
 };
 
 } // ns Mirall

@@ -22,13 +22,15 @@ class QIcon;
 class QString;
 class QObject;
 class QPixmap;
+class QColor;
 
 namespace Mirall {
 
 class SyncResult;
 
-class Theme
+class Theme : public QObject
 {
+    Q_OBJECT
 public:
     enum CustomMediaType {
         oCSetupTop,      // ownCloud connect page
@@ -37,16 +39,37 @@ public:
         oCSetupResultTop // ownCloud connect result page
     };
 
+    /* returns a singleton instance. */
     static Theme* instance();
 
-    virtual QString appName() const = 0;
-
-    virtual QString configFileName() const = 0;
+    /**
+     * @brief appNameGUI - Human readable application name.
+     *
+     * Use and redefine this if the human readable name contains spaces,
+     * special chars and such.
+     *
+     * By default, appName() is returned.
+     *
+     * @return QString with human readable app name.
+     */
+    virtual QString appNameGUI() const;
 
     /**
-      * get a folder icon for a given backend in a given size.
-      */
-    virtual QIcon   folderIcon( const QString& ) const = 0;
+     * @brief appName - Application name (short)
+     *
+     * Use and redefine this as an application name. Keep it straight as
+     * it is used for config files etc. If you need a more sophisticated
+     * name in the GUI, redefine appNameGUI.
+     *
+     * @return QString with app name.
+     */
+    virtual QString appName() const = 0;
+
+    /**
+     * @brief configFileName
+     * @return the name of the config file.
+     */
+    virtual QString configFileName() const = 0;
 
     /**
       * the icon that is shown in the tray context menu left of the folder name
@@ -56,10 +79,9 @@ public:
     /**
       * get an sync state icon
       */
-    virtual QIcon   syncStateIcon( SyncResult::Status, bool sysTray = false ) const = 0;
+    virtual QIcon   syncStateIcon( SyncResult::Status, bool sysTray = false ) const;
 
     virtual QIcon   folderDisabledIcon() const = 0;
-    virtual QPixmap splashScreen() const = 0;
 
     virtual QIcon   applicationIcon() const = 0;
 
@@ -70,6 +92,11 @@ public:
      * Characteristics: bool if more than one sync folder is allowed
      */
     virtual bool singleSyncFolder() const;
+
+    /**
+    * URL to help file
+    */
+    virtual QString helpUrl() const { return QString::null; }
 
     /**
      * Setting a value here will pre-define the server url.
@@ -101,6 +128,24 @@ public:
      */
     virtual QVariant customMedia( CustomMediaType type );
 
+    /** @return color for the setup wizard */
+    virtual QColor wizardHeaderTitleColor() const;
+
+    /** @return color for the setup wizard. */
+    virtual QColor wizardHeaderBackgroundColor() const;
+
+    /** @return logo for the setup wizard. */
+    virtual QPixmap wizardHeaderLogo() const;
+
+    /**
+     * The default implementation creates a
+     * background based on
+     * \ref wizardHeaderTitleColor().
+     *
+     * @return banner for the setup wizard.
+     */
+    virtual QPixmap wizardHeaderBanner() const;
+
     /**
      * About dialog contents
      */
@@ -119,6 +164,9 @@ public:
 protected:
     QIcon themeIcon(const QString& name, bool sysTray = false) const;
     Theme() {}
+
+signals:
+    void systrayUseMonoIconsChanged(bool);
 
 private:
     Theme(Theme const&);

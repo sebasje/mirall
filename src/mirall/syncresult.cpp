@@ -19,13 +19,11 @@ namespace Mirall
 
 SyncResult::SyncResult()
 : _status( Undefined )
-  , _localRunOnly(false)
 {
 }
 
 SyncResult::SyncResult(SyncResult::Status status )
     : _status(status)
-    , _localRunOnly(false)
 {
 }
 
@@ -58,6 +56,9 @@ QString SyncResult::statusString() const
         case SetupError:
             re = QLatin1String("SetupError");
             break;
+	case SyncPrepare:
+	    re = QLatin1String("SyncPrepare");
+	    break;
         case Unavailable:
             re = QLatin1String("Not availabe");
             break;
@@ -110,16 +111,6 @@ QString SyncResult::errorString() const
 void SyncResult::clearErrors()
 {
     _errors.clear();
-}
-
-bool SyncResult::localRunOnly() const
-{
-    return _localRunOnly;
-}
-
-void SyncResult::setLocalRunOnly( bool lor )
-{
-    _localRunOnly = lor;
 }
 
 SyncResult::~SyncResult()

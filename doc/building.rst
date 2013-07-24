@@ -20,20 +20,24 @@ Linux
 Mac OS X
 --------
 
-Follow the `generic build instructions`_.
+Next to XCode (and the command line tools!), you will need some
+extra dependencies.
 
-You can install the missing dependencies via MacPorts_ or Homebrew_.
+You can install these dependencies via MacPorts_ or Homebrew_.
 This is only needed on the build machine, since non-standard libs
 will be deployed in the app bundle.
 
-The only exception to this rule is libiniparser_, which lacks a decent
-build system. If you are using Homebrew_, you can just add it::
+The tested and preferred way is to use HomeBrew_. The ownCloud team has
+its own repository which contains non-standard recipes.  Add it with::
 
-  brew tap dschmidt/owncloud
-  brew install iniparser
+  brew tap owncloud/owncloud
 
-Otherwise, you need to copy the header and lib files to
-``/usr/local/include`` and ``/usr/local/lib`` respectively.
+Next, install the missing dependencies::
+
+  brew install $(brew deps ocsync)
+  brew install $(brew deps mirall)
+
+To build mirall and cmake, follow the `generic build instructions`_.
 
 .. note::
   You should not call ``make install`` at any time, since the product of the
@@ -51,18 +55,22 @@ if you do not have it installed already.
 In order to cross-compile, the following repositories need to be added
 via YaST or ``zypper ar`` (adjust when using openSUSE 12.2)::
 
-  http://download.opensuse.org/repositories/isv:/ownCloud:/devel:/mingw:/win32/openSUSE_12.1/
-  http://download.opensuse.org/repositories/windows:/mingw/openSUSE_12.1/
-  http://download.opensuse.org/repositories/windows:/mingw:/win32/openSUSE_12.1/
+  zypper ar http://download.opensuse.org/repositories/isv:/ownCloud:/devel:/mingw:/win32/openSUSE_12.1/isv:ownCloud:devel:mingw:win32.repo
+  zypper ar http://download.opensuse.org/repositories/windows:/mingw:/win32/openSUSE_12.1/windows:mingw:win32.repo
+  zypper ar http://download.opensuse.org/repositories/windows:/mingw/openSUSE_12.1/windows:mingw.repo
 
 Next, install the cross-compiler packages and the cross-compiled dependencies::
 
-  zypper si -d mingw32-csync
-  zypper install kdewin-png2ico mingw32-libqt4 mingw32-libqt4-devel \
-                 mingw32-libgcrypt mingw32-libgnutls mingw32-libneon \
-                 mingw32-libbeecrypt mingw32-libopenssl mingw32-openssl \
-                 mingw32-libpng-devel mingw32-libsqlite mingw32-qtkeychain \
-                 mingw32-qtkeychain-devel mingw32-iniparser mingw32-dlfcn
+  zypper install cmake make mingw32-cross-binutils mingw32-cross-cpp mingw32-cross-gcc \
+                 mingw32-cross-gcc-c++ mingw32-cross-pkg-config mingw32-filesystem \
+                 mingw32-headers  mingw32-runtime site-config mingw32-iniparser-devel \
+                 mingw32-libsqlite-devel mingw32-dlfcn-devel mingw32-libssh2-devel \
+                 kdewin-png2ico mingw32-libqt4 mingw32-libqt4-devel mingw32-libgcrypt \
+                 mingw32-libgnutls mingw32-libneon mingw32-libneon-devel mingw32-libbeecrypt \
+                 mingw32-libopenssl mingw32-openssl mingw32-libpng-devel mingw32-libsqlite \
+                 mingw32-qtkeychain mingw32-qtkeychain-devel mingw32-iniparser mingw32-dlfcn \
+                 mingw32-libintl-devel mingw32-libneon-devel mingw32-libopenssl-devel \
+                 mingw32-libproxy-devel mingw32-libxml2-devel mingw32-zlib-devel
 
 For the installer, the NSIS installer package is also required::
 
@@ -76,18 +84,18 @@ For the installer, the NSIS installer package is also required::
 You will also need to manually download and install the following files with
 ``rpm -ivh <package>`` (They will also work with OpenSUSE 12.2)::
 
-http://pmbs.links2linux.org/download/mingw:/32/openSUSE_12.1/x86_64/mingw32-cross-nsis-plugin-processes-0-1.1.x86_64.rpm
-http://pmbs.links2linux.org/download/mingw:/32/openSUSE_12.1/x86_64/mingw32-cross-nsis-plugin-uac-0-3.1.x86_64.rpm
+  rpm -ihv http://pmbs.links2linux.org/download/mingw:/32/openSUSE_12.1/x86_64/mingw32-cross-nsis-plugin-processes-0-1.1.x86_64.rpm
+  rpm -ihv http://pmbs.links2linux.org/download/mingw:/32/openSUSE_12.1/x86_64/mingw32-cross-nsis-plugin-uac-0-3.1.x86_64.rpm
 
 Now, follow the `generic build instructions`_, but pay attention to
 the following differences:
 
 1. For building ``libocsync``, you need to use ``mingw32-cmake`` instead
    of cmake.
-2. Also, you need to specify *absolute pathes* for ``CSYNC_LIBRARY_PATH``
-   and ``CSYNC_LIBRARY_PATH`` when running ``cmake`` on mirall.
-3. for building ``mirall``, you need to use ``cmake`` again, but make sure
+2. for building ``mirall``, you need to use ``cmake`` again, but make sure
    to append the following parameter::
+3. Also, you need to specify *absolute pathes* for ``CSYNC_LIBRARY_PATH``
+   and ``CSYNC_LIBRARY_PATH`` when running ``cmake`` on mirall.
 
   ``-DCMAKE_TOOLCHAIN_FILE=../mirall/admin/win/Toolchain-mingw32-openSUSE.cmake``
 
@@ -147,9 +155,13 @@ directories. If this succeeds, call ``make``. The owncloud binary should appear
 in the ``bin`` directory. You can also run ``make install`` to install the client to
 ``/usr/local/bin``.
 
-To build in installer (requires the mingw32-cross-nsis packages)::
+To build an installer/app bundle (requires the mingw32-cross-nsis packages on Windows)::
 
   make package
+
+Known cmake parameters:
+
+* WITH_DOC=TRUE: create doc and manpages via running ``make``; also adds install statements to be able to install it via ``make install``.
 
 .. _`ownCloud repository from OBS`: http://software.opensuse.org/download/package?project=isv:ownCloud:devel&package=owncloud-client
 .. _CSync: http://www.csync.org
@@ -157,4 +169,3 @@ To build in installer (requires the mingw32-cross-nsis packages)::
 .. _Git: http://git-scm.com
 .. _MacPorts: http://www.macports.org
 .. _Homebrew: http://mxcl.github.com/homebrew/
-.. _libiniparser: http://ndevilla.free.fr/iniparser/

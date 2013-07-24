@@ -16,16 +16,10 @@
 #include "mirall/mirallconfigfile.h"
 #include "mirall/theme.h"
 
-#include <QDebug>
-#include <QDesktopServices>
-#include <QFileDialog>
-#include <QFileInfo>
-#include <QUrl>
-#include <QValidator>
-#include <QWizardPage>
-#include <QDir>
-#include <QScrollBar>
-#include <QSslSocket>
+#include "QProgressIndicator.h"
+
+#include <QtCore>
+#include <QtGui>
 
 #include <stdlib.h>
 
@@ -54,366 +48,398 @@ void setupCustomMedia( QVariant variant, QLabel *label )
 
 // ======================================================================
 
-
-OwncloudWelcomePage::OwncloudWelcomePage()
-{
-    setTitle(tr("Welcome to %1").arg(Theme::instance()->appName()));
-
-    QVBoxLayout *lay = new QVBoxLayout(this);
-    QLabel *content = new QLabel;
-    lay->addWidget(content, 100, Qt::AlignTop);
-    content->setAlignment(Qt::AlignTop);
-    content->setTextFormat(Qt::RichText);
-    content->setWordWrap(true);
-    Theme *theme = Theme::instance();
-    if (theme->overrideServerUrl().isEmpty()) {
-        content->setText(tr("<p>In order to connect to your %1 server, you need to provide the server address "
-                            "as well as your credentials.</p><p>This wizard will guide you through the process.<p>"
-                            "<p>If you have not received this information, please contact your %1 provider.</p>")
-                         .arg(theme->appName()));
-    } else {
-        content->setText(tr("<p>In order to connect to your %1 server, you need to provide "
-                            "your credentials.</p><p>This wizard will guide you through "
-                            "the setup process.</p>").arg(theme->appName()));
-    }
-}
-
-
 OwncloudSetupPage::OwncloudSetupPage()
 {
     _ui.setupUi(this);
 
-    setTitle(tr("Create Connection to %1").arg(Theme::instance()->appName()));
+    Theme *theme = Theme::instance();
+    setTitle( tr("<font color=\"%1\" size=\"5\">Connect to %2</font>")
+              .arg(theme->wizardHeaderTitleColor().name()).arg( theme->appNameGUI()));
+    setSubTitle( tr("<font color=\"%1\">Enter user credentials</font>")
+                 .arg(theme->wizardHeaderTitleColor().name()));
 
-    connect(_ui.leUrl, SIGNAL(textChanged(QString)), SLOT(handleNewOcUrl(QString)));
-
-    registerField( QLatin1String("OCUrl"), _ui.leUrl );
+    registerField( QLatin1String("OCUrl"),    _ui.leUrl );
     registerField( QLatin1String("OCUser"),   _ui.leUsername );
     registerField( QLatin1String("OCPasswd"), _ui.lePassword);
-    registerField( QLatin1String("connectMyOC"), _ui.cbConnectOC );
-    registerField( QLatin1String("secureConnect"), _ui.cbSecureConnect );
-    registerField( QLatin1String("PwdNoLocalStore"), _ui.cbNoPasswordStore );
+    registerField( QLatin1String("OCSyncFromScratch"), _ui.cbSyncFromScratch);
 
-    _ui.cbSecureConnect->setEnabled(QSslSocket::supportsSsl());
+    _ui.errorLabel->setVisible(true);
+    _ui.advancedBox->setVisible(false);
+
+    _progressIndi = new QProgressIndicator;
+    _ui.resultLayout->addWidget( _progressIndi );
+    _progressIndi->setVisible(false);
+    _ui.resultLayout->setEnabled(false);
+
+    // Error label
+    QString style = QLatin1String("border: 1px solid #eed3d7; border-radius: 5px; padding: 3px;"
+                                  "background-color: #f2dede; color: #b94a48;");
+
+
+    _ui.errorLabel->setStyleSheet( style );
+    _ui.errorLabel->setWordWrap(true);
+    _ui.errorLabel->setVisible(false);
+
+    _checking = false;
+
+    setupCustomization();
+
+    connect(_ui.leUrl, SIGNAL(textChanged(QString)), SLOT(slotUrlChanged(QString)));
+    connect( _ui.leUsername, SIGNAL(textChanged(QString)), this, SLOT(slotUserChanged(QString)));
 
     connect( _ui.lePassword, SIGNAL(textChanged(QString)), this, SIGNAL(completeChanged()));
     connect( _ui.leUsername, SIGNAL(textChanged(QString)), this, SIGNAL(completeChanged()));
-
-    connect( _ui.cbNoPasswordStore, SIGNAL(stateChanged(int)), this, SLOT(slotPwdStoreChanged(int)));
-    connect( _ui.cbSecureConnect, SIGNAL(stateChanged(int)), this, SLOT(slotSecureConChanged(int)));
-
-    _ui.cbConnectOC->hide();
-    setupCustomization();
+    connect( _ui.cbAdvanced, SIGNAL(stateChanged (int)), SLOT(slotToggleAdvanced(int)));
+    connect( _ui.pbSelectLocalFolder, SIGNAL(clicked()), SLOT(slotSelectFolder()));
 }
 
 OwncloudSetupPage::~OwncloudSetupPage()
 {
+    delete _progressIndi;
 }
 
-void OwncloudSetupPage::setOCUrl( const QString& newUrl )
+void OwncloudSetupPage::slotToggleAdvanced(int state)
 {
-    QString url( newUrl );
-    if( url.isEmpty() ) {
+    _ui.advancedBox->setVisible( state == Qt::Checked );
+    slotHandleUserInput();
+    QSize size = wizard()->sizeHint();
+    // need to substract header for some reason
+    size -= QSize(0, 63);
+
+    wizard()->setMinimumSize(size);
+    wizard()->resize(size);
+}
+
+void OwncloudSetupPage::setOCUser( const QString & user )
+{
+    _ocUser = user;
+    _ui.leUsername->setText(user);
+}
+
+void OwncloudSetupPage::setServerUrl( const QString& newUrl )
+{
+    _oCUrl = newUrl;
+    if( _oCUrl.isEmpty() ) {
         _ui.leUrl->clear();
         return;
     }
-    if( url.startsWith( QLatin1String("https"))) {
-        _ui.cbSecureConnect->setChecked( true );
-        url.remove(0,5);
-    } else if( url.startsWith( QLatin1String("http"))) {
-        _ui.cbSecureConnect->setChecked( false );
-        url.remove(0,4);
-    }
-    if( url.startsWith( QLatin1String("://"))) url.remove(0,3);
 
-    _ui.leUrl->setText( url );
+    _ui.leUrl->setText( _oCUrl );
 }
 
 void OwncloudSetupPage::setupCustomization()
 {
     // set defaults for the customize labels.
-    _ui.sideLabel->setText( QString::null );
-    _ui.sideLabel->setFixedWidth(160);
-
     _ui.topLabel->hide();
     _ui.bottomLabel->hide();
 
     Theme *theme = Theme::instance();
     QVariant variant = theme->customMedia( Theme::oCSetupTop );
-    setupCustomMedia( variant, _ui.topLabel );
-    variant = theme->customMedia( Theme::oCSetupSide );
-    setupCustomMedia( variant, _ui.sideLabel );
+    if( !variant.isNull() ) {
+        setupCustomMedia( variant, _ui.topLabel );
+    }
+
     variant = theme->customMedia( Theme::oCSetupBottom );
     setupCustomMedia( variant, _ui.bottomLabel );
 
     QString fixUrl = theme->overrideServerUrl();
     if( !fixUrl.isEmpty() ) {
-        setOCUrl( fixUrl );
+        _ui.label_2->hide();
+        setServerUrl( fixUrl );
         _ui.leUrl->setEnabled( false );
-        _ui.cbSecureConnect->hide();
         _ui.leUrl->hide();
-        _ui.protocolLabel->hide();
-        _ui.serverAddressLabel->hide();
     }
 }
 
-void OwncloudSetupPage::slotPwdStoreChanged( int state )
+void OwncloudSetupPage::slotUserChanged(const QString& user )
 {
-    _ui.lePassword->setEnabled( state == Qt::Unchecked );
-    emit completeChanged();
+    slotHandleUserInput();
 }
 
-void OwncloudSetupPage::slotSecureConChanged( int state )
+// slot hit from textChanged of the url entry field.
+void OwncloudSetupPage::slotUrlChanged(const QString& ocUrl)
 {
-    if( state == Qt::Checked ) {
-        _ui.protocolLabel->setText(QLatin1String("https://"));
-    } else {
-        _ui.protocolLabel->setText(QLatin1String("http://"));
-    }
-}
+    slotHandleUserInput();
 
-void OwncloudSetupPage::handleNewOcUrl(const QString& ocUrl)
-{
+#if 0
     QString url = ocUrl;
-    int len = 0;
+    bool visible = false;
+
     if (url.startsWith(QLatin1String("https://"))) {
-        _ui.cbSecureConnect->setChecked(true);
-        len = 8;
+        _ui.urlLabel->setPixmap( QPixmap(":/mirall/resources/security-high.png"));
+        _ui.urlLabel->setToolTip(tr("This url is secure. You can use it."));
+        visible = true;
     }
     if (url.startsWith(QLatin1String("http://"))) {
-        _ui.cbSecureConnect->setChecked(false);
-        len = 7;
+        _ui.urlLabel->setPixmap( QPixmap(":/mirall/resources/security-low.png"));
+        _ui.urlLabel->setToolTip(tr("This url is NOT secure. You should not use it."));
+        visible = true;
     }
-    if( len ) {
-        int pos = _ui.leUrl->cursorPosition();
-        url.remove(0, len);
-        _ui.leUrl->setText(url);
-        _ui.leUrl->setCursorPosition(qMax(0, pos-len));
-
-    }
+#endif
 }
 
 bool OwncloudSetupPage::isComplete() const
 {
     if( _ui.leUrl->text().isEmpty() ) return false;
+    if( _checking ) return false;
 
-    if( _ui.cbNoPasswordStore->checkState() == Qt::Checked ) {
-        return !(_ui.leUsername->text().isEmpty());
-    }
-    return !(_ui.leUsername->text().isEmpty() || _ui.lePassword->text().isEmpty() );
+    return !( _ui.lePassword->text().isEmpty() || _ui.leUsername->text().isEmpty() );
 }
 
 void OwncloudSetupPage::initializePage()
 {
+    _connected = false;
+    _checking  = false;
+    _multipleFoldersExist = false;
+
+    // call to init label
+    slotHandleUserInput();
+
+    if( _configExists ) {
+        _ui.lePassword->setFocus();
+    } else {
+        _ui.leUrl->setFocus();
+    }
+}
+
+bool OwncloudSetupPage::urlHasChanged()
+{
+    bool change = false;
+    const QChar slash('/');
+
+    QUrl currentUrl( url() );
+    QUrl initialUrl( _oCUrl );
+
+    QString currentPath = currentUrl.path();
+    QString initialPath = initialUrl.path();
+
+    // add a trailing slash.
+    if( ! currentPath.endsWith( slash )) currentPath += slash;
+    if( ! initialPath.endsWith( slash )) initialPath += slash;
+
+    if( currentUrl.host() != initialUrl.host() ||
+        currentUrl.port() != initialUrl.port() ||
+            currentPath != initialPath ) {
+        change = true;
+    }
+
+    if( !change) { // no change yet, check the user.
+        QString user = _ui.leUsername->text().simplified();
+        if( user != _ocUser ) change = true;
+    }
+
+    return change;
+}
+
+// Called if the user changes the user- or url field. Adjust the texts and
+// evtl. warnings on the dialog.
+void OwncloudSetupPage::slotHandleUserInput()
+{
+    // if the url has not changed, return.
+    if( ! urlHasChanged() ) {
+        // disable the advanced button as nothing has changed.
+        _ui.cbAdvanced->setEnabled(false);
+        _ui.advancedBox->setEnabled(false);
+    } else {
+        // Enable advanced stuff for new connection configuration.
+        _ui.cbAdvanced->setEnabled(true);
+        _ui.advancedBox->setEnabled(true);
+    }
+
+    const QString locFolder = localFolder();
+
+    // check if the local folder exists. If so, and if its not empty, show a warning.
+    QDir dir( locFolder );
+    QStringList entries = dir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot);
+
+    QString t;
+
+    if( !urlHasChanged() && _configExists ) {
+        // This is the password change mode: No change to the url and a config
+        // to an ownCloud exists.
+        t = tr("Change the Password for your configured account.");
+    } else {
+        // Complete new setup.
+        _ui.pbSelectLocalFolder->setText(QDir::toNativeSeparators(locFolder));
+
+        if( _remoteFolder.isEmpty() || _remoteFolder == QLatin1String("/") ) {
+            t = tr("Your entire account will be synced to the local folder '%1'.")
+                    .arg(QDir::toNativeSeparators(locFolder));
+        } else {
+            t = tr("%1 folder '%2' is synced to local folder '%3'")
+                    .arg(Theme::instance()->appName()).arg(_remoteFolder)
+                    .arg(QDir::toNativeSeparators(locFolder));
+        }
+
+        if ( _multipleFoldersExist ) {
+            t += tr("<p><small><strong>Warning:</strong> You currently have multiple folders "
+                    "configured. If you continue with the current settings, the folder configurations "
+                    "will be discarded and a single root folder sync will be created!</small></p>");
+        }
+
+        if( entries.count() > 0) {
+            // the directory is not empty
+            if (!_ui.cbAdvanced->isChecked()) {
+                t += tr("<p><small><strong>Warning:</strong> The local directory is not empty. "
+                        "Pick a resolution in the advanced settings!</small></p>");
+            }
+            _ui.resolutionWidget->setVisible(true);
+        } else {
+            // the dir is empty, which means that there is no problem.
+            _ui.resolutionWidget->setVisible(false);
+        }
+    }
+
+    _ui.syncModeLabel->setText(t);
+    _ui.syncModeLabel->setFixedHeight(_ui.syncModeLabel->sizeHint().height());
 }
 
 int OwncloudSetupPage::nextId() const
 {
-  return OwncloudWizard::Page_Install;
+  return OwncloudWizard::Page_Result;
 }
 
-// ======================================================================
-
-OwncloudWizardSelectTypePage::OwncloudWizardSelectTypePage()
+QString OwncloudSetupPage::url() const
 {
-    _ui.setupUi(this);
-    registerField( QLatin1String("connectMyOC"), _ui.connectMyOCRadioBtn );
-    registerField( QLatin1String("createNewOC"), _ui.createNewOCRadioBtn );
-    registerField( QLatin1String("OCUrl"),       _ui.OCUrlLineEdit );
-
-    connect( _ui.connectMyOCRadioBtn, SIGNAL(clicked()), SIGNAL(completeChanged()));
-    connect( _ui.createNewOCRadioBtn, SIGNAL(clicked()), SIGNAL(completeChanged()));
-    connect( _ui.OCUrlLineEdit, SIGNAL(textChanged(QString)), SIGNAL(completeChanged()));
-
-#ifdef OWNCLOUD_CLIENT
-    _ui.createNewOCRadioBtn->setVisible( false );
-    _ui.createNewOwncloudLabel->setVisible( false );
-#endif
-
-#if QT_VERSION >= 0x040700
-    _ui.OCUrlLineEdit->setPlaceholderText(tr("http://owncloud.mydomain.org"));
-#endif
+    QString url = _ui.leUrl->text().simplified();
+    return url;
 }
 
-OwncloudWizardSelectTypePage::~OwncloudWizardSelectTypePage()
+QString OwncloudSetupPage::localFolder() const
 {
+    QString folder = wizard()->property("localFolder").toString();
+    return folder;
 }
 
-void OwncloudWizardSelectTypePage::initializePage()
+void OwncloudSetupPage::setConnected( bool comp )
 {
-
+    _connected = comp;
+    _ui.resultLayout->setEnabled(true);
+    _progressIndi->setVisible(false);
+    _progressIndi->stopAnimation();
 }
 
-int OwncloudWizardSelectTypePage::nextId() const
+bool OwncloudSetupPage::validatePage()
 {
-  if( _ui.connectMyOCRadioBtn->isChecked() ) {
-    return OwncloudWizard::Page_OC_Credentials;
-  }
-  return OwncloudWizard::Page_Create_OC;
-}
+    bool re = false;
 
-bool OwncloudWizardSelectTypePage::isComplete() const
-{
-  if( _ui.connectMyOCRadioBtn->isChecked() ) {
-    // a valid url is needed.
-    QString u = _ui.OCUrlLineEdit->text();
-    QUrl url( u );
-    if( url.isValid() ) {
-      return true;
+    if( ! _connected) {
+        setErrorString(QString::null);
+        _checking = true;
+        _ui.resultLayout->setEnabled(true);
+        _progressIndi->setVisible(true);
+        _progressIndi->startAnimation();
+        emit completeChanged();
+
+        emit connectToOCUrl( url() );
+        return false;
+    } else {
+        // connecting is running
+        stopSpinner();
+        _checking = false;
+        emit completeChanged();
+        return true;
     }
-    return false;
-  }
-  return true;
 }
 
-void OwncloudWizardSelectTypePage::setOCUrl( const QString& url )
+void OwncloudSetupPage::setErrorString( const QString& err )
 {
-  _ui.OCUrlLineEdit->setText( url );
-}
-
-// ======================================================================
-
-
-OwncloudCredentialsPage::OwncloudCredentialsPage()
-{
-    _ui.setupUi(this);
-    registerField( QLatin1String("OCUser"),   _ui.OCUserEdit );
-    registerField( QLatin1String("OCPasswd"), _ui.OCPasswdEdit );
-    registerField( QLatin1String("PwdNoLocalStore"), _ui.cbPwdNoLocalStore );
-
-    connect( _ui.OCPasswdEdit, SIGNAL(textChanged(QString)), this, SIGNAL(completeChanged()));
-
-    connect( _ui.cbPwdNoLocalStore, SIGNAL(stateChanged(int)), this, SLOT(slotPwdStoreChanged(int)));
-}
-
-OwncloudCredentialsPage::~OwncloudCredentialsPage()
-{
-}
-
-void OwncloudCredentialsPage::slotPwdStoreChanged( int state )
-{
-    _ui.OCPasswdEdit->setEnabled( state == Qt::Unchecked );
+    if( err.isEmpty()) {
+        _ui.errorLabel->setVisible(false);
+    } else {
+        _ui.errorLabel->setVisible(true);
+        _ui.errorLabel->setText(err);
+    }
+    _checking = false;
     emit completeChanged();
+    stopSpinner();
 }
 
-bool OwncloudCredentialsPage::isComplete() const
+void OwncloudSetupPage::stopSpinner()
 {
-    if( _ui.cbPwdNoLocalStore->checkState() == Qt::Checked ) {
-        return !(_ui.OCUserEdit->text().isEmpty());
+    _ui.resultLayout->setEnabled(false);
+    _progressIndi->setVisible(false);
+    _progressIndi->stopAnimation();
+}
+
+OwncloudSetupPage::SyncMode OwncloudSetupPage::syncMode()
+{
+    return BoxMode;
+}
+
+void OwncloudSetupPage::setRemoteFolder( const QString& remoteFolder )
+{
+    if( !remoteFolder.isEmpty() ) {
+        _remoteFolder = remoteFolder;
     }
-    return !(_ui.OCUserEdit->text().isEmpty() || _ui.OCPasswdEdit->text().isEmpty() );
 }
 
-void OwncloudCredentialsPage::initializePage()
+void OwncloudSetupPage::setMultipleFoldersExist(bool exist)
 {
+    _multipleFoldersExist = exist;
 }
 
-int OwncloudCredentialsPage::nextId() const
-{
-  return OwncloudWizard::Page_Install;
-}
-
-// ======================================================================
-
-
-OwncloudFTPAccessPage::OwncloudFTPAccessPage()
-{
-    _ui.setupUi(this);
-    registerField( QLatin1String("ftpUrl"),    _ui.ftpUrlEdit );
-    registerField( QLatin1String("ftpUser"),   _ui.ftpUserEdit );
-    registerField( QLatin1String("ftpPasswd"), _ui.ftpPasswdEdit );
-    // registerField( QLatin1String("ftpDir"),    _ui.ftpDir );
-
-#if QT_VERSION >= 0x040700
-    _ui.ftpUrlEdit->setPlaceholderText(tr("ftp.mydomain.org"));
-#endif
-}
-
-OwncloudFTPAccessPage::~OwncloudFTPAccessPage()
-{
-}
-
-void OwncloudFTPAccessPage::initializePage()
-{
-    // _ui.lineEditOCAlias->setText( "Owncloud" );
-}
-
-void OwncloudFTPAccessPage::setFTPUrl( const QString& url )
-{
-  _ui.ftpUrlEdit->setText( url );
-}
-
-int OwncloudFTPAccessPage::nextId() const
-{
-  return OwncloudWizard::Page_OC_Credentials;
-}
-
-bool OwncloudFTPAccessPage::isComplete() const
-{
-    return true;
-}
-
-// ======================================================================
-
-CreateAnOwncloudPage::CreateAnOwncloudPage()
-{
-    _ui.setupUi(this);
-    registerField(QLatin1String("createLocalOC"),  _ui.createLocalRadioBtn );
-    registerField(QLatin1String("createOnDomain"), _ui.createPerFTPRadioBtn );
-    registerField(QLatin1String("myOCDomain"),     _ui.myDomainEdit );
-
-    connect( _ui.createLocalRadioBtn, SIGNAL(clicked()), SIGNAL(completeChanged()));
-    connect( _ui.createPerFTPRadioBtn, SIGNAL(clicked()), SIGNAL(completeChanged()));
-    connect( _ui.myDomainEdit, SIGNAL(textChanged(QString)), SIGNAL(completeChanged()));
-
-#if QT_VERSION >= 0x040700
-    _ui.myDomainEdit->setPlaceholderText(tr("mydomain.org"));
-#endif
-}
-
-CreateAnOwncloudPage::~CreateAnOwncloudPage()
-{
-}
-
-void CreateAnOwncloudPage::initializePage()
-{
-    // _ui.lineEditOCAlias->setText( "Owncloud" );
-}
-
-int CreateAnOwncloudPage::nextId() const
-{
-  if( _ui.createLocalRadioBtn->isChecked() ) {
-    return OwncloudWizard::Page_OC_Credentials;
-  }
-
-  return OwncloudWizard::Page_FTP;
-}
-
-bool CreateAnOwncloudPage::isComplete() const
+void OwncloudSetupPage::slotSelectFolder()
 {
 
-  if( _ui.createPerFTPRadioBtn->isChecked() ) {
-    QString dom = _ui.myDomainEdit->text();
-    qDebug() << "check is Complete with " << dom;
-    return (!dom.isEmpty() && dom.contains( QLatin1Char('.'))
-            && dom.lastIndexOf(QLatin1Char('.')) < dom.length()-2 );
-  }
-  return true;
+    QString dir = QFileDialog::getExistingDirectory(0, tr("Local Sync Folder"), QDir::homePath());
+    if( !dir.isEmpty() ) {
+        _ui.pbSelectLocalFolder->setText(dir);
+        wizard()->setProperty("localFolder", dir);
+        slotHandleUserInput();
+    }
 }
 
-QString CreateAnOwncloudPage::domain() const
+OwncloudSetupPage::SyncMode OwncloudWizard::syncMode()
 {
-  return _ui.myDomainEdit->text();
+    return _setupPage->syncMode();
+    return OwncloudSetupPage::BoxMode;
 }
+
+void OwncloudWizard::setMultipleFoldersExist(bool exist)
+{
+    _setupPage->setMultipleFoldersExist(exist);
+}
+
+void OwncloudSetupPage::setConfigExists(  bool config )
+{
+    _configExists = config;
+
+    if (config == true) {
+        setSubTitle( tr("<font color=\"%1\">Change your user credentials</font>")
+                     .arg(Theme::instance()->wizardHeaderTitleColor().name()));
+    }
+}
+
 // ======================================================================
 
 OwncloudWizardResultPage::OwncloudWizardResultPage()
 {
     _ui.setupUi(this);
     // no fields to register.
-    _ui.resultTextEdit->setAcceptRichText(true);
-    _ui.ocLinkLabel->setVisible( false );
 
+    Theme *theme = Theme::instance();
+    setTitle( tr("<font color=\"%1\" size=\"5\">Everything set up!</font>")
+              .arg(theme->wizardHeaderTitleColor().name()));
+    // required to show header in QWizard's modern style
+    setSubTitle( QLatin1String(" ") );
+
+    _ui.pbOpenLocal->setText("Open local folder");
+    _ui.pbOpenServer->setText(tr("Open %1").arg(Theme::instance()->appNameGUI()));
+
+    _ui.pbOpenLocal->setIcon(QIcon(":/mirall/resources/folder-sync.png"));
+    _ui.pbOpenLocal->setText(tr("Open Local Folder"));
+    _ui.pbOpenLocal->setIconSize(QSize(48, 48));
+    connect(_ui.pbOpenLocal, SIGNAL(clicked()), SLOT(slotOpenLocal()));
+
+    _ui.pbOpenLocal->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+
+    QIcon appIcon = theme->applicationIcon();
+    _ui.pbOpenServer->setIcon(appIcon.pixmap(48));
+    _ui.pbOpenServer->setText(tr("Open %1").arg(theme->appNameGUI()));
+    _ui.pbOpenServer->setIconSize(QSize(48, 48));
+    _ui.pbOpenServer->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    connect(_ui.pbOpenServer, SIGNAL(clicked()), SLOT(slotOpenServer()));
     setupCustomization();
 }
 
@@ -421,42 +447,35 @@ OwncloudWizardResultPage::~OwncloudWizardResultPage()
 {
 }
 
-void OwncloudWizardResultPage::initializePage()
+void OwncloudWizardResultPage::setComplete(bool complete)
 {
-    // _ui.lineEditOCAlias->setText( "Owncloud" );
+    _complete = complete;
+    emit completeChanged();
 }
 
 bool OwncloudWizardResultPage::isComplete() const
 {
-    return true;
+    return _complete;
 }
 
-void OwncloudWizardResultPage::appendResultText( const QString& msg, OwncloudWizard::LogType type )
+void OwncloudWizardResultPage::initializePage()
 {
-  if( msg.isEmpty() ) {
-    _ui.resultTextEdit->clear();
-  } else {
-    if( type == OwncloudWizard::LogParagraph ) {
-      _ui.resultTextEdit->append( msg );
+    const QString localFolder = wizard()->property("localFolder").toString();
+    QString text;
+    if( _remoteFolder == QLatin1String("/") || _remoteFolder.isEmpty() ) {
+        text = tr("Your entire account is synced to the local folder <i>%1</i>")
+                .arg(QDir::toNativeSeparators(localFolder));
     } else {
-      // _ui.resultTextEdit->append( msg );
-      _ui.resultTextEdit->insertPlainText(msg );
+        text = tr("ownCloud folder <i>%1</i> is synced to local folder <i>%2</i>")
+                .arg(_remoteFolder).arg(QDir::toNativeSeparators(localFolder));
     }
-    _ui.resultTextEdit->verticalScrollBar()->setValue( _ui.resultTextEdit->verticalScrollBar()->maximum() );
-  }
+    _ui.localFolderLabel->setText( text );
+
 }
 
-void OwncloudWizardResultPage::showOCUrlLabel( const QString& url, bool show )
+void OwncloudWizardResultPage::setRemoteFolder(const QString &remoteFolder)
 {
-  _ui.ocLinkLabel->setText( tr("Congratulations! Your <a href=\"%1\" title=\"%1\">new %2</a> is now up and running!")
-		  .arg(url).arg( Theme::instance()->appName()));
-  _ui.ocLinkLabel->setOpenExternalLinks( true );
-
-  if( show ) {
-    _ui.ocLinkLabel->setVisible( true );
-  } else {
-    _ui.ocLinkLabel->setVisible( false );
-  }
+    _remoteFolder = remoteFolder;
 }
 
 void OwncloudWizardResultPage::setupCustomization()
@@ -476,100 +495,133 @@ void OwncloudWizardResultPage::setupCustomization()
  */
 
 OwncloudWizard::OwncloudWizard(QWidget *parent)
-    : QWizard(parent)
+    : QWizard(parent),
+      _configExists(false)
 {
-#ifdef OWNCLOUD_CLIENT
-    setPage(Page_oCWelcome,      new OwncloudWelcomePage() );
-    setPage(Page_oCSetup,        new OwncloudSetupPage() );
-#else
-    setPage(Page_SelectType,     new OwncloudWizardSelectTypePage() );
-    setPage(Page_OC_Credentials, new OwncloudCredentialsPage() );
-#endif
-    setPage(Page_Create_OC,      new CreateAnOwncloudPage() );
-    setPage(Page_FTP,            new OwncloudFTPAccessPage() );
-    setPage(Page_Install,        new OwncloudWizardResultPage() );
+    _setupPage  = new OwncloudSetupPage;
+    _resultPage = new OwncloudWizardResultPage;
+    setPage(Page_oCSetup, _setupPage  );
+    setPage(Page_Result,  _resultPage );
 
-#ifdef Q_WS_MAC
+    // note: start Id is set by the calling class depending on if the
+    // welcome text is to be shown or not.
     setWizardStyle( QWizard::ModernStyle );
-#endif
-    setField(QLatin1String("connectMyOC"), true);
 
     connect( this, SIGNAL(currentIdChanged(int)), SLOT(slotCurrentPageChanged(int)));
 
+    connect( _setupPage, SIGNAL(connectToOCUrl(QString)), SIGNAL(connectToOCUrl(QString)));
+
+
+    Theme *theme = Theme::instance();
+    setWizardStyle(QWizard::ModernStyle);
+    setPixmap( QWizard::BannerPixmap, theme->wizardHeaderBanner() );
+    setPixmap( QWizard::LogoPixmap, theme->wizardHeaderLogo() );
+    setOption( QWizard::NoBackButtonOnStartPage );
+    setOption( QWizard::NoBackButtonOnLastPage );
+    setOption( QWizard::NoCancelButton );
+    setTitleFormat(Qt::RichText);
+    setSubTitleFormat(Qt::RichText);
+}
+
+QString OwncloudWizard::localFolder() const
+{
+    return(_setupPage->localFolder());
 }
 
 QString OwncloudWizard::ocUrl() const
 {
     QString url = field("OCUrl").toString().simplified();
-    if( field("secureConnect").toBool() ) {
-        url.prepend(QLatin1String("https://"));
-    } else {
-        url.prepend(QLatin1String("http://"));
-    }
     return url;
+}
+
+void OwncloudWizard::enableFinishOnResultWidget(bool enable)
+{
+    _resultPage->setComplete(enable);
+}
+
+void OwncloudWizard::setRemoteFolder( const QString& remoteFolder )
+{
+    _setupPage->setRemoteFolder( remoteFolder );
+    _resultPage->setRemoteFolder( remoteFolder );
+}
+
+void OwncloudWizard::showConnectInfo( const QString& msg )
+{
+    if( _setupPage ) {
+        _setupPage->setErrorString( msg );
+    }
+}
+
+void OwncloudWizard::successfullyConnected(bool enable)
+{
+    _setupPage->setConnected( enable );
+
+    if( enable ) {
+        next();
+    }
 }
 
 void OwncloudWizard::slotCurrentPageChanged( int id )
 {
-  qDebug() << "Current Wizard page changed to " << id;
-  qDebug() << "Page_install is " << Page_Install;
+    qDebug() << "Current Wizard page changed to " << id;
 
-  if( id == Page_FTP ) {
-    // preset the ftp url field
-    CreateAnOwncloudPage *p = static_cast<CreateAnOwncloudPage*> (page( Page_Create_OC ));
-    QString domain = p->domain();
-    if( domain.startsWith( QLatin1String("http://") )) {
-      domain = domain.right( domain.length()-7 );
-    }
-    if( domain.startsWith( QLatin1String("https://") )) {
-      domain = domain.right( domain.length()-8 );
+    if( id == Page_oCSetup ) {
+        setButtonText( QWizard::NextButton, tr("Connect...") );
+        emit clearPendingRequests();
+        _setupPage->initializePage();
+
     }
 
-    QString host = QLatin1String("ftp.") +domain;
-    OwncloudFTPAccessPage *p1 = static_cast<OwncloudFTPAccessPage*> (page( Page_FTP ));
-    p1->setFTPUrl( host );
-  }
-  if( id == Page_Install ) {
-    appendToResultWidget( QString::null );
-    showOCUrlLabel( false );
-    if( field(QLatin1String("connectMyOC")).toBool() ) {
-      // check the url and connect.
-      _oCUrl = ocUrl();
-      emit connectToOCUrl( _oCUrl);
-    } else if( field(QLatin1String("createLocalOC")).toBool() ) {
-      qDebug() << "Connect to local!";
-      emit installOCLocalhost();
-    } else if( field(QLatin1String("createNewOC")).toBool() ) {
-      // call in installation mode and install to ftp site.
-      emit installOCServer();
-    } else {
+    if( id == Page_Result ) {
+        appendToConfigurationLog( QString::null );
     }
-  }
 }
 
-void OwncloudWizard::showOCUrlLabel( bool show )
+void OwncloudWizard::displayError( const QString& msg )
 {
-  OwncloudWizardResultPage *p = static_cast<OwncloudWizardResultPage*> (page( Page_Install ));
-  p->showOCUrlLabel( _oCUrl, show );
+    _setupPage->setErrorString( msg );
 }
 
-void OwncloudWizard::appendToResultWidget( const QString& msg, LogType type )
+void OwncloudWizard::appendToConfigurationLog( const QString& msg, LogType type )
 {
-  OwncloudWizardResultPage *p = static_cast<OwncloudWizardResultPage*> (page( Page_Install ));
-  p->appendResultText( msg, type );
+    _setupLog << msg;
+    qDebug() << "Setup-Log: " << msg;
 }
 
 void OwncloudWizard::setOCUrl( const QString& url )
 {
-  _oCUrl = url;
-#ifdef OWNCLOUD_CLIENT
-  OwncloudSetupPage *p = static_cast<OwncloudSetupPage*>(page(Page_oCSetup));
-#else
-  OwncloudWizardSelectTypePage *p = static_cast<OwncloudWizardSelectTypePage*>(page( Page_SelectType ));
-#endif
-  if( p )
-      p->setOCUrl( url );
-
+  _setupPage->setServerUrl( url );
 }
+
+void OwncloudWizard::setOCUser( const QString& user )
+{
+  _oCUser = user;
+  _setupPage->setOCUser( user );
+}
+
+void OwncloudWizard::setConfigExists( bool config )
+{
+    _configExists = config;
+    _setupPage->setConfigExists( config );
+}
+
+bool OwncloudWizard::configExists()
+{
+    return _configExists;
+}
+
+void OwncloudWizardResultPage::slotOpenLocal()
+{
+    const QString localFolder = wizard()->property("localFolder").toString();
+    QDesktopServices::openUrl(QUrl::fromLocalFile(localFolder));
+}
+
+void OwncloudWizardResultPage::slotOpenServer()
+{
+    QUrl url = field("OCUrl").toUrl();
+    qDebug() << Q_FUNC_INFO << url;
+    QDesktopServices::openUrl(url);
+}
+
 
 } // end namespace

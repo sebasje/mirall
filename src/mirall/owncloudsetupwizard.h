@@ -19,6 +19,7 @@
 #include <QWidget>
 #include <QProcess>
 #include <QNetworkReply>
+#include <QPointer>
 
 #include "mirall/owncloudwizard.h"
 #include "mirall/theme.h"
@@ -28,20 +29,19 @@ namespace Mirall {
 class SiteCopyFolder;
 class SyncResult;
 class ownCloudInfo;
-class FolderMan;
 
 class OwncloudSetupWizard : public QObject
 {
     Q_OBJECT
 public:
-    explicit OwncloudSetupWizard( FolderMan *folderMan = 0, Theme *theme = 0, QObject *parent = 0 );
+    explicit OwncloudSetupWizard(QObject *parent = 0 );
 
     ~OwncloudSetupWizard();
 
     /**
      * @intro wether or not to show the intro wizard page
      */
-    void startWizard(bool intro = false);
+    void startWizard();
 
     void installServer();
 
@@ -58,6 +58,9 @@ public:
 
     OwncloudWizard *wizard();
 
+    /** Run the wizard */
+    static void runWizard(QObject *obj, const char* amember, QWidget *parent = 0 );
+
 signals:
     // issued if the oC Setup process (owncloud-admin) is finished.
     void    ownCloudSetupFinished( bool );
@@ -67,42 +70,31 @@ signals:
 public slots:
 
 protected slots:
-    // QProcess related slots:
-    void slotReadyReadStandardOutput();
-    void slotReadyReadStandardError();
-    void slotStateChanged( QProcess::ProcessState );
-    void slotError( QProcess::ProcessError );
-    void slotStarted();
-    void slotProcessFinished( int, QProcess::ExitStatus );
-
     // wizard dialog signals
-    void slotInstallOCServer();
     void slotConnectToOCUrl( const QString& );
-    void slotCreateOCLocalhost();
-
-    void slotCreateRemoteFolder(bool);
 
 private slots:
     void slotOwnCloudFound( const QString&, const QString&, const QString&, const QString& );
     void slotNoOwnCloudFound( QNetworkReply* );
     void slotCreateRemoteFolderFinished( QNetworkReply::NetworkError );
     void slotAssistantFinished( int );
-
+    void slotClearPendingRequests();
+    void slotAuthCheckReply( const QString&, QNetworkReply * );
 private:
-    bool checkOwncloudAdmin( const QString& );
-    void runOwncloudAdmin( const QStringList& );
-    bool createRemoteFolder( const QString& );
+    bool createRemoteFolder();
+    void checkRemoteFolder();
+
     void finalizeSetup( bool );
 
     /* Start a request to the newly installed ownCloud to check the connection */
     void testOwnCloudConnect();
 
     OwncloudWizard *_ocWizard;
-    FolderMan      *_folderMan;
-    QProcess       *_process;
+    QPointer<QNetworkReply>  _mkdirRequestReply;
+    QPointer<QNetworkReply>  _checkInstallationRequest;
+    QPointer<QNetworkReply>  _checkRemoteFolderRequest;
 
     QString         _configHandle;
-    QString         _localFolder;
     QString         _remoteFolder;
 };
 

@@ -58,16 +58,11 @@ public:
 
     /**
       * Set a file name to load a file with ignore patterns.
+      *
+      * Valid entries do not start with a hash sign (#)
+      * and may contain wildcards
       */
-    void setIgnoreListFile( const QString& );
-
-    /**
-     * Add an ignore pattern that will not be
-     * notified
-     *
-     * You can use wildcards
-     */
-    void addIgnore(const QString &pattern);
+    void addIgnoreListFile( const QString& );
 
     /**
      * If true, folderChanged() events are sent
@@ -134,9 +129,6 @@ private:
     // QStringList _pendingPaths;
     QTimer *_processTimer;
     QStringList _ignores;
-    // for the initial synchronization, without
-    // any file changed
-    bool _initialSyncDone;
 
     friend class FolderWatcherPrivate;
 };

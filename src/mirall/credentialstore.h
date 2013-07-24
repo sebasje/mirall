@@ -14,21 +14,12 @@
 #ifndef CREDENTIALSTORE_H
 #define CREDENTIALSTORE_H
 
-#include "config.h"
 #include <QObject>
+#include <QInputDialog>
 
-#ifdef WITH_QTKEYCHAIN
-#include "qtkeychain/keychain.h"
-
-using namespace QKeychain;
-#else
-// FIXME: If the slot definition below is ifdefed for some reason the slot is
-// not there even if WITH_QTKEYCHAIN is defined.
 namespace QKeychain {
-   typedef void Job;
+  class Job;
 }
-#endif
-
 
 namespace Mirall {
 
@@ -43,10 +34,8 @@ namespace Mirall {
  * The fetchCredentials() call changes the internal state of the credential store
  * to one of
  *   Ok: There are credentials. Note that it's unknown if they are correct!!
- *   UserCanceled: The fetching involved user interaction and the user canceled
- *                 the operation. No valid credentials are there.
- *   TooManyAttempts: The user tried to often to enter a password.
  *   Fetching: The fetching is not yet finished.
+ *   EntryNotFound: No password entry found in the storage.
  *   Error:    A general error happened.
  * After fetching has finished, signal fetchCredentialsFinished(bool) is emitted.
  * The result can be retrieved with state() and password() and user() methods.
@@ -58,24 +47,21 @@ class CredentialStore : public QObject
 public:
     enum CredState { NotFetched = 0,
                      Ok,
-                     UserCanceled,
                      Fetching,
                      AsyncFetching,
                      EntryNotFound,
-                     AccessDeniedByUser,
                      AccessDenied,
                      NoKeychainBackend,
                      Error,
-                     TooManyAttempts };
+                     AsyncWriting        };
 
     enum CredentialType {
-        User = 0,
-        Settings,
+        Settings = 0,
         KeyChain
     };
 
-    QString password( const QString& connection = QString::null ) const;
-    QString user( const QString& connection = QString::null ) const;
+    QString password( ) const;
+    QString user( ) const;
 
     /**
      * @brief state
@@ -92,12 +78,6 @@ public:
     void fetchCredentials();
 
     /**
-     * @brief basicAuthHeader - return a basic authentication header.
-     * @return a QByteArray with a ready to use Header for HTTP basic auth.
-     */
-    QByteArray basicAuthHeader() const;
-
-    /**
      * @brief instance - singleton pointer.
      * @return the singleton pointer to access the object.
      */
@@ -109,19 +89,14 @@ public:
      * This function is called from the setup wizard to set the credentials
      * int this store. Note that it does not store the password.
      * The function also sets the state to ok.
+     * @param url - the connection url
      * @param user - the user name
-     * @param password - the password.
      */
-    void setCredentials( const QString&, const QString&, const QString& );
+    void setCredentials( const QString& url, const QString& user, const QString& pwd);
 
     void saveCredentials( );
 
     QString errorMessage();
-
-    /**
-     * @brief canTryAgain - check if another try to get credentials makes sense.
-    */
-    bool canTryAgain();
 
     void reset();
 signals:
@@ -150,7 +125,6 @@ private:
     static QString _user;
     static QString _url;
     static QString _errorMsg;
-    static int     _tries;
     static CredentialType _type;
 };
 }

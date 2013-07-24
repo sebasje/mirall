@@ -47,8 +47,7 @@ FolderWatcher::FolderWatcher(const QString &root, QObject *parent)
       _eventsEnabled(true),
       _eventInterval(DEFAULT_EVENT_INTERVAL_MSEC),
       _root(root),
-      _processTimer(new QTimer(this)),
-      _initialSyncDone(false)
+      _processTimer(new QTimer(this))
 {
     _d = new FolderWatcherPrivate(this);
 
@@ -70,7 +69,7 @@ QString FolderWatcher::root() const
     return _root;
 }
 
-void FolderWatcher::setIgnoreListFile( const QString& file )
+void FolderWatcher::addIgnoreListFile( const QString& file )
 {
     if( file.isEmpty() ) return;
 
@@ -80,16 +79,10 @@ void FolderWatcher::setIgnoreListFile( const QString& file )
 
     while (!infile.atEnd()) {
         QString line = QString::fromLocal8Bit( infile.readLine() ).trimmed();
-        if( !line.startsWith( QLatin1Char('#') )) {
-            addIgnore(line);
+        if( !line.startsWith( QLatin1Char('#') ) && line.isEmpty() ) {
+            _ignores.append(line);
         }
     }
-}
-
-void FolderWatcher::addIgnore(const QString &pattern)
-{
-    if( pattern.isEmpty() ) return;
-    _ignores.append(pattern);
 }
 
 QStringList FolderWatcher::ignores() const
@@ -147,13 +140,12 @@ void FolderWatcher::slotProcessTimerTimeout()
 {
     qDebug() << "* Processing of event queue for" << root();
 
-    if (!_pendingPathes.empty() || !_initialSyncDone) {
+    if (!_pendingPathes.empty() ) {
         QStringList notifyPaths = _pendingPathes.keys();
         _pendingPathes.clear();
         //qDebug() << lastEventTime << eventTime;
         qDebug() << "  * Notify" << notifyPaths.size() << "change items for" << root();
         emit folderChanged(notifyPaths);
-        _initialSyncDone = true;
     }
 }
 
@@ -172,7 +164,7 @@ void FolderWatcher::setProcessTimer()
 void FolderWatcher::changeDetected(const QString& f)
 {
     if( ! eventsEnabled() ) {
-        qDebug() << "FolderWatcher::changeDetected when eventsEnabled() -> ignore";
+        // qDebug() << "FolderWatcher::changeDetected when eventsEnabled() -> ignore";
         return;
     }
 

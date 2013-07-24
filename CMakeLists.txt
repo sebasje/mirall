@@ -4,7 +4,8 @@ project(mirall)
 set(PACKAGE "mirall")
 set( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules )
 
-if ( DEFINED OEM_THEME_DIR AND EXISTS ${OEM_THEME_DIR}/OEM.cmake )
+set(OEM_THEME_DIR "" CACHE STRING "Define directory containing a custom theme")
+if ( EXISTS ${OEM_THEME_DIR}/OEM.cmake )
      include ( ${OEM_THEME_DIR}/OEM.cmake )
 else ()
      include ( ${CMAKE_SOURCE_DIR}/OWNCLOUD.cmake )
@@ -12,7 +13,7 @@ endif()
 
 include(${CMAKE_SOURCE_DIR}/VERSION.cmake)
 configure_file( ${CMAKE_SOURCE_DIR}/src/mirall/version.h.in "${CMAKE_CURRENT_BINARY_DIR}/src/mirall/version.h" )
-include_directories(BEFORE "${CMAKE_CURRENT_BINARY_DIR}/src/mirall/")
+include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR} "${CMAKE_CURRENT_BINARY_DIR}/src/mirall/")
 
 include(GNUInstallDirs)
 
@@ -53,9 +54,19 @@ else()
 endif()
 #####
 
+#####
+## handle DBUS for Fdo notifications
+if( UNIX AND NOT APPLE )
+    add_definitions( -DUSE_FDO_NOTIFICATIONS)
+endif()
+####
+
 #### find libs
-find_package(Qt4 4.6.0 COMPONENTS QtCore QtGui QtXml QtNetwork QtTest REQUIRED )
-find_package(Csync)
+find_package(Qt4 4.7.0 COMPONENTS QtCore QtGui QtXml QtNetwork QtTest REQUIRED )
+if( UNIX AND NOT APPLE ) # Fdo notifications
+    find_package(Qt4 4.7.0 COMPONENTS QtDBus REQUIRED )
+endif()
+find_package(Csync REQUIRED)
 if(UNIX)
 find_package(INotify REQUIRED)
 else()
@@ -65,7 +76,6 @@ find_package(Sphinx)
 find_package(PdfLatex)
 find_package(QtKeychain)
 
-set(WITH_CSYNC CSYNC_FOUND)
 set(WITH_QTKEYCHAIN ${QTKEYCHAIN_FOUND})
 set(USE_INOTIFY ${INOTIFY_FOUND})
 
@@ -99,12 +109,6 @@ set(CPACK_SOURCE_IGNORE_FILES
 
 include(OwnCloudCPack.cmake)
 
-#
-# This cmake builds two targets (aka apps), mirall and owncloud. For the owncloud
-# target, OWNCLOUD_CLIENT needs to be a compile flag. It is set in src/CMakeLists.txt
-# but if that fails because cmake is too old, uncomment this here if you want to build
-# owncloud.
-# add_definitions(-DOWNCLOUD_CLIENT)
 add_definitions(-DUNICODE)
 add_definitions(-D_UNICODE)
 
