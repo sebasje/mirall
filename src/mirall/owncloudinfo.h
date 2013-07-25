@@ -44,7 +44,6 @@ public:
       * a general GET request to the ownCloud. If the second bool parameter is
       * true, the WebDAV server is queried.
       */
-    QNetworkReply* getRequest( const QString&, bool );
     QNetworkReply* checkInstallation();
 
     /**
@@ -75,6 +74,11 @@ public:
      * set it initially and forget about its memory management.
      */
     void setNetworkAccessManager( QNetworkAccessManager *qnam );
+
+    /**
+      * Send a generic GET request to the server
+      */
+    QNetworkReply* getRequest( const QUrl &url);
 
     /**
       * Create a collection via owncloud. Provide a relative path.
@@ -152,7 +156,6 @@ private:
     /**
      * a general GET request to the ownCloud WebDAV.
      */
-    QNetworkReply* getRequest( const QUrl &url);
     QNetworkReply* davRequest(const QByteArray&, QNetworkRequest&, QIODevice* );
 
     ~ownCloudInfo();
