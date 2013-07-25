@@ -68,8 +68,8 @@ set(libsync_SRCS
     mirall/networklocation.cpp
     mirall/mirallconfigfile.cpp
     mirall/credentialstore.cpp
-    mirall/csyncfolder.cpp
-    mirall/owncloudfolder.cpp
+    #    mirall/csyncfolder.cpp
+    #mirall/owncloudfolder.cpp
     #mirall/owncloudinfo.cpp
     mirall/csyncthread.cpp
     mirall/fileutils.cpp
@@ -243,7 +243,7 @@ endif(NOT WIN32)
     add_executable( mirall WIN32 main.cpp ${final_src})
 
     target_link_libraries(mirall ${QT_LIBRARIES} )
-    target_link_libraries(mirall mirallsync)
+    target_link_libraries(mirall owncloudsync)
     target_link_libraries(mirall ${CSYNC_LIBRARY})
 
     set_target_properties( mirall PROPERTIES
