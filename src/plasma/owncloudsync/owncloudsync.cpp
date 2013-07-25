@@ -32,6 +32,7 @@
 #include "mirall/syncresult.h"
 #include "mirall/folder.h"
 #include "mirall/mirallconfigfile.h"
+#include "mirall/progressdispatcher.h"
 
 class OwncloudSyncPrivate {
 public:
@@ -94,6 +95,17 @@ void OwncloudSync::init()
     connect(d->ocInfo, SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
              SLOT(slotDirCheckReply(QString,QNetworkReply*)));
 
+
+    connect(Mirall::ProgressDispatcher::instance(),
+            SIGNAL(itemProgress(int, const QString&, const QString&, qint64, qint64)),
+            this,
+            SLOT(itemProgress(int, const QString&, const QString&, qint64, qint64)));
+
+    connect(Mirall::ProgressDispatcher::instance(),
+            SIGNAL(overallProgress(const QString&, const QString&, int, int, qint64, qint64)),
+            this,
+            SLOT(overallProgress(const QString&, const QString&, int, int, qint64, qint64)));
+
 }
 
 OwncloudSync::~OwncloudSync()
@@ -120,6 +132,25 @@ void OwncloudSync::slotSyncStateChange(const QString &s)
     }
     updateFolder(d->folderMan->folder(s));
 }
+
+void OwncloudSync::itemProgress(int kind, const QString& folder, const QString& file, qint64 p1, qint64 p2)
+{
+    qDebug() << "POC Item progress: " << folder << file << p1 << p2;
+}
+
+void OwncloudSync::overallProgress(const QString& folder, const QString& file, int fileNo, int fileCnt, qint64 p1, qint64 p2)
+{
+    qDebug() << "POC Overall Progress: " << folder << file << fileNo << fileCnt << p1 << p2;
+    QVariantMap vm;
+    vm["folder"] = folder;
+    vm["file"] = file;
+    vm["fileNo"] = fileNo;
+    vm["fileCnt"] = fileCnt;
+    vm["p1"] = p1;
+    vm["p2"] = p2;
+    emit progressChanged(vm);
+}
+
 
 QString OwncloudSync::display()
 {

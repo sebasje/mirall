@@ -83,6 +83,11 @@
       <arg type="a{sv}" direction="out" />
     </signal>
 
+    <signal name="progressChanged">
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QVariantMap"/>
+      <arg type="a{sv}" direction="out" />
+    </signal>
+
 
   </interface>
 </node>
