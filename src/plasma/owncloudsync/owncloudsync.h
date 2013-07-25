@@ -83,11 +83,13 @@ class OwncloudSync : public QObject
         void slotOwnCloudFound( const QString&, const QString&, const QString&, const QString& );
         void slotNoOwnCloudFound( QNetworkReply* );
         void slotCheckAuthentication();
-        void slotAuthCheck( const QString& ,QNetworkReply* );
+        void slotAuthCheck();
         void slotCreateRemoteFolderFinished();
         void slotDirCheckReply( const QString&, QNetworkReply* );
+        void slotDirectoryListingUpdated(const QStringList &directories );
         void slotCheckRemoteFolderFinished();
         void slotFetchCredentials();
+        void slotGuiLog(const QString &err, const QString &msg);
         void slotCredentialsFetched( bool );
 
     protected:

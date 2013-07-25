@@ -71,6 +71,8 @@ class OwncloudSettings : public QObject
             CustomError // Anything else
         };
 
+        static QString statusString(int s);
+
     public Q_SLOTS:
         void init();
 
@@ -133,7 +135,6 @@ class OwncloudSettings : public QObject
     private:
         OwncloudSettingsPrivate* d;
         QString errorString(int e);
-        QString statusString(int s);
 
 };
 

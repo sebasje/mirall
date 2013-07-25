@@ -156,8 +156,10 @@ PlasmaComponents.PageStack {
         } else {
             print(" -----> connected. Folders: " + owncloudSettings.folders.length);
             if (owncloudSettings.folders.length) {
+                print(" lentth OK");
                 root.state = "default";
             } else {
+                print(" ==> length NAK");
                 root.state = "setup";
             }
             setupWizard.state = "favorites";
@@ -188,6 +190,7 @@ PlasmaComponents.PageStack {
     }
 
     Component.onCompleted: {
+        print("============================= complete");
         updateState();
     }
 }

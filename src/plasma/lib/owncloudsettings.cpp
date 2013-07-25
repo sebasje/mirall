@@ -80,7 +80,7 @@ OwncloudSettings::OwncloudSettings(QObject* parent) :
     kDebug() << "OwncloudSettings module loaded.";
     connect(this, SIGNAL(foldersChanged()), SLOT(updateGlobalStatus()));
     init();
-    emit foldersChanged();
+    //emit foldersChanged();
 }
 
 OwncloudSettings::~OwncloudSettings()
@@ -101,7 +101,7 @@ void OwncloudSettings::init()
         d->client = 0; // invalidate client when dbus connection is lost
         return;
     } else if (d->client == 0) {
-
+        qDebug() << "++ POC COnnecting up dbus";
         d->client = new OrgKdeOwncloudsyncInterface("org.kde.owncloudsync", "/", QDBusConnection::sessionBus(), this);
         QObject::connect(d->client, SIGNAL(statusChanged(int)), this, SLOT(setOwncloudStatus(int)));
         QObject::connect(d->client, SIGNAL(errorChanged(int)), this, SLOT(setError(int)));
@@ -111,7 +111,7 @@ void OwncloudSettings::init()
         QObject::connect(d->client, SIGNAL(remoteFolderExists(const QString&, bool)), this, SIGNAL(remoteFolderExists(const QString&, bool)));
         //QObject::connect(d->client, SIGNAL(remoteFolderExists(const QString&, bool)), this, SLOT(slotRemoteFolderExists(const QString&, bool)));
 
-        refresh();
+        QTimer::singleShot(2000, this, SLOT(refresh()));
     }
 }
 
@@ -172,11 +172,12 @@ int OwncloudSettings::owncloudStatus() const
 
 void OwncloudSettings::setOwncloudStatus(int i)
 {
-    if (d->status != i) {
+    qDebug() << "POC blaat was / new" << statusString(d->status) << statusString(i) << i;
+    //if (d->status != i) {
         d->status = i;
-        qDebug() << " setOwncloudStatus " << statusString(i);
+        qDebug() << " !!! setOwncloudStatus " << statusString(i);
         emit owncloudStatusChanged();
-    }
+    //}
 }
 
 int OwncloudSettings::error() const
@@ -446,6 +447,7 @@ QDeclarativeListProperty<OwncloudFolder> OwncloudSettings::folders()
 void OwncloudSettings::refresh()
 {
     if (d->client) {
+        qDebug() << "POC refresh()";
         d->client->refresh();
     }
 }
