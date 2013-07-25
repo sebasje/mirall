@@ -8,6 +8,7 @@ set(kcm_owncloud_PART_SRCS
     ../lib/minijob.cpp
     ../lib/job.cpp
     ../lib/createfolderjob.cpp
+    ../lib/syncprogress.cpp
 )
 qt4_add_dbus_interface(kcm_owncloud_PART_SRCS ../owncloudsync/org.kde.owncloudsync.xml owncloud_interface )
 
