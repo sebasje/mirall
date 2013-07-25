@@ -91,6 +91,7 @@ class OwncloudSettings : public QObject
         void setFolderList(const QVariantMap &m);
         void setFolder(const QVariantMap &m);
         void setOwncloud(const QVariantMap &m);
+        //void setProgress(const QVariantMap &m);
         void setUrl(const QString &u);
         void serviceUnregistered();
 

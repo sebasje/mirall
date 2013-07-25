@@ -23,6 +23,7 @@
 #include "owncloudfolder.h"
 #include "minijob.h"
 #include "createfolderjob.h"
+#include "syncprogress.h"
 
 #include <kdebug.h>
 #include <KLocale>
@@ -55,6 +56,7 @@ public:
 
     QList<OwncloudFolder*> folders;
     QVariantMap owncloudInfo;
+    SyncProgress *progress;
     QDBusServiceWatcher *serviceWatcher;
 };
 
@@ -62,6 +64,7 @@ OwncloudSettings::OwncloudSettings(QObject* parent) :
     QObject(parent)
 {
     d = new OwncloudSettingsPrivate;
+    d->progress = new SyncProgress(this);
     d->q = this;
     d->client = 0;
 
@@ -110,7 +113,7 @@ void OwncloudSettings::init()
         QObject::connect(d->client, SIGNAL(owncloudChanged(const QVariantMap&)), this, SLOT(setOwncloud(const QVariantMap&)));
         QObject::connect(d->client, SIGNAL(remoteFolderExists(const QString&, bool)), this, SIGNAL(remoteFolderExists(const QString&, bool)));
         //QObject::connect(d->client, SIGNAL(remoteFolderExists(const QString&, bool)), this, SLOT(slotRemoteFolderExists(const QString&, bool)));
-
+        QObject::connect(d->client, SIGNAL(progressChanged(const QVariantMap&)), d->progress, SLOT(setProgress(const QVariantMap&)));
         QTimer::singleShot(2000, this, SLOT(refresh()));
     }
 }
@@ -280,7 +283,6 @@ void OwncloudSettings::enableFolder(const QString& name, bool enabled)
 
 void OwncloudSettings::checkRemoteFolder(const QString &folder)
 {
-    kDebug() << "checkremote folder" << folder;
     if (d->client && !folder.isEmpty()) {
         d->client->checkRemoteFolder(folder);
     }

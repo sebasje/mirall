@@ -1,0 +1,75 @@
+/***************************************************************************
+ *                                                                         *
+ *   Copyright 2012 Sebastian Kügler <sebas@kde.org>                       *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
+ ***************************************************************************/
+
+#include "syncprogress.h"
+
+
+#include <kdebug.h>
+#include <QVariant>
+
+
+SyncProgress::SyncProgress(QObject* parent)
+    : QObject(parent)
+{
+}
+
+SyncProgress::~SyncProgress()
+{
+}
+
+void SyncProgress::setProgress(const QVariantMap &m)
+{
+    d = m;
+    qDebug() << " ==> Progress: " << m;
+    // TODO: only emit changed values
+    emit currentChanged();
+    emit totalChanged();
+    emit fileChanged();
+    emit folderChanged();
+
+    emit progressChanged();
+
+}
+
+qint64 SyncProgress::current() const
+{
+    return d["p1"].toULongLong();
+}
+
+qint64 SyncProgress::total() const
+{
+    return d["p2"].toULongLong();
+}
+
+
+QString SyncProgress::file() const
+{
+    return d["file"].toString();
+}
+
+QString SyncProgress::folder() const
+{
+    return d["folder"].toString();
+}
+
+
+
+
+//#include "syncprogress.moc"
