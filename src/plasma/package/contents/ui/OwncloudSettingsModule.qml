@@ -30,6 +30,7 @@ PlasmaComponents.PageStack {
 
     property bool webdavInFileManager: false
     property bool showRemoveFolder: true
+    property int defaultMargin: 8
 
     OwncloudSettings {
         id: owncloudSettings
@@ -112,6 +113,19 @@ PlasmaComponents.PageStack {
             anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: enabledSwitch.top; }
             Behavior on opacity { FadeAnimation { } }
         }
+
+        ProgressItem {
+            id: progressItem
+            progress: owncloudSettings.progress
+            width: parent.width
+            height: 200
+            visible: owncloudSettings.globalStatus == OwncloudFolder.Running
+            anchors {
+                bottom: enabledSwitch.top
+            }
+
+        }
+
 
         PlasmaComponents.CheckBox {
             id: enabledSwitch

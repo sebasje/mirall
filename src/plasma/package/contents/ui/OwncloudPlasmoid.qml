@@ -31,6 +31,7 @@ Item {
 
     property bool webdavInFileManager: false
     property bool showRemoveFolder: false
+    property int defaultMargin: 8
 
     anchors.margins: 24
 
@@ -73,6 +74,18 @@ Item {
             anchors { top: headingLabel.bottom; topMargin: 12; left: parent.left; right: parent.right; bottom: enabledSwitch.top; }
         }
 
+        ProgressItem {
+            id: progressItem
+            progress: owncloudSettings.progress
+            anchors {
+                bottom: enabledSwitch.top;
+                left: folderList.left;
+                right: folderList.right;
+                bottomMargin: defaultMargin * 2
+            }
+            height: childrenRect.height
+            visible: owncloudSettings.globalStatus == OwncloudFolder.Running
+        }
         ErrorHandler {
             id: ocStatus
             anchors { top: folderList.top; left: folderList.left; right: folderList.right; }

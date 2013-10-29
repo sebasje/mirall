@@ -37,7 +37,7 @@ SyncProgress::~SyncProgress()
 void SyncProgress::setProgress(const QVariantMap &m)
 {
     d = m;
-    qDebug() << " ==> Progress: " << m;
+    qDebug() << " ==> updating progress: " << m;
     // TODO: only emit changed values
     emit currentChanged();
     emit totalChanged();

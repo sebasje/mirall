@@ -23,6 +23,7 @@
 #include "directorylister.h"
 #include "dirmodel.h"
 #include "createfolderjob.h"
+#include "syncprogress.h"
 
 #include <QtDeclarative>
 //#include <QDeclarativeItem>
@@ -65,6 +66,7 @@ void OwncloudApplet::init()
     qmlRegisterType<OwncloudSettings>("org.kde.plasma.owncloud", 0, 1, "OwncloudSettings");
     qmlRegisterType<OwncloudFolder>("org.kde.plasma.owncloud", 0, 1, "OwncloudFolder");
     qmlRegisterType<CreateFolderJob>("org.kde.plasma.owncloud", 0, 1, "CreateFolderJob");
+    qmlRegisterUncreatableType<SyncProgress>("org.kde.plasma.owncloud", 0, 1, "SyncProgress", "Access this type through owncloudSettings.progress");
 
     m_declarativeWidget->setQmlPath(qmlFile);
     m_declarativeWidget->setMinimumSize(220, 250);

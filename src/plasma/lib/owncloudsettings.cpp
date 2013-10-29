@@ -197,6 +197,18 @@ void OwncloudSettings::setError(int i)
     }
 }
 
+void OwncloudSettings::setProgress(const QVariantMap& m)
+{
+    d->progress->setProgress(m);
+    emit progressChanged();
+}
+
+SyncProgress* OwncloudSettings::progress() const
+{
+    return d->progress;
+}
+
+
 void OwncloudSettings::startDaemon()
 {
     // start daemon

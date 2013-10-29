@@ -25,6 +25,7 @@
 #include <KIconLoader>
 
 #include "owncloudfolder.h"
+#include "syncprogress.h"
 //#include "minijob.h"
 
 #include <QDeclarativeComponent>
@@ -49,6 +50,7 @@ class OwncloudSettings : public QObject
     Q_PROPERTY(int error READ error NOTIFY errorChanged)
     Q_PROPERTY(QDeclarativeListProperty<OwncloudFolder> folders READ folders NOTIFY foldersChanged)
     Q_PROPERTY(QString url READ url WRITE setUrl NOTIFY urlChanged)
+    Q_PROPERTY(SyncProgress* progress READ progress NOTIFY progressChanged)
     Q_PROPERTY(int globalStatus READ globalStatus NOTIFY globalStatusChanged)
     Q_PROPERTY(QString version READ version NOTIFY versionChanged)
     Q_PROPERTY(QString edition READ edition NOTIFY editionChanged)
@@ -91,7 +93,8 @@ class OwncloudSettings : public QObject
         void setFolderList(const QVariantMap &m);
         void setFolder(const QVariantMap &m);
         void setOwncloud(const QVariantMap &m);
-        //void setProgress(const QVariantMap &m);
+        void setProgress(const QVariantMap &m);
+        SyncProgress* progress() const;
         void setUrl(const QString &u);
         void serviceUnregistered();
 
@@ -121,6 +124,7 @@ class OwncloudSettings : public QObject
         void foldersChanged();
         void globalStatusChanged();
         void statusMessageChanged();
+        void progressChanged();
         void errorMessageChanged();
         void editionChanged();
         void versionChanged();

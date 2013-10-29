@@ -27,6 +27,7 @@
 #include "dirmodel.h"
 #include "minijob.h"
 #include "createfolderjob.h"
+#include "syncprogress.h"
 
 // Qt
 #include <QBoxLayout>
@@ -94,6 +95,7 @@ OwncloudConfig::OwncloudConfig(QWidget *parent, const QVariantList &)
     qmlRegisterType<OwncloudFolder>("org.kde.plasma.owncloud", 0, 1, "OwncloudFolder");
     qmlRegisterType<MiniJob>("org.kde.plasma.owncloud", 0, 1, "MiniJob");
     qmlRegisterType<CreateFolderJob>("org.kde.plasma.owncloud", 0, 1, "CreateFolderJob");
+    qmlRegisterUncreatableType<SyncProgress>("org.kde.plasma.owncloud", 0, 1, "SyncProgress", "Access this type through owncloudSettings.progress");
 
 
     Plasma::PackageStructure::Ptr structure = Plasma::PackageStructure::load("Plasma/Generic");

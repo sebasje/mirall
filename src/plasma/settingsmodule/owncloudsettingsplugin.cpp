@@ -57,6 +57,7 @@ OwncloudSettingsPlugin::OwncloudSettingsPlugin(QObject *parent, const QVariantLi
     qmlRegisterType<DirModel>("org.kde.plasma.owncloud", 0, 1, "DirModel");
     qmlRegisterType<OwncloudSettings>("org.kde.plasma.owncloud", 0, 1, "OwncloudSettings");
     qmlRegisterType<OwncloudFolder>("org.kde.plasma.owncloud", 0, 1, "OwncloudFolder");
+    qmlRegisterUncreatableType<SyncProgress>("org.kde.plasma.owncloud", 0, 1, "SyncProgress", "Access this type through owncloudSettings.progress");
     qmlRegisterType<MiniJob>("org.kde.plasma.owncloud", 0, 1, "MiniJob");
     qmlRegisterType<CreateFolderJob>("org.kde.plasma.owncloud", 0, 1, "CreateFolderJob");
 }
