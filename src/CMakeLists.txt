@@ -255,7 +255,6 @@ endif(NOT WIN32)
     )
 
     target_link_libraries(owncloudsync ${QT_LIBRARIES} )
-    target_link_libraries(owncloudsync owncloudsync)
     target_link_libraries(owncloudsync ${CSYNC_LIBRARY})
 
     set_target_properties(owncloudsync PROPERTIES
