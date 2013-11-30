@@ -19,9 +19,10 @@
 #include "mirall/generalsettings.h"
 #include "mirall/networksettings.h"
 #include "mirall/accountsettings.h"
-#include "mirall/application.h"
 #include "mirall/mirallconfigfile.h"
 #include "mirall/progressdispatcher.h"
+#include "mirall/owncloudgui.h"
+#include "mirall/protocolwidget.h"
 
 #include <QLabel>
 #include <QStandardItemModel>
@@ -39,14 +40,25 @@ QIcon createDummy() {
     return icon;
 }
 
-SettingsDialog::SettingsDialog(Application *app, QWidget *parent) :
+SettingsDialog::SettingsDialog(ownCloudGui *gui, QWidget *parent) :
     QDialog(parent),
     _ui(new Ui::SettingsDialog)
 {
+    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     _ui->setupUi(this);
     setObjectName("Settings"); // required as group for saveGeometry call
 
-    setWindowTitle(tr("%1 Settings").arg(Theme::instance()->appNameGUI()));
+    setWindowTitle(tr("%1").arg(Theme::instance()->appNameGUI()));
+
+    _accountSettings = new AccountSettings(this);
+    addAccount(tr("Account"), _accountSettings);
+
+    QIcon protocolIcon(QLatin1String(":/mirall/resources/activity.png"));
+    QListWidgetItem *protocol= new QListWidgetItem(protocolIcon, tr("Activity"), _ui->labelWidget);
+    protocol->setSizeHint(QSize(0, 32));
+    _ui->labelWidget->addItem(protocol);
+    _protocolWidget = new ProtocolWidget;
+    _protocolIdx = _ui->stack->addWidget(_protocolWidget);
 
     QIcon generalIcon(QLatin1String(":/mirall/resources/settings.png"));
     QListWidgetItem *general = new QListWidgetItem(generalIcon, tr("General"), _ui->labelWidget);
@@ -61,35 +73,54 @@ SettingsDialog::SettingsDialog(Application *app, QWidget *parent) :
     _ui->labelWidget->addItem(network);
     NetworkSettings *networkSettings = new NetworkSettings;
     _ui->stack->addWidget(networkSettings);
-    connect(networkSettings, SIGNAL(proxySettingsChanged()), app, SLOT(slotSetupProxy()));
-    connect(networkSettings, SIGNAL(proxySettingsChanged()), FolderMan::instance(), SLOT(slotScheduleAllFolders()));
+    connect(networkSettings, SIGNAL(proxySettingsChanged()), gui, SIGNAL(setupProxy()));
 
-    //connect(generalSettings, SIGNAL(resizeToSizeHint()), SLOT(resizeToSizeHint()));
+    FolderMan *folderMan = FolderMan::instance();
+    connect( folderMan, SIGNAL(folderSyncStateChange(QString)),
+             this, SLOT(slotSyncStateChange(QString)));
 
-    _accountSettings = new AccountSettings(this);
-    addAccount(tr("Account"), _accountSettings);
-    slotUpdateAccountState();
-
-    connect( app, SIGNAL(folderStateChanged(Folder*)), _accountSettings, SLOT(slotUpdateFolderState(Folder*)));
-    connect( app, SIGNAL(folderStateChanged(Folder*)), SLOT(slotUpdateAccountState()));
-
-    connect( _accountSettings, SIGNAL(addASync()), app, SLOT(slotFolderAdded()) );
-    connect( _accountSettings, SIGNAL(folderChanged()), app, SLOT(slotFoldersChanged()));
+    QuotaInfo *quotaInfo = gui->quotaInfo();
+    connect( quotaInfo, SIGNAL(quotaUpdated(qint64,qint64)),
+             _accountSettings, SLOT(slotUpdateQuota(qint64,qint64)));
+    _accountSettings->slotUpdateQuota(quotaInfo->lastQuotaTotalBytes(), quotaInfo->lastQuotaUsedBytes());
+    connect( _accountSettings, SIGNAL(folderChanged()), gui, SLOT(slotFoldersChanged()));
     connect( _accountSettings, SIGNAL(openFolderAlias(const QString&)),
-             app, SLOT(slotFolderOpenAction(QString)));
+             gui, SLOT(slotFolderOpenAction(QString)));
 
-    connect( ProgressDispatcher::instance(), SIGNAL(itemProgress(Progress::Kind, QString,QString,qint64,qint64)),
-             _accountSettings, SLOT(slotSetProgress(Progress::Kind, QString,QString,qint64,qint64)));
-    connect( ProgressDispatcher::instance(), SIGNAL(overallProgress(QString,QString, int,int,qint64,qint64)),
-             _accountSettings, SLOT(slotSetOverallProgress( const QString&, const QString&, int, int, qint64, qint64)));
+    connect( ProgressDispatcher::instance(), SIGNAL(progressInfo(QString, Progress::Info)),
+             _accountSettings, SLOT(slotSetProgress(QString, Progress::Info)) );
+    connect( ProgressDispatcher::instance(), SIGNAL(progressSyncProblem(QString,Progress::SyncProblem)),
+             _accountSettings, SLOT(slotProgressProblem(QString,Progress::SyncProblem)) );
 
-    _ui->labelWidget->setCurrentRow(_ui->labelWidget->row(general));
+    _ui->labelWidget->setCurrentRow(_ui->labelWidget->row(_accountItem));
 
     connect(_ui->labelWidget, SIGNAL(currentRowChanged(int)),
             _ui->stack, SLOT(setCurrentIndex(int)));
 
     QPushButton *closeButton = _ui->buttonBox->button(QDialogButtonBox::Close);
     connect(closeButton, SIGNAL(pressed()), SLOT(accept()));
+
+    QAction *showLogWindow = new QAction(this);
+    showLogWindow->setShortcut(QKeySequence("F12"));
+    connect(showLogWindow, SIGNAL(triggered()), gui, SLOT(slotToggleLogBrowser()));
+    addAction(showLogWindow);
+
+    int iconSize = 32;
+    QListWidget *listWidget = _ui->labelWidget;
+    int spacing = 20;
+    // reverse at least ~8 characters
+    int effectiveWidth = fontMetrics().averageCharWidth() * 8 + iconSize + spacing;
+    // less than ~16 characters, elide otherwise
+    int maxWidth = fontMetrics().averageCharWidth() * 16 + iconSize + spacing;
+    for (int i = 0; i < listWidget->count(); i++) {
+        QListWidgetItem *item = listWidget->item(i);
+        QFontMetrics fm(item->font());
+        int curWidth = fm.width(item->text()) + iconSize + spacing;
+        effectiveWidth = qMax(curWidth, effectiveWidth);
+        if (curWidth > maxWidth) item->setToolTip(item->text());
+    }
+    effectiveWidth = qMin(effectiveWidth, maxWidth);
+    listWidget->setFixedWidth(effectiveWidth);
 
     MirallConfigFile cfg;
     cfg.restoreGeometry(this);
@@ -109,18 +140,48 @@ void SettingsDialog::addAccount(const QString &title, QWidget *widget)
 
 }
 
-void SettingsDialog::closeEvent(QCloseEvent *event)
-{
-    MirallConfigFile cfg;
-    cfg.saveGeometry(this);
-    QWidget::closeEvent(event);
-}
-
-void SettingsDialog::slotUpdateAccountState()
+void SettingsDialog::slotSyncStateChange(const QString& alias)
 {
     FolderMan *folderMan = FolderMan::instance();
     SyncResult state = folderMan->accountStatus(folderMan->map().values());
     _accountItem->setIcon(Theme::instance()->syncStateIcon(state.status()));
+
+    Folder *folder = folderMan->folder(alias);
+    if( folder ) {
+        _accountSettings->slotUpdateFolderState(folder);
+    }
 }
+
+void SettingsDialog::setGeneralErrors(const QStringList &errors)
+{
+    if( _accountSettings ) {
+        _accountSettings->setGeneralErrors(errors);
+    }
+}
+
+// close event is not being called here
+void SettingsDialog::reject() {
+    MirallConfigFile cfg;
+    cfg.saveGeometry(this);
+    QDialog::reject();
+}
+
+void SettingsDialog::accept() {
+    MirallConfigFile cfg;
+    cfg.saveGeometry(this);
+    QDialog::accept();
+}
+
+void SettingsDialog::slotRefreshResultList() {
+    if( _protocolWidget ) {
+        _protocolWidget->setupList();
+    }
+}
+
+void SettingsDialog::showActivityPage()
+{
+    _ui->labelWidget->setCurrentRow(_protocolIdx);
+}
+
 
 } // namespace Mirall

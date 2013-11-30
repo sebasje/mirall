@@ -24,7 +24,7 @@ class FolderStatusModel : public QStandardItemModel
 {
 public:
     FolderStatusModel();
-    virtual Qt::ItemFlags flags( const QModelIndex& );
+    virtual Qt::ItemFlags flags( const QModelIndex& ) const;
     QVariant data(const QModelIndex &index, int role) const;
 
 };
@@ -48,7 +48,9 @@ class FolderStatusDelegate : public QStyledItemDelegate
                     SyncProgressOverallPercent,
                     SyncProgressOverallString,
                     SyncProgressItemString,
-                    AddProgressSpace
+                    AddProgressSpace,
+                    WarningCount,
+                    SyncRunning
                   };
     void paint( QPainter*, const QStyleOptionViewItem&, const QModelIndex& ) const;
     QSize sizeHint( const QStyleOptionViewItem&, const QModelIndex& ) const;

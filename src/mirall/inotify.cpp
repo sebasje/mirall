@@ -47,7 +47,7 @@ INotify::INotify(QObject *parent, int mask)
     _buffer = (char *) malloc(_buffer_size);
 }
 
-void INotify::slotActivated(int fd)
+void INotify::slotActivated(int /*fd*/)
 {
     int len;
     struct inotify_event* event;
@@ -82,12 +82,13 @@ void INotify::slotActivated(int fd)
     // reset counter
     i = 0;
     // while there are enough events in the buffer
-    while(i + sizeof(struct inotify_event) < len) {
+    while(i + sizeof(struct inotify_event) < static_cast<unsigned int>(len)) {
         // cast an inotify_event
         event = (struct inotify_event*)&_buffer[i];
         // with the help of watch descriptor, retrieve, corresponding INotify
         if (event == NULL) {
             qDebug() << "NULL event";
+            i += sizeof(struct inotify_event);
             continue;
         }
 
@@ -115,14 +116,17 @@ INotify::~INotify()
     delete _notifier;
 }
 
-void INotify::addPath(const QString &path)
+bool INotify::addPath(const QString &path)
 {
     // Add an inotify watch.
     int wd = inotify_add_watch(_fd, path.toUtf8().constData(), _mask);
-    if( wd > -1 )
+    if( wd > -1 ) {
         _wds[path] = wd;
-    else
+        return true;
+    } else {
         qDebug() << "WRN: Could not watch " << path << ':' << strerror(errno);
+        return false;
+    }
 }
 
 void INotify::removePath(const QString &path)

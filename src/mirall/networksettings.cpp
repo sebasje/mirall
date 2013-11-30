@@ -111,9 +111,9 @@ void NetworkSettings::loadBWLimitSettings()
     _ui->downloadLimitRadioButton->setChecked(cfgFile.useDownloadLimit());
     int uploadLimit = cfgFile.useUploadLimit();
     if ( uploadLimit >= 1 ) {
-        _ui->downloadLimitRadioButton->setChecked(true);
+        _ui->uploadLimitRadioButton->setChecked(true);
     } else if (uploadLimit == 0){
-        _ui->noDownloadLimitRadioButton->setChecked(true);
+        _ui->noUploadLimitRadioButton->setChecked(true);
     } else {
         _ui->autoUploadLimitRadioButton->setChecked(true);
     }

@@ -49,7 +49,11 @@ void FolderWatcherPrivate::slotAddFolderRecursive(const QString &path)
     int subdirs = 0;
     qDebug() << "(+) Watcher:" << path;
 
-    _inotify->addPath(path);
+    if (!_inotify->addPath(path)) {
+        emit _parent->error(tr("Could not monitor directories due to system limitations.\n"
+                          "The application will not work reliably. Please check the\n"
+                          "documentation for possible fixes."));
+    }
     QStringList watchedFolders(_inotify->directories());
     // qDebug() << "currently watching " << watchedFolders;
     QStringListIterator subfoldersIt(FileUtils::subFoldersList(path, FileUtils::SubFolderRecursive));
@@ -78,7 +82,7 @@ void FolderWatcherPrivate::slotAddFolderRecursive(const QString &path)
         qDebug() << "    `-> and" << subdirs << "subdirectories";
 }
 
-void FolderWatcherPrivate::slotINotifyEvent(int mask, int cookie, const QString &path)
+void FolderWatcherPrivate::slotINotifyEvent(int mask, int /*cookie*/, const QString &path)
 {
     int lastMask = _lastMask;
     QString lastPath = _lastPath;
@@ -114,9 +118,8 @@ void FolderWatcherPrivate::slotINotifyEvent(int mask, int cookie, const QString 
     }
     else if (mask & IN_DELETE) {
         //qDebug() << cookie << " DELETE: " << path;
-        if ( QFileInfo(path).isDir() && _inotify->directories().contains(path) ) {
-            qDebug() << "(-) Watcher:" << path;
-            _inotify->removePath(path);
+        if ( QFileInfo(path).isDir() ) {
+            removePath(path);
         }
     }
     else if (mask & IN_CLOSE_WRITE) {
@@ -129,7 +132,16 @@ void FolderWatcherPrivate::slotINotifyEvent(int mask, int cookie, const QString 
         //qDebug() << cookie << " OTHER " << mask << " :" << path;
     }
 
-    foreach (const QString& pattern, _parent->ignores()) {
+     QStringList ignores = _parent->ignores();
+
+     if( path.endsWith(".csync_journal.db.ctmp") ||
+            path.endsWith(".csync_journal.db.ctmp-journal") ||
+            path.endsWith(".csync_journal.db")) {
+        qDebug() << " ** Inotify ignored for " <<path;
+        return;
+    }
+
+    foreach (const QString& pattern, ignores) {
         QRegExp regexp(pattern);
         regexp.setPatternSyntax(QRegExp::Wildcard);
 
@@ -154,5 +166,14 @@ void FolderWatcherPrivate::slotINotifyEvent(int mask, int cookie, const QString 
     _parent->_pendingPathes[path] = _parent->_pendingPathes[path]+mask;
     _parent->setProcessTimer();
 }
+
+void FolderWatcherPrivate::removePath(const QString &path )
+{
+    if (_inotify->directories().contains(path) ) {
+        qDebug() << "(-) Watcher:" << path;
+        _inotify->removePath(path);
+    }
+}
+
 
 } // namespace Mirall

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>607</width>
-    <height>385</height>
+    <height>382</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,16 +31,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="removeAccountButton">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>Remove Account</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="modifyAccountButton">
         <property name="text">
          <string>Modify Account</string>
@@ -53,7 +43,7 @@
    <item row="0" column="0" colspan="2">
     <widget class="QGroupBox" name="syncStatusGroupBox">
      <property name="title">
-      <string>Sync Status</string>
+      <string>Account to Synchronize</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
       <item row="0" column="0" colspan="2">
@@ -69,43 +59,23 @@
       <item row="1" column="1">
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QPushButton" name="_ButtonAdd">
+         <widget class="QPushButton" name="_buttonAdd">
           <property name="text">
-           <string>Add Sync...</string>
+           <string>Add Folder...</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="_ButtonEnable">
+         <widget class="QPushButton" name="_buttonEnable">
           <property name="text">
            <string>Pause</string>
           </property>
          </widget>
         </item>
         <item>
-         <spacer name="verticalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QPushButton" name="_ButtonRemove">
+         <widget class="QPushButton" name="_buttonRemove">
           <property name="text">
            <string>Remove</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="_ButtonReset">
-          <property name="text">
-           <string>Reset</string>
           </property>
          </widget>
         </item>
@@ -121,13 +91,6 @@
            </size>
           </property>
          </spacer>
-        </item>
-        <item>
-         <widget class="QPushButton" name="_ButtonInfo">
-          <property name="text">
-           <string>Info...</string>
-          </property>
-         </widget>
         </item>
        </layout>
       </item>
@@ -151,6 +114,9 @@
         <property name="value">
          <number>-1</number>
         </property>
+        <property name="textVisible">
+         <bool>false</bool>
+        </property>
        </widget>
       </item>
       <item>
@@ -161,7 +127,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="label_2">
+       <widget class="QLabel" name="quotaInfoLabel">
         <property name="text">
          <string>&lt;b&gt;Note:&lt;/b&gt; Some folders, including network mounted or shared folders, might have different limits.</string>
         </property>

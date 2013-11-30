@@ -18,17 +18,22 @@
 #include "mirall/mirallconfigfile.h"
 #include "mirall/occinfo.h"
 #include "mirall/utility.h"
+#include "mirall/mirallaccessmanager.h"
 
 #include <QtCore>
 #include <QtNetwork>
 #include <QtGui>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets>
+#endif
+
 
 namespace Mirall {
 
 
 UpdateDetector::UpdateDetector(QObject *parent) :
     QObject(parent)
-  , _accessManager( new QNetworkAccessManager(this))
+  , _accessManager(new MirallAccessManager(this))
 {
 }
 
@@ -126,6 +131,7 @@ void UpdateDetector::showDialog()
     hlayout->addWidget(lbl);
 
     QDialogButtonBox *bb = new QDialogButtonBox;
+    bb->setWindowFlags(bb->windowFlags() & ~Qt::WindowContextHelpButtonHint);
     QPushButton *skip = bb->addButton(tr("Skip update"), QDialogButtonBox::ResetRole);
     QPushButton *reject = bb->addButton(tr("Skip this time"), QDialogButtonBox::AcceptRole);
     QPushButton  *getupdate = bb->addButton(tr("Get update"), QDialogButtonBox::AcceptRole);

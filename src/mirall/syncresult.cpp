@@ -18,12 +18,14 @@ namespace Mirall
 {
 
 SyncResult::SyncResult()
-: _status( Undefined )
+    : _status( Undefined ),
+      _warnCount(0)
 {
 }
 
 SyncResult::SyncResult(SyncResult::Status status )
-    : _status(status)
+    : _status(status),
+      _warnCount(0)
 {
 }
 
@@ -38,30 +40,36 @@ QString SyncResult::statusString() const
     Status stat = status();
 
     switch( stat ){
-        case Undefined:
-            re = QLatin1String("Undefined");
-            break;
-        case NotYetStarted:
-            re = QLatin1String("Not yet Started");
-            break;
-        case SyncRunning:
-            re = QLatin1String("Sync Running");
-            break;
-        case Success:
-            re = QLatin1String("Success");
-            break;
-        case Error:
-            re = QLatin1String("Error");
-            break;
-        case SetupError:
-            re = QLatin1String("SetupError");
-            break;
-	case SyncPrepare:
-	    re = QLatin1String("SyncPrepare");
-	    break;
-        case Unavailable:
-            re = QLatin1String("Not availabe");
-            break;
+    case Undefined:
+        re = QLatin1String("Undefined");
+        break;
+    case NotYetStarted:
+        re = QLatin1String("Not yet Started");
+        break;
+    case SyncRunning:
+        re = QLatin1String("Sync Running");
+        break;
+    case Success:
+        re = QLatin1String("Success");
+        break;
+    case Error:
+        re = QLatin1String("Error");
+        break;
+    case SetupError:
+        re = QLatin1String("SetupError");
+        break;
+    case SyncPrepare:
+        re = QLatin1String("SyncPrepare");
+        break;
+    case Problem:
+        re = QLatin1String("Success, but with problems");
+        break;
+    case Unavailable:
+        re = QLatin1String("Not availabe");
+        break;
+    case SyncAbortRequested:
+        re = QLatin1String("Sync Request aborted by user");
+        break;
     }
     return re;
 }
@@ -85,6 +93,16 @@ SyncFileItemVector SyncResult::syncFileItemVector() const
 QDateTime SyncResult::syncTime() const
 {
     return _syncTime;
+}
+
+void SyncResult::setWarnCount(int wc)
+{
+    _warnCount = wc;
+}
+
+int SyncResult::warnCount() const
+{
+    return _warnCount;
 }
 
 void SyncResult::setErrorStrings( const QStringList& list )
@@ -113,8 +131,19 @@ void SyncResult::clearErrors()
     _errors.clear();
 }
 
+void SyncResult::setFolder(const QString& folder)
+{
+    _folder = folder;
+}
+
+QString SyncResult::folder() const
+{
+    return _folder;
+}
+
 SyncResult::~SyncResult()
 {
+
 }
 
 } // ns mirall

@@ -33,7 +33,9 @@ public:
       NotYetStarted,
       SyncPrepare,
       SyncRunning,
+      SyncAbortRequested,
       Success,
+      Problem,
       Error,
       SetupError,
       Unavailable
@@ -46,6 +48,8 @@ public:
     void    setErrorStrings( const QStringList& );
     QString errorString() const;
     QStringList errorStrings() const;
+    int     warnCount() const;
+    void    setWarnCount(int wc);
     void    clearErrors();
 
     // handle a list of changed items.
@@ -56,15 +60,19 @@ public:
     Status status() const;
     QString statusString() const;
     QDateTime syncTime() const;
+    void setFolder(const QString& folder);
+    QString folder() const;
 
 private:
     Status             _status;
     SyncFileItemVector _syncItems;
     QDateTime          _syncTime;
+    QString            _folder;
     /**
      * when the sync tool support this...
      */
     QStringList        _errors;
+    int                _warnCount;
 };
 
 }

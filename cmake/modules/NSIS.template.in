@@ -1,6 +1,6 @@
 ;ownCloud installer script.
 
-!define APPLICATION_SHORTNAME "@APPLICATION_SHORTNAME@"
+!define APPLICATION_SHORTNAME "@APPLICATION_EXECUTABLE@"
 !define APPLICATION_NAME "@APPLICATION_NAME@"
 !define APPLICATION_VENDOR "@APPLICATION_VENDOR@"
 !define APPLICATION_EXECUTABLE "@APPLICATION_EXECUTABLE@.exe"
@@ -39,7 +39,6 @@
 !define IMAGEFORMATS_DLL_PATH "${MING_LIB}/qt4/plugins/imageformats"
 
 !define CSYNC_LIBRARY_DIR "@CSYNC_LIBRARY_DIR@"
-!define CSYNC_PLUGIN_DIR "@CSYNC_PLUGIN_DIR@"
 !define CSYNC_CONFIG_DIR "@CSYNC_CONFIG_DIR@"
 
 !define NSI_PATH "${source_path}/admin/win/nsi"
@@ -282,90 +281,24 @@ Section "${APPLICATION_NAME}" SEC_APPLICATION
    !ifndef INSTALL_PATH
         ;Main executable.
         File "${BUILD_PATH}\bin\${APPLICATION_EXECUTABLE}"
-        File "${BUILD_PATH}\src\libowncloudsync.dll"
+        File "${BUILD_PATH}\src\lib${APPLICATION_SHORTNAME}sync.dll"
 
-        File "${BUILD_PATH}\src\mirall_ca.qm"
-        File "${BUILD_PATH}\src\mirall_cs_CZ.qm"
-        File "${BUILD_PATH}\src\mirall_da.qm"
-        File "${BUILD_PATH}\src\mirall_de.qm"
-        File "${BUILD_PATH}\src\mirall_el.qm"
-        File "${BUILD_PATH}\src\mirall_en.qm"
-        File "${BUILD_PATH}\src\mirall_eo.qm"
-        File "${BUILD_PATH}\src\mirall_es.qm"
-        File "${BUILD_PATH}\src\mirall_es_AR.qm"
-        File "${BUILD_PATH}\src\mirall_et_EE.qm"
-        File "${BUILD_PATH}\src\mirall_eu.qm"
-        File "${BUILD_PATH}\src\mirall_fa.qm"
-        File "${BUILD_PATH}\src\mirall_fi_FI.qm"
-        File "${BUILD_PATH}\src\mirall_fr.qm"
-        File "${BUILD_PATH}\src\mirall_gl.qm"
-        File "${BUILD_PATH}\src\mirall_he.qm"
-        File "${BUILD_PATH}\src\mirall_hr.qm"
-        File "${BUILD_PATH}\src\mirall_hu_HU.qm"
-        File "${BUILD_PATH}\src\mirall_it.qm"
-        File "${BUILD_PATH}\src\mirall_ja_JP.qm"
-        File "${BUILD_PATH}\src\mirall_ko.qm"
-        File "${BUILD_PATH}\src\mirall_lb.qm"
-        File "${BUILD_PATH}\src\mirall_lt_LT.qm"
-        File "${BUILD_PATH}\src\mirall_lv.qm"
-        File "${BUILD_PATH}\src\mirall_mk.qm"
-        File "${BUILD_PATH}\src\mirall_ms_MY.qm"
-        File "${BUILD_PATH}\src\mirall_nb_NO.qm"
-        File "${BUILD_PATH}\src\mirall_nl.qm"
-        File "${BUILD_PATH}\src\mirall_oc.qm"
-        File "${BUILD_PATH}\src\mirall_pl.qm"
-        File "${BUILD_PATH}\src\mirall_pt_BR.qm"
-        File "${BUILD_PATH}\src\mirall_pt_PT.qm"
-        File "${BUILD_PATH}\src\mirall_ro.qm"
-        File "${BUILD_PATH}\src\mirall_ru.qm"
-        File "${BUILD_PATH}\src\mirall_ru_RU.qm"
-        File "${BUILD_PATH}\src\mirall_si_LK.qm"
-        File "${BUILD_PATH}\src\mirall_sk_SK.qm"
-        File "${BUILD_PATH}\src\mirall_sl.qm"
-        File "${BUILD_PATH}\src\mirall_sr@latin.qm"
-        File "${BUILD_PATH}\src\mirall_sv.qm"
-        File "${BUILD_PATH}\src\mirall_ta_LK.qm"
-        File "${BUILD_PATH}\src\mirall_th_TH.qm"
-        File "${BUILD_PATH}\src\mirall_tr.qm"
-        File "${BUILD_PATH}\src\mirall_uk.qm"
-        File "${BUILD_PATH}\src\mirall_vi.qm"
-        File "${BUILD_PATH}\src\mirall_zh_CN.qm"
-        File "${BUILD_PATH}\src\mirall_zh_TW.qm"
-
-        #File "${MING_SHARE}\qt4\translations\qt_ar.qm"
-        File "${MING_SHARE}\qt4\translations\qt_cs.qm"
-        File "${MING_SHARE}\qt4\translations\qt_da.qm"
-        File "${MING_SHARE}\qt4\translations\qt_de.qm"
-        File "${MING_SHARE}\qt4\translations\qt_es.qm"
-        File "${MING_SHARE}\qt4\translations\qt_fa.qm"
-        File "${MING_SHARE}\qt4\translations\qt_fr.qm"
-        File "${MING_SHARE}\qt4\translations\qt_gl.qm"
-        File "${MING_SHARE}\qt4\translations\qt_he.qm"
-        File "${MING_SHARE}\qt4\translations\qt_hu.qm"
-        File "${MING_SHARE}\qt4\translations\qt_ja.qm"
-        File "${MING_SHARE}\qt4\translations\qt_ko.qm"
-        File "${MING_SHARE}\qt4\translations\qt_lt.qm"
-        File "${MING_SHARE}\qt4\translations\qt_pl.qm"
-        File "${MING_SHARE}\qt4\translations\qt_pt.qm"
-        File "${MING_SHARE}\qt4\translations\qt_ru.qm"
-        File "${MING_SHARE}\qt4\translations\qt_sk.qm"
-        File "${MING_SHARE}\qt4\translations\qt_sl.qm"
-        File "${MING_SHARE}\qt4\translations\qt_sv.qm"
-        File "${MING_SHARE}\qt4\translations\qt_uk.qm"
-        File "${MING_SHARE}\qt4\translations\qt_zh_CN.qm"
-        File "${MING_SHARE}\qt4\translations\qt_zh_TW.qm"
-        File "${MING_SHARE}\qt4\translations\qt_zh_TW.qm"
-
-        File "${MING_SHARE}\qt4\translations\qtkeychain_de.qm"
+        File "${BUILD_PATH}\src\mirall_*.qm"
+        ; Make sure only to copy qt, not qt_help, etc
+        File "${MING_SHARE}\qt4\translations\qt_??.qm"
+        File "${MING_SHARE}\qt4\translations\qt_??_??.qm"
+        File "${MING_SHARE}\qt4\translations\qtkeychain_*.qm"
 
         SetOutPath "$INSTDIR\accessible"
         File "${ACCESSIBLE_DLL_PATH}\qtaccessiblewidgets4.dll"
+        SetOutPath "$INSTDIR\imageformats"
+        File "${IMAGEFORMATS_DLL_PATH}\qgif4.dll"
+        File "${IMAGEFORMATS_DLL_PATH}\qjpeg4.dll"
+        File "${IMAGEFORMATS_DLL_PATH}\qico4.dll"
 
-        SetOutPath "$INSTDIR\modules"
-        ; FIXME: fix installation dir of module, currently needs manual copying to
-        ; /usr/i686-w64-mingw32/sys-root/mingw/bin/csync_modules/
+        SetOutPath "$INSTDIR\sqldrivers"
+        File "${SQLITE_DLL_PATH}\qsqlite4.dll"
 
-        File "${CSYNC_PLUGIN_DIR}/ocsync_owncloud.dll"
         SetOutPath "$INSTDIR"
    !endif
 
@@ -379,12 +312,14 @@ Section "${APPLICATION_NAME}" SEC_APPLICATION
    File "${QT_DLL_PATH}\QtCore4.dll"
    File "${QT_DLL_PATH}\QtGui4.dll"
    File "${QT_DLL_PATH}\QtNetwork4.dll"
+   File "${QT_DLL_PATH}\QtSql4.dll"
    File "${QT_DLL_PATH}\QtXml4.dll"
+   File "${QT_DLL_PATH}\QtWebKit4.dll"
 
    ;QtKeyChain stuff
    File "${MING_BIN}\libqtkeychain.dll"
 
-   File "${CSYNC_LIBRARY_DIR}/libocsync.dll"
+   File "${CSYNC_LIBRARY_DIR}\libocsync.dll"
    File "${MING_BIN}\libsqlite3-0.dll"
    File "${MING_BIN}\libiniparser.dll"
    File "${MING_BIN}\libdl.dll"
@@ -403,7 +338,7 @@ Section "${APPLICATION_NAME}" SEC_APPLICATION
 
    ; Other
    ;File "${MING_BIN}\libpng15-15.dll"
-   ;File "${MING_BIN}\libjpeg-8.dll"
+   File "${MING_BIN}\libjpeg-8.dll"
    File "${MING_BIN}\zlib1.dll"
    File "${MING_BIN}\libcrypto-10.dll"
    File "${MING_BIN}\libssl-10.dll"
@@ -416,18 +351,13 @@ SectionEnd
 SectionGroup "Shortcuts"
 
 !ifdef OPTION_SECTION_SC_START_MENU
-   ${MementoSection} "Start Menu Program Group" SEC_START_MENU
+   ${MementoSection} "Start Menu Program Shortcut" SEC_START_MENU
       SectionIn 1 2 3
       SetDetailsPrint textonly
-      DetailPrint "Adding shortcuts for the ${APPLICATION_NAME} program group to the Start Menu."
+      DetailPrint "Adding shortcut for ${APPLICATION_NAME} to the Start Menu."
       SetDetailsPrint listonly
       SetShellVarContext all
-      RMDir /r "$SMPROGRAMS\${APPLICATION_NAME}"
-      CreateDirectory "$SMPROGRAMS\${APPLICATION_NAME}"
-      ;CreateShortCut "$SMPROGRAMS\${APPLICATION_NAME}\LICENSE.lnk" "$INSTDIR\LICENSE.txt"
-      CreateShortCut "$SMPROGRAMS\${APPLICATION_NAME}\${APPLICATION_NAME}.lnk" "$INSTDIR\${APPLICATION_EXECUTABLE}"
-      ;CreateShortCut "$SMPROGRAMS\${APPLICATION_NAME}\Release notes.lnk" "$INSTDIR\NOTES.txt"
-      CreateShortCut "$SMPROGRAMS\${APPLICATION_NAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe"
+      CreateShortCut "$SMPROGRAMS\${APPLICATION_NAME}.lnk" "$INSTDIR\${APPLICATION_EXECUTABLE}"
       SetShellVarContext current
    ${MementoSectionEnd}
 !endif
@@ -460,7 +390,7 @@ ${MementoSectionDone}
 ;--------------------------------
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 !insertmacro MUI_DESCRIPTION_TEXT ${SEC_APPLICATION} "${APPLICATION_NAME} essentials."
-!insertmacro MUI_DESCRIPTION_TEXT ${SEC_START_MENU} "${APPLICATION_NAME} program group."
+!insertmacro MUI_DESCRIPTION_TEXT ${SEC_START_MENU} "${APPLICATION_NAME} shortcut."
 !insertmacro MUI_DESCRIPTION_TEXT ${SEC_DESKTOP} "Desktop shortcut for ${APPLICATION_NAME}."
 !insertmacro MUI_DESCRIPTION_TEXT ${SEC_QUICK_LAUNCH} "Quick Launch shortcut for ${APPLICATION_NAME}."
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
@@ -568,7 +498,7 @@ Section Uninstall
    ;Start menu shortcuts.
    !ifdef OPTION_SECTION_SC_START_MENU
       SetShellVarContext all
-      RMDir /r "$SMPROGRAMS\${APPLICATION_NAME}"
+      Delete "$SMPROGRAMS\${APPLICATION_NAME}.lnk"
       SetShellVarContext current
    !endif
 

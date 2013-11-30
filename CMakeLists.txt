@@ -4,6 +4,8 @@ project(mirall)
 set(PACKAGE "mirall")
 set( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules )
 
+include(Warnings)
+
 set(OEM_THEME_DIR "" CACHE STRING "Define directory containing a custom theme")
 if ( EXISTS ${OEM_THEME_DIR}/OEM.cmake )
      include ( ${OEM_THEME_DIR}/OEM.cmake )
@@ -11,11 +13,27 @@ else ()
      include ( ${CMAKE_SOURCE_DIR}/OWNCLOUD.cmake )
 endif()
 
+if (NOT DEFINED APPLICATION_SHORTNAME)
+     set ( APPLICATION_SHORTNAME ${APPLICATION_NAME} )
+endif()
+
 include(${CMAKE_SOURCE_DIR}/VERSION.cmake)
 configure_file( ${CMAKE_SOURCE_DIR}/src/mirall/version.h.in "${CMAKE_CURRENT_BINARY_DIR}/src/mirall/version.h" )
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR} "${CMAKE_CURRENT_BINARY_DIR}/src/mirall/")
 
+#####
+## handle DBUS for Fdo notifications
+if( UNIX AND NOT APPLE )
+    add_definitions( -DUSE_FDO_NOTIFICATIONS)
+    set(WITH_DBUS ON)
+endif()
+####
+
 include(GNUInstallDirs)
+include(DefineInstallationPaths)
+include(QtVersionAbstraction)
+
+setup_qt()
 
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
@@ -32,10 +50,8 @@ if (${GIT_SHA1} STREQUAL "GITDIR-NOTFOUND")
     endif()
 endif()
 
-## stupid, we should upstream this
-if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT CMAKE_INSTALL_SYSCONFDIR)
-    set(CMAKE_INSTALL_SYSCONFDIR "/etc")
-endif()
+set(SYSCONFDIR ${SYSCONF_INSTALL_DIR})
+set(DATADIR ${DATA_INSTALL_DIR})
 
 #####
 ## handle BUILD_OWNCLOUD_OSX_BUNDLE
@@ -54,19 +70,14 @@ else()
 endif()
 #####
 
-#####
-## handle DBUS for Fdo notifications
-if( UNIX AND NOT APPLE )
-    add_definitions( -DUSE_FDO_NOTIFICATIONS)
-endif()
-####
-
 #### find libs
-find_package(Qt4 4.7.0 COMPONENTS QtCore QtGui QtXml QtNetwork QtTest REQUIRED )
-if( UNIX AND NOT APPLE ) # Fdo notifications
-    find_package(Qt4 4.7.0 COMPONENTS QtDBus REQUIRED )
-endif()
+#find_package(Qt4 4.7.0 COMPONENTS QtCore QtGui QtXml QtNetwork QtTest QtWebkit REQUIRED )
+#if( UNIX AND NOT APPLE ) # Fdo notifications
+#    find_package(Qt4 4.7.0 COMPONENTS QtDBus REQUIRED )
+#endif()
+find_package(Neon REQUIRED)
 find_package(Csync REQUIRED)
+find_package(QtKeychain REQUIRED)
 if(UNIX)
 find_package(INotify REQUIRED)
 else()
@@ -74,7 +85,6 @@ find_package(INotify)
 endif()
 find_package(Sphinx)
 find_package(PdfLatex)
-find_package(QtKeychain)
 
 set(WITH_QTKEYCHAIN ${QTKEYCHAIN_FOUND})
 set(USE_INOTIFY ${INOTIFY_FOUND})
@@ -87,25 +97,6 @@ else()
 endif()
 
 configure_file(config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-
-set(CPACK_SOURCE_IGNORE_FILES
-  # hidden files
-  "/\\\\..+$"
-  # temporary files
-  "\\\\.swp$"
-  # backup files
-  "~$"
-  # others
-  "\\\\.#"
-  "/#"
-  "/build/"
-  "/_build/"
-  # used before
-  "\\\\.o$"
-  "\\\\.lo$"
-  "\\\\.la$"
-  "Makefile\\\\.in$"
-)
 
 include(OwnCloudCPack.cmake)
 
@@ -128,5 +119,5 @@ endif(UNIT_TESTING)
 if(BUILD_OWNCLOUD_OSX_BUNDLE)
     configure_file(sync-exclude.lst ${OWNCLOUD_OSX_BUNDLE}/Contents/Resources/sync-exclude.lst COPYONLY)
 else()
-    install( FILES sync-exclude.lst DESTINATION ${CMAKE_INSTALL_SYSCONFDIR} )
+    install( FILES sync-exclude.lst DESTINATION ${SYSCONFDIR}/${APPLICATION_SHORTNAME} )
 endif()

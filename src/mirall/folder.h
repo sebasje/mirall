@@ -20,61 +20,48 @@
 #include "mirall/syncresult.h"
 #include "mirall/progressdispatcher.h"
 #include "mirall/csyncthread.h"
+#include "mirall/syncjournaldb.h"
 
 #include <QDir>
 #include <QHash>
 #include <QNetworkAccessManager>
 #include <QNetworkProxy>
-#include <QNetworkProxyFactory>
 #include <QObject>
 #include <QStringList>
-#include <QThread>
-#include <QTimer>
 
 #include <QDebug>
+#include <QTimer>
+#include <qelapsedtimer.h>
 
 class QFileSystemWatcher;
+class QThread;
 
 namespace Mirall {
 
 class FolderWatcher;
 
 typedef enum SyncFileStatus_s {
-    STATUS_NONE,
-    STATUS_EVAL,
-    STATUS_REMOVE,
-    STATUS_RENAME,
-    STATUS_NEW,
-    STATUS_CONFLICT,
-    STATUS_IGNORE,
-    STATUS_SYNC,
-    STATUS_STAT_ERROR,
-    STATUS_ERROR,
-    STATUS_UPDATED
+    FILE_STATUS_NONE,
+    FILE_STATUS_EVAL,
+    FILE_STATUS_REMOVE,
+    FILE_STATUS_RENAME,
+    FILE_STATUS_NEW,
+    FILE_STATUS_CONFLICT,
+    FILE_STATUS_IGNORE,
+    FILE_STATUS_SYNC,
+    FILE_STATUS_STAT_ERROR,
+    FILE_STATUS_ERROR,
+    FILE_STATUS_UPDATED
 } SyncFileStatus;
 
-class ServerActionNotifier : public QObject
-{
-    Q_OBJECT
-public:
-    ServerActionNotifier(QObject *parent = 0);
-public slots:
-    void slotSyncFinished(const SyncResult &result);
-signals:
-    void guiLog(const QString&, const QString&);
-    void sendResults();
-private:
-};
 
 class Folder : public QObject
 {
     Q_OBJECT
 
-protected:
-    friend class FolderMan;
+public:
     Folder(const QString&, const QString&, const QString& , QObject*parent = 0L);
 
-public:
     ~Folder();
 
     typedef QHash<QString, Folder*> Map;
@@ -94,10 +81,16 @@ public:
      * local folder path
      */
     QString path() const;
+
     /**
      * remote folder path
      */
-    QString secondPath() const;
+    QString remotePath() const;
+
+    /**
+     * remote folder path with server url
+     */
+    QUrl remoteUrl() const;
 
     /**
      * local folder path with native separators
@@ -135,8 +128,6 @@ public:
       */
      virtual void wipe();
 
-     QTimer   *_pollTimer;
-
 signals:
     void syncStateChange();
     void syncStarted();
@@ -144,7 +135,6 @@ signals:
     void scheduleToSync( const QString& );
 
 public slots:
-     void slotSyncFinished(const SyncResult &);
 
      /**
        *
@@ -153,14 +143,10 @@ public slots:
 
      /**
        * terminate the current sync run
+       *
+       * If block is true, this will block synchroniously for the sync thread to finish.
        */
-     void slotTerminateSync();
-
-     /**
-      * Sets minimum amounts of milliseconds that will separate
-      * poll intervals
-      */
-     void setPollInterval( int );
+     void slotTerminateSync(bool block);
 
      void slotAboutToRemoveAllFiles(SyncFileItem::Direction, bool*);
 
@@ -172,61 +158,52 @@ public slots:
       */
       void startSync(const QStringList &pathList = QStringList());
 
+      /**
+       * Starts a sync (calling startSync)
+       * if the policies allow for it
+       */
+      void evaluateSync(const QStringList &pathList);
+
+      void setProxyDirty(bool value);
+      bool proxyDirty();
+
 private slots:
     void slotCSyncStarted();
     void slotCSyncError(const QString& );
     void slotCsyncUnavailable();
     void slotCSyncFinished();
 
-    void slotFileTransmissionProgress(Progress::Kind kind, const QString& file ,qint64 p1, qint64 p2);
-
-    void slotOverallTransmissionProgress( const QString& fileName, int fileNo, int fileCnt,
-                                          qint64 o1, qint64 o2);
+    void slotTransmissionProgress(const Progress::Info& progress);
+    void slotTransmissionProblem( const Progress::SyncProblem& problem );
 
     void slotPollTimerTimeout();
-
-
-    /** called when the watcher detect a list of changed paths */
-
-    void slotSyncStarted();
+    void etagRetreived(const QString &);
+    void slotNetworkUnavailable();
 
     /**
      * Triggered by a file system watcher on the local sync dir
      */
     void slotLocalPathChanged( const QString& );
     void slotThreadTreeWalkResult(const SyncFileItemVector& );
+    void slotCatchWatcherError( const QString& );
 
-protected:
+private:
     bool init();
 
-    /**
-     * The minimum amounts of seconds to wait before
-     * doing a full sync to see if the remote changed
-     */
-    int pollInterval() const;
     void setSyncState(SyncResult::Status state);
 
     void setIgnoredFiles();
     void setProxy();
-    static int getauth(const char *prompt,
-                             char *buf,
-                             size_t len,
-                             int echo,
-                             int verify,
-                             void *userdata
-                             );
     const char* proxyTypeToCStr(QNetworkProxy::ProxyType type);
 
-    /**
-     * Starts a sync (calling startSync)
-     * if the policies allow for it
-     */
-    void evaluateSync(const QStringList &pathList);
+    void bubbleUpSyncResult();
 
     void checkLocalPath();
 
+    void createGuiLog( const QString& filename, const QString& verb, int count );
+
     QString   _path;
-    QString   _secondPath;
+    QString   _remotePath;
     QString   _alias;
     QString   _configFile;
     QFileSystemWatcher *_pathWatcher;
@@ -239,9 +216,22 @@ protected:
     bool         _csyncError;
     bool         _csyncUnavail;
     bool         _wipeDb;
+    bool         _proxyDirty;
     Progress::Kind _progressKind;
+    QTimer        _pollTimer;
+    QString       _lastEtag;
+    QElapsedTimer _timeSinceLastSync;
+
+    SyncJournalDb _journal;
 
     CSYNC *_csync_ctx;
+
+    const char *_proxy_type;
+    QByteArray  _proxy_host;
+    int         _proxy_port;
+    QByteArray  _proxy_user;
+    QByteArray  _proxy_pwd;
+
 };
 
 }

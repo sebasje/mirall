@@ -18,7 +18,8 @@
 #include "mirall/syncresult.h"
 #include "mirall/inotify.h"
 #include "mirall/theme.h"
-#include "owncloudinfo.h"
+
+#include <neon/ne_socket.h>
 
 #ifdef Q_OS_MAC
 #include <CoreServices/CoreServices.h>
@@ -53,8 +54,10 @@ FolderMan::FolderMan(QObject *parent) :
 
 FolderMan *FolderMan::instance()
 {
-    if(!_instance)
+    if(!_instance) {
         _instance = new FolderMan;
+        ne_sock_init();
+    }
 
     return _instance;
 }
@@ -62,23 +65,12 @@ FolderMan *FolderMan::instance()
 FolderMan::~FolderMan()
 {
     qDeleteAll(_folderMap);
+    ne_sock_exit();
 }
 
 Mirall::Folder::Map FolderMan::map()
 {
     return _folderMap;
-}
-
-
-int FolderMan::setupFolders()
-{
-    // setup a handler to look for configuration changes
-    return setupKnownFolders();
-}
-
-void FolderMan::slotReparseConfiguration()
-{
-    setupKnownFolders();
 }
 
 int FolderMan::unloadAllFolders()
@@ -95,7 +87,7 @@ int FolderMan::unloadAllFolders()
     return cnt;
 }
 
-int FolderMan::setupKnownFolders()
+int FolderMan::setupFolders()
 {
   qDebug() << "* Setup folders from " << _folderConfigPath;
 
@@ -225,7 +217,7 @@ Folder* FolderMan::setupFolderFromConfigFile(const QString &file) {
         return folder;
     }
 
-    QSettings settings( cfgFile.filePath(), QSettings::IniFormat);
+    QSettings settings( _folderConfigPath + QLatin1Char('/') + escapedAlias, QSettings::IniFormat);
     qDebug() << "    -> file path: " << settings.fileName();
 
     // Check if the filename is equal to the group setting. If not, use the group
@@ -238,9 +230,10 @@ Folder* FolderMan::setupFolderFromConfigFile(const QString &file) {
 
     settings.beginGroup( escapedAlias ); // read the group with the same name as the file which is the folder alias
 
-    QString path = settings.value(QLatin1String("localpath")).toString();
+    QString path = settings.value(QLatin1String("localPath")).toString();
     QString backend = settings.value(QLatin1String("backend")).toString();
-    QString targetPath = settings.value( QLatin1String("targetPath") ).toString();
+    QString targetPath = settings.value( QLatin1String("targetPath")).toString();
+    bool paused = settings.value( QLatin1String("paused"), false).toBool();
     // QString connection = settings.value( QLatin1String("connection") ).toString();
     QString alias = unescapeAlias( escapedAlias );
 
@@ -258,6 +251,9 @@ Folder* FolderMan::setupFolderFromConfigFile(const QString &file) {
     folder->setConfigFile(file);
     qDebug() << "Adding folder to Folder Map " << folder;
     _folderMap[alias] = folder;
+    if (paused) {
+        _disabledFolders.insert(folder);
+    }
 
     /* Use a signal mapper to connect the signals to the alias */
     connect(folder, SIGNAL(scheduleToSync(const QString&)), SLOT(slotScheduleSync(const QString&)));
@@ -279,6 +275,17 @@ void FolderMan::slotEnableFolder( const QString& alias, bool enable )
     Folder *f = _folderMap[alias];
     if( f ) {
         f->setSyncEnabled(enable);
+        f->evaluateSync(QStringList());
+
+        QSettings settings(_folderConfigPath + QLatin1Char('/') + f->configFile(), QSettings::IniFormat);
+        settings.beginGroup(escapeAlias(f->alias()));
+        if (enable) {
+            settings.remove("paused");
+            _disabledFolders.remove(f);
+        } else {
+            settings.setValue("paused", true);
+            _disabledFolders.insert(f);
+        }
     }
 }
 
@@ -293,10 +300,9 @@ void FolderMan::terminateSyncProcess( const QString& alias )
     if( ! folderAlias.isEmpty() ) {
         Folder *f = _folderMap[folderAlias];
         if( f ) {
-            f->slotTerminateSync();
-
+            f->slotTerminateSync(true);
             if(_currentSyncFolder == folderAlias )
-                _currentSyncFolder = QString::null;
+                _currentSyncFolder.clear();
         }
     }
 }
@@ -325,7 +331,9 @@ SyncResult FolderMan::syncResult( Folder *f )
 void FolderMan::slotScheduleAllFolders()
 {
     foreach( Folder *f, _folderMap.values() ) {
-        slotScheduleSync( f->alias() );
+        if (f->syncEnabled()) {
+            slotScheduleSync( f->alias() );
+        }
     }
 }
 
@@ -344,18 +352,24 @@ void FolderMan::slotScheduleSync( const QString& alias )
     }
 
     if( ! _scheduleQueue.contains(alias )) {
-        _scheduleQueue.append(alias);
+        _scheduleQueue.enqueue(alias);
     } else {
         qDebug() << " II> Sync for folder " << alias << " already scheduled, do not enqueue!";
     }
-
     slotScheduleFolderSync();
-
 }
 
 void FolderMan::setSyncEnabled( bool enabled )
 {
+    if (!_syncEnabled && enabled && !_scheduleQueue.isEmpty()) {
+        // We have things in our queue that were waiting the the connection to go back on.
+        QTimer::singleShot(200, this, SLOT(slotScheduleFolderSync()));
+    }
     _syncEnabled = enabled;
+
+    foreach( Folder *f, _folderMap.values() ) {
+        f->setSyncEnabled(enabled && !_disabledFolders.contains(f));
+    }
 }
 
 /*
@@ -377,12 +391,13 @@ void FolderMan::slotScheduleFolderSync()
 
     qDebug() << "XX slotScheduleFolderSync: folderQueue size: " << _scheduleQueue.count();
     if( ! _scheduleQueue.isEmpty() ) {
-        const QString alias = _scheduleQueue.takeFirst();
+        const QString alias = _scheduleQueue.dequeue();
         if( _folderMap.contains( alias ) ) {
-            ownCloudInfo::instance()->getQuotaRequest("/");
             Folder *f = _folderMap[alias];
-            _currentSyncFolder = alias;
-            f->startSync( QStringList() );
+            if( f->syncEnabled() ) {
+                _currentSyncFolder = alias;
+                f->startSync( QStringList() );
+            }
         }
     }
 }
@@ -416,6 +431,23 @@ void FolderMan::addFolderDefinition(const QString& alias, const QString& sourceF
     settings.setValue(QLatin1String("backend"),     "owncloud" );
     settings.setValue(QLatin1String("connection"),  Theme::instance()->appName());
     settings.sync();
+}
+
+Folder *FolderMan::folderForPath(const QUrl &path)
+{
+    QString absolutePath = path.toLocalFile();
+    absolutePath.append("/");
+
+    foreach(Folder* folder, map().values())
+    {
+        if(absolutePath.startsWith(folder->path()))
+        {
+            qDebug() << "found folder: " << folder->path() << " for " << absolutePath;
+            return folder;
+        }
+    }
+
+    return 0;
 }
 
 void FolderMan::removeAllFolderDefinitions()
@@ -460,7 +492,10 @@ void FolderMan::removeFolder( const QString& alias )
             qDebug() << "Remove folder config file " << file.fileName();
             file.remove();
         }
-        f->deleteLater();
+        // FIXME: this is a temporar dirty fix against a crash happening because
+        // the csync owncloud module still has static components. Activate the
+        // delete once the module is fixed.
+        // f->deleteLater();
     }
 }
 
@@ -506,6 +541,14 @@ bool FolderMan::startFromScratch( const QString& localFolder )
     return false;
 }
 
+void FolderMan::setDirtyProxy(bool value)
+{
+    foreach( Folder *f, _folderMap.values() ) {
+        f->setProxyDirty(value);
+    }
+}
+
+
 SyncResult FolderMan::accountStatus(const QList<Folder*> &folders)
 {
     SyncResult overallResult(SyncResult::Undefined);
@@ -531,6 +574,7 @@ SyncResult FolderMan::accountStatus(const QList<Folder*> &folders)
         case SyncResult::Unavailable:
             overallResult.setStatus( SyncResult::Unavailable );
             break;
+        case SyncResult::Problem: // don't show the problem icon in tray.
         case SyncResult::Success:
             if( overallResult.status() == SyncResult::Undefined )
                 overallResult.setStatus( SyncResult::Success );
@@ -542,13 +586,15 @@ SyncResult FolderMan::accountStatus(const QList<Folder*> &folders)
             if ( overallResult.status() != SyncResult::Error )
                 overallResult.setStatus( SyncResult::SetupError );
             break;
-        // no default case on purpose, check compiler warnings
+        case SyncResult::SyncAbortRequested:
+            break;
+            // no default case on purpose, check compiler warnings
         }
     }
     return overallResult;
 }
 
-QString FolderMan::statusToString( SyncResult syncStatus ) const
+QString FolderMan::statusToString( SyncResult syncStatus, bool enabled ) const
 {
     QString folderMessage;
     switch( syncStatus.status() ) {
@@ -572,17 +618,21 @@ QString FolderMan::statusToString( SyncResult syncStatus ) const
         break;
     case SyncResult::Error:
         break;
+    case SyncResult::Problem:
+        folderMessage = tr( "Last Sync was successful, but with warnings on individual files.");
+        break;
     case SyncResult::SetupError:
-
         folderMessage = tr( "Setup Error." );
+        break;
+    case SyncResult::SyncAbortRequested:
+        folderMessage = tr( "User Abort." );
         break;
     // no default case on purpose, check compiler warnings
     }
-// FIXME!
-//    if( !folder->syncEnabled() ) {
-//        // sync is disabled.
-//        folderMessage = tr( "%1 (Sync is paused)" ).arg(folderMessage);
-//    }
+    if( !enabled ) {
+        // sync is disabled.
+        folderMessage = tr( "%1 (Sync is paused)" ).arg(folderMessage);
+    }
     return folderMessage;
 }
 

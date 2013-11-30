@@ -20,7 +20,6 @@
 #include <QDir>
 #include <QListWidget>
 #include <QListWidgetItem>
-#include <QColorGroup>
 #include <QMessageBox>
 #include <QInputDialog>
 
@@ -30,9 +29,12 @@ IgnoreListEditor::IgnoreListEditor(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::IgnoreListEditor)
 {
+    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     ui->setupUi(this);
 
-    ui->descriptionLabel->setText(tr("Files matching the following patterns will not be synchronized:"));
+    ui->descriptionLabel->setText(tr("Files or directories matching a pattern will not be synchronized.\n\n"
+                                     "Checked items will also be deleted if they prevent a directory from "
+                                     "being removed. This is useful for meta data."));
 
     MirallConfigFile cfgFile;
     readIgnoreFile(cfgFile.excludeFile(MirallConfigFile::SystemScope), true);
@@ -49,7 +51,8 @@ IgnoreListEditor::IgnoreListEditor(QWidget *parent) :
 
 static void setupItemFlags(QListWidgetItem* item)
 {
-    item->setFlags(Qt::ItemIsEnabled|Qt::ItemIsSelectable);
+    item->setFlags(Qt::ItemIsEnabled|Qt::ItemIsSelectable|Qt::ItemIsUserCheckable);
+    item->setCheckState(Qt::Unchecked);
 }
 
 IgnoreListEditor::~IgnoreListEditor()
@@ -83,7 +86,11 @@ void IgnoreListEditor::slotUpdateLocalIgnoreList()
         for(int i = 0; i < ui->listWidget->count(); ++i) {
             QListWidgetItem *item = ui->listWidget->item(i);
             if (item->flags() & Qt::ItemIsEnabled) {
-                ignores.write(item->text().toUtf8()+'\n');
+                QByteArray prepend;
+                if (item->checkState() == Qt::Checked) {
+                    prepend = "]";
+                }
+                ignores.write(prepend+item->text().toUtf8()+'\n');
             }
         }
     } else {
@@ -94,9 +101,21 @@ void IgnoreListEditor::slotUpdateLocalIgnoreList()
 
 void IgnoreListEditor::slotAddPattern()
 {
-    QString pattern = QInputDialog::getText(this, tr("Add Ignore Pattern"), tr("Add a new ignore pattern:"));
-    QListWidgetItem *item = new QListWidgetItem(pattern);
+    bool okClicked;
+    QString pattern = QInputDialog::getText(this, tr("Add Ignore Pattern"),
+                                            tr("Add a new ignore pattern:"),
+                                            QLineEdit::Normal, QString(), &okClicked);
+
+    if (!okClicked || pattern.isEmpty())
+        return;
+
+    QListWidgetItem *item = new QListWidgetItem;
     setupItemFlags(item);
+    if (pattern.startsWith("]")) {
+        pattern = pattern.mid(1);
+        item->setCheckState(Qt::Checked);
+    }
+    item->setText(pattern);
     ui->listWidget->addItem(item);
     ui->listWidget->scrollToItem(item);
 }
@@ -128,9 +147,14 @@ void IgnoreListEditor::readIgnoreFile(const QString &file, bool readOnly)
             QString line = QString::fromUtf8(ignores.readLine());
             line.chop(1);
             if (!line.isEmpty() && !line.startsWith("#")) {
-                QListWidgetItem *item = new QListWidgetItem(line);
+                QListWidgetItem *item = new QListWidgetItem;
+                setupItemFlags(item);
+                if (line.startsWith("]")) {
+                    line = line.mid(1);
+                    item->setCheckState(Qt::Checked);
+                }
+                item->setText(line);
                 if (readOnly) {
-                    setupItemFlags(item);
                     item->setFlags(item->flags() ^ Qt::ItemIsEnabled);
                     item->setToolTip(disabledTip);
                 }

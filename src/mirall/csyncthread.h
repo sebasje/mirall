@@ -21,6 +21,8 @@
 #include <QMutex>
 #include <QThread>
 #include <QString>
+#include <qelapsedtimer.h>
+#include <qstack.h>
 #include <QNetworkProxy>
 #include <QNetworkCookie>
 
@@ -33,29 +35,41 @@ class QProcess;
 
 namespace Mirall {
 
+class SyncJournalFileRecord;
+
+class SyncJournalDb;
+
+class OwncloudPropagator;
+
+void csyncLogCatcher(int /*verbosity*/,
+                     const char */*function*/,
+                     const char *buffer,
+                     void */*userdata*/);
+
 class CSyncThread : public QObject
 {
     Q_OBJECT
+
 public:
-    CSyncThread(CSYNC *);
+    CSyncThread(CSYNC *, const QString &localPath, const QString &remotePath, SyncJournalDb *journal);
     ~CSyncThread();
 
-    static QString csyncErrorToString( CSYNC_ERROR_CODE, const char * );
+    static QString csyncErrorToString( CSYNC_STATUS);
 
     Q_INVOKABLE void startSync();
 
-    void setLastAuthCookies(QList<QNetworkCookie> c);
+    /* Abort the sync.  Called from the main thread */
+    void abort();
 
 signals:
-    void fileReceived( const QString& );
-    void fileRemoved( const QString& );
     void csyncError( const QString& );
     void csyncWarning( const QString& );
     void csyncUnavailable();
     void treeWalkResult(const SyncFileItemVector&);
 
-    void fileTransmissionProgress( Progress::Kind, const QString&, qint64, qint64);
-    void overallTransmissionProgress( const QString& file, int file_no, int file_cnt, qint64 o1, qint64 o2 );
+    void transmissionProgress( const Progress::Info& progress );
+    void transmissionProblem( const Progress::SyncProblem& problem );
+
     void csyncStateDbFile( const QString& );
     void wipeDb();
 
@@ -64,23 +78,19 @@ signals:
 
     void aboutToRemoveAllFiles(SyncFileItem::Direction direction, bool *cancel);
 
+private slots:
+    void transferCompleted(const SyncFileItem& item);
+    void slotFinished();
+    void slotProgress(Progress::Kind kind, const SyncFileItem &item, quint64 curr = 0, quint64 total = 0);
+
 private:
     void handleSyncError(CSYNC *ctx, const char *state);
-    static void cb_file_progress(const char *remote_url,
-                                 enum csync_notify_type_e kind,
-                                 long long o1, long long o2,
-                                 void *userdata);
-    static void cb_overall_progress(const char *file_name, int file_no,
-                                    int file_cnt, long long o1, long long o2, void *userdata);
+    void progressProblem(Progress::Kind kind, const SyncFileItem& item);
 
     static int treewalkLocal( TREE_WALK_FILE*, void *);
     static int treewalkRemote( TREE_WALK_FILE*, void *);
     int treewalkFile( TREE_WALK_FILE*, bool );
-    int treewalkError( TREE_WALK_FILE* );
-
-    static int walkFinalize(TREE_WALK_FILE*, void* );
-
-
+    bool checkBlacklisting( SyncFileItem *item );
 
     static QMutex _mutex;
     static QMutex _syncMutex;
@@ -88,12 +98,30 @@ private:
 
     CSYNC *_csync_ctx;
     bool _needsUpdate;
+    QString _localPath;
+    QString _remotePath;
+    SyncJournalDb *_journal;
+    QScopedPointer <OwncloudPropagator> _propagator;
+    QElapsedTimer _syncTime;
+    QString _lastDeleted; // if the last item was a path and it has been deleted
+    QHash <QString, QString> _seenFiles;
+
+
+    // maps the origin and the target of the folders that have been renamed
+    QHash<QString, QString> _renamedFolders;
+    QString adjustRenamedPath(const QString &original);
 
     bool _hasFiles; // true if there is at least one file that is not ignored or removed
+    Progress::Info _progressInfo;
+    int _downloadLimit;
+    int _uploadLimit;
+    qint64 _currentFileNo;
+    qint64 _overallFileCount;
+    quint64 _lastOverallBytes;
 
-    QList<QNetworkCookie> _lastAuthCookies;
+    QAtomicInt _abortRequested;
 
-    friend class CSyncRunScopeHelper;
+    friend struct CSyncRunScopeHelper;
 };
 }
 

@@ -50,6 +50,9 @@ public:
       */
     void addFolderDefinition(const QString&, const QString&, const QString& );
 
+    /** Returns the folder which the file or directory stored in path is in */
+    Folder* folderForPath(const QUrl& path);
+
     /** Returns the folder by alias or NULL if no folder with the alias exists. */
     Folder *folder( const QString& );
 
@@ -78,7 +81,7 @@ public:
     /** Creates a new and empty local directory. */
     bool startFromScratch( const QString& );
 
-    QString statusToString( SyncResult ) const;
+    QString statusToString( SyncResult, bool enabled ) const;
 
     static SyncResult accountStatus( const QList<Folder*> &folders );
 
@@ -96,8 +99,6 @@ public slots:
     void slotFolderSyncStarted();
     void slotFolderSyncFinished( const SyncResult& );
 
-    void slotReparseConfiguration();
-
     void terminateSyncProcess( const QString& alias = QString::null );
 
     /* delete all folder objects */
@@ -109,6 +110,8 @@ public slots:
 
     void slotScheduleAllFolders();
 
+    void setDirtyProxy(bool value = true);
+
 private slots:
     // slot to add a folder to the syncing queue
     void slotScheduleSync( const QString & );
@@ -119,7 +122,6 @@ private slots:
 private:
     // finds all folder configuration files
     // and create the folders
-    int setupKnownFolders();
     void terminateCurrentSync();
     QString getBackupName( const QString& ) const;
 
@@ -130,12 +132,14 @@ private:
 
     void removeFolder( const QString& );
 
+    QSet<Folder*>  _disabledFolders;
     Folder::Map    _folderMap;
     QString        _folderConfigPath;
     QSignalMapper *_folderChangeSignalMapper;
     QString        _currentSyncFolder;
-    QStringList    _scheduleQueue;
     bool           _syncEnabled;
+    QQueue<QString> _scheduleQueue;
+    bool            _dirtyProxy; // If the proxy need to be re-configured
 
     explicit FolderMan(QObject *parent = 0);
     static FolderMan *_instance;

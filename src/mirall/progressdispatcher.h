@@ -15,6 +15,10 @@
 #define PROGRESSDISPATCHER_H
 
 #include <QObject>
+#include <QHash>
+#include <QTime>
+#include <QQueue>
+#include <QElapsedTimer>
 
 namespace Mirall {
 
@@ -22,10 +26,11 @@ namespace Mirall {
 /**
  * @brief The FolderScheduler class schedules folders for sync
  */
-class Progress
+namespace Progress
 {
-public:
-    enum ProgressKind_s {
+    enum Kind {
+        Invalid,
+        StartSync,
         Download,
         Upload,
         Context,
@@ -33,12 +38,52 @@ public:
         StartDownload,
         StartUpload,
         EndDownload,
-        EndUpload
+        EndUpload,
+        EndSync,
+        StartDelete,
+        EndDelete,
+        StartRename,
+        EndRename,
+        SoftError,
+        NormalError,
+        FatalError
     };
-    typedef ProgressKind_s Kind;
 
-    static QString asString( Kind );
-};
+    struct Info {
+        Kind    kind;
+        QString folder;
+        QString current_file;
+        qint64  file_size;
+        qint64  current_file_bytes;
+
+        qint64  overall_file_count;
+        qint64  current_file_no;
+        qint64  overall_transmission_size;
+        qint64  overall_current_bytes;
+
+        QDateTime timestamp;
+
+        Info() : kind(Invalid), file_size(0), current_file_bytes(0),
+                 overall_file_count(0), current_file_no(0),
+                 overall_transmission_size(0), overall_current_bytes(0)  { }
+    };
+
+    struct SyncProblem {
+        Kind    kind;
+        QString folder;
+        QString current_file;
+        QString error_message;
+        int     error_code;
+        QDateTime  timestamp;
+
+        SyncProblem() : kind(Invalid), error_code(0) {}
+    };
+
+    QString asActionString( Kind );
+    QString asResultString( Kind );
+
+    bool isErrorKind( Kind );
+}
 
 /**
  * @file progressdispatcher.h
@@ -58,42 +103,36 @@ public:
     static ProgressDispatcher* instance();
     ~ProgressDispatcher();
 
+    QList<Progress::Info> recentChangedItems(int count);
+    QList<Progress::SyncProblem> recentProblems(int count);
+
+    Progress::Kind currentFolderContext( const QString& folder );
+
 signals:
     /**
-      @brief Signals the progress of a single file item.
-
-      @param[out]  kind   The progress kind
-      @param[out]  folder The folder which is being processed
-      @param[out]  file   The current file.
-      @param[out]  p1     The current progress in byte.
-      @param[out]  p2     The maximum progress in byte.
-
-     */
-    void itemProgress( Progress::Kind kind, const QString& folder, const QString& file, qint64 p1, qint64 p2);
-
-    /**
-      @brief Signals the overall progress of a sync run.
-
-      This signals the overall sync progress of a single sync run.
-      If p1 == 0, the sync starts.
-      If p1 == p2, the sync is finished.
+      @brief Signals the progress of data transmission.
 
       @param[out]  folder The folder which is being processed
-      @param[out]  file   The current file.
-      @param[out]  fileNo The current file number
-      @param[out]  fileNo The overall file count to process.
-      @param[out]  p1     The current progress in byte.
-      @param[out]  p2     The maximum progress in byte.
+      @param[out]  newProgress   A struct with all progress info.
+
      */
-    void overallProgress(const QString& folder, const QString& file, int fileNo, int fileCnt, qint64 p1, qint64 p2);
+
+    void progressInfo( const QString& folder, const Progress::Info& progress );
+    void progressSyncProblem( const QString& folder, const Progress::SyncProblem& problem );
 
 protected:
-    void setFolderProgress(Progress::Kind,  const QString&, const QString&, qint64, qint64);
-    void setOverallProgress(const QString&, const QString&, int, int, qint64, qint64);
+    void setProgressInfo(const QString& folder, const Progress::Info& progress);
+    void setProgressProblem( const QString& folder, const Progress::SyncProblem& problem);
 
 private:
     ProgressDispatcher(QObject* parent = 0);
+    const int _QueueSize;
+    QList<Progress::Info> _recentChanges;
+    QList<Progress::SyncProblem> _recentProblems;
 
+    QHash<QString, Progress::Kind> _currentAction;
+
+    QElapsedTimer _timer;
     static ProgressDispatcher* _instance;
 };
 

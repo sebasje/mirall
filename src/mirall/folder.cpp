@@ -15,14 +15,34 @@
  */
 #include "config.h"
 
+#include "mirall/account.h"
 #include "mirall/folder.h"
+#include "mirall/folderman.h"
 #include "mirall/folderwatcher.h"
-#include "mirall/mirallconfigfile.h"
-#include "mirall/syncresult.h"
 #include "mirall/logger.h"
-#include "mirall/owncloudinfo.h"
-#include "mirall/credentialstore.h"
+#include "mirall/mirallconfigfile.h"
+#include "mirall/networkjobs.h"
+#include "mirall/syncjournalfilerecord.h"
+#include "mirall/syncresult.h"
 #include "mirall/utility.h"
+
+#include "creds/abstractcredentials.h"
+
+
+extern "C" {
+
+enum csync_exclude_type_e {
+  CSYNC_NOT_EXCLUDED   = 0,
+  CSYNC_FILE_SILENTLY_EXCLUDED,
+  CSYNC_FILE_EXCLUDE_AND_REMOVE,
+  CSYNC_FILE_EXCLUDE_LIST,
+  CSYNC_FILE_EXCLUDE_INVALID_CHAR
+};
+typedef enum csync_exclude_type_e CSYNC_EXCLUDE_TYPE;
+
+CSYNC_EXCLUDE_TYPE csync_excluded(CSYNC *ctx, const char *path, int filetype);
+
+}
 
 #include <QDebug>
 #include <QTimer>
@@ -34,53 +54,25 @@
 
 namespace Mirall {
 
-void csyncLogCatcher(CSYNC *ctx,
-                     int verbosity,
-                     const char *function,
-                     const char *buffer,
-                     void *userdata)
-{
-  Logger::instance()->csyncLog( QString::fromUtf8(buffer) );
-}
-
-static QString replaceScheme(const QString &urlStr)
-{
-
-    QUrl url( urlStr );
-    if( url.scheme() == QLatin1String("http") ) {
-        url.setScheme( QLatin1String("owncloud") );
-    } else {
-        // connect SSL!
-        url.setScheme( QLatin1String("ownclouds") );
-    }
-    return url.toString();
-}
-
 Folder::Folder(const QString &alias, const QString &path, const QString& secondPath, QObject *parent)
     : QObject(parent)
       , _path(path)
-      , _secondPath(secondPath)
-      , _pollTimer(new QTimer(this))
+      , _remotePath(secondPath)
       , _alias(alias)
       , _enabled(true)
       , _thread(0)
       , _csync(0)
       , _csyncError(false)
       , _csyncUnavail(false)
+      , _wipeDb(false)
+      , _proxyDirty(true)
+      , _journal(path)
       , _csync_ctx(0)
 {
     qsrand(QTime::currentTime().msec());
-    MirallConfigFile cfgFile;
+    _timeSinceLastSync.start();
 
-    _pollTimer->setSingleShot(true);
-    int polltime = cfgFile.remotePollInterval()- 2000 + (int)( 4000.0*qrand()/(RAND_MAX+1.0));
-    qDebug() << "setting remote poll timer interval to" << polltime << "msec for folder " << alias;
-    _pollTimer->setInterval( polltime );
-
-    QObject::connect(_pollTimer, SIGNAL(timeout()), this, SLOT(slotPollTimerTimeout()));
-    _pollTimer->start();
-
-    _watcher = new Mirall::FolderWatcher(path, this);
+    _watcher = new FolderWatcher(path, this);
 
     MirallConfigFile cfg;
     _watcher->addIgnoreListFile( cfg.excludeFile(MirallConfigFile::SystemScope) );
@@ -88,24 +80,24 @@ Folder::Folder(const QString &alias, const QString &path, const QString& secondP
 
     QObject::connect(_watcher, SIGNAL(folderChanged(const QStringList &)),
                      SLOT(slotChanged(const QStringList &)));
-    QObject::connect(this, SIGNAL(syncStarted()),
-                     SLOT(slotSyncStarted()));
-    QObject::connect(this, SIGNAL(syncFinished(const SyncResult &)),
-                     SLOT(slotSyncFinished(const SyncResult &)));
 
     _syncResult.setStatus( SyncResult::NotYetStarted );
 
-    ServerActionNotifier *notifier = new ServerActionNotifier(this);
-    connect(notifier, SIGNAL(guiLog(QString,QString)), Logger::instance(), SIGNAL(optionalGuiLog(QString,QString)));
-    connect(this, SIGNAL(syncFinished(SyncResult)), notifier, SLOT(slotSyncFinished(SyncResult)));
-
     // check if the local path exists
     checkLocalPath();
+
+    int polltime = cfg.remotePollInterval();
+    qDebug() << "setting remote poll timer interval to" << polltime << "msec";
+    _pollTimer.setInterval( polltime );
+    QObject::connect(&_pollTimer, SIGNAL(timeout()), this, SLOT(slotPollTimerTimeout()));
+    _pollTimer.start();
+
+    _syncResult.setFolder(alias);
 }
 
 bool Folder::init()
 {
-    QString url = replaceScheme(ownCloudInfo::instance()->webdavUrl() + secondPath());
+    QString url = Utility::toCSyncScheme(remoteUrl().toString());
     QString localpath = path();
 
     if( csync_create( &_csync_ctx, localpath.toUtf8().data(), url.toUtf8().data() ) < 0 ) {
@@ -113,30 +105,40 @@ bool Folder::init()
         slotCSyncError(tr("Unable to create csync-context"));
         _csync_ctx = 0;
     } else {
-        csync_set_log_callback(   _csync_ctx, csyncLogCatcher );
-        csync_set_log_verbosity(_csync_ctx, 11);
+        csync_set_log_callback( csyncLogCatcher );
+        csync_set_log_level( 11 );
 
         MirallConfigFile cfgFile;
         csync_set_config_dir( _csync_ctx, cfgFile.configPath().toUtf8() );
 
         csync_enable_conflictcopys(_csync_ctx);
         setIgnoredFiles();
-        csync_set_auth_callback( _csync_ctx, getauth );
+        if (Account *account = AccountManager::instance()->account()) {
+            account->credentials()->syncContextPreInit(_csync_ctx);
+        } else {
+            qDebug() << Q_FUNC_INFO << "No default Account object, huh?";
+        }
 
         if( csync_init( _csync_ctx ) < 0 ) {
-            qDebug() << "Could not initialize csync!" << csync_get_error(_csync_ctx) << csync_get_error_string(_csync_ctx);
-            slotCSyncError(CSyncThread::csyncErrorToString(csync_get_error(_csync_ctx), csync_get_error_string(_csync_ctx)));
+            qDebug() << "Could not initialize csync!" << csync_get_status(_csync_ctx) << csync_get_status_string(_csync_ctx);
+            QString errStr = CSyncThread::csyncErrorToString(CSYNC_STATUS(csync_get_status(_csync_ctx)));
+            const char *errMsg = csync_get_status_string(_csync_ctx);
+            if( errMsg ) {
+                errStr += QLatin1String("<br/>");
+                errStr += QString::fromUtf8(errMsg);
+            }
+            slotCSyncError(errStr);
             csync_destroy(_csync_ctx);
             _csync_ctx = 0;
         }
     }
     return _csync_ctx;
 }
+
 Folder::~Folder()
 {
     if( _thread ) {
-        _thread->quit();
-        csync_request_abort(_csync_ctx);
+        _csync->abort();
         _thread->wait();
     }
     delete _csync;
@@ -199,9 +201,23 @@ bool Folder::isBusy() const
     return ( _thread && _thread->isRunning() );
 }
 
-QString Folder::secondPath() const
+QString Folder::remotePath() const
 {
-    return _secondPath;
+    return _remotePath;
+}
+
+QUrl Folder::remoteUrl() const
+{
+    Account *account = AccountManager::instance()->account();
+    QUrl url = account->davUrl();
+    QString path = url.path();
+    if (!path.endsWith('/')) {
+        path.append('/');
+    }
+    path.append(_remotePath);
+    url.setPath(path);
+    qDebug() << url;
+    return url;
 }
 
 QString Folder::nativePath() const
@@ -217,25 +233,15 @@ bool Folder::syncEnabled() const
 void Folder::setSyncEnabled( bool doit )
 {
   _enabled = doit;
-  _watcher->setEventsEnabled( doit );
-  if( doit && ! _pollTimer->isActive() ) {
-      _pollTimer->start();
-  }
 
-  qDebug() << "setSyncEnabled - ############################ " << doit;
   if( doit ) {
-      // undefined until next sync
-      _syncResult.setStatus( SyncResult::NotYetStarted);
-      _syncResult.clearErrors();
-      evaluateSync( QStringList() );
+      // qDebug() << "Syncing enabled on folder " << name();
   } else {
-      // disable folder. Done through the _enabled-flag set above
+      // do not stop or start the watcher here, that is done internally by
+      // folder class. Even if the watcher fires, the folder does not
+      // schedule itself because it checks the var. _enabled before.
+      _pollTimer.stop();
   }
-}
-
-int Folder::pollInterval() const
-{
-    return _pollTimer->interval();
 }
 
 void Folder::setSyncState(SyncResult::Status state)
@@ -243,38 +249,59 @@ void Folder::setSyncState(SyncResult::Status state)
     _syncResult.setStatus(state);
 }
 
-void Folder::setPollInterval(int milliseconds)
-{
-    _pollTimer->setInterval( milliseconds );
-}
-
 SyncResult Folder::syncResult() const
 {
   return _syncResult;
 }
 
-void Folder::evaluateSync(const QStringList &pathList)
+void Folder::evaluateSync(const QStringList &/*pathList*/)
 {
   if( !_enabled ) {
     qDebug() << "*" << alias() << "sync skipped, disabled!";
     return;
   }
 
-  // stop the poll timer here. Its started again in the slot of
-  // sync finished.
-  qDebug() << "* " << alias() << "Poll timer disabled";
-  _pollTimer->stop();
-
   _syncResult.setStatus( SyncResult::NotYetStarted );
+  _syncResult.clearErrors();
   emit scheduleToSync( alias() );
 
 }
 
 void Folder::slotPollTimerTimeout()
 {
-    qDebug() << "* Polling" << alias() << "for changes. Ignoring all pending events until now";
-    _watcher->clearPendingEvents();
-    evaluateSync(QStringList());
+    qDebug() << "* Polling" << alias() << "for changes. (time since last sync:" << (_timeSinceLastSync.elapsed() / 1000) << "s)";
+
+    if (quint64(_timeSinceLastSync.elapsed()) > MirallConfigFile().forceSyncInterval() ||
+            _syncResult.status() != SyncResult::Success ) {
+        qDebug() << "** Force Sync now";
+        evaluateSync(QStringList());
+    } else {
+        RequestEtagJob* job = new RequestEtagJob(AccountManager::instance()->account(), remotePath(), this);
+        // check if the etag is different
+        QObject::connect(job, SIGNAL(etagRetreived(QString)), this, SLOT(etagRetreived(QString)));
+        QObject::connect(job, SIGNAL(networkError(QNetworkReply*)), this, SLOT(slotNetworkUnavailable()));
+        job->start();
+    }
+}
+
+void Folder::etagRetreived(const QString& etag)
+{
+    qDebug() << "* Compare etag  with previous etag: " << (_lastEtag != etag);
+
+    // re-enable sync if it was disabled because network was down
+    FolderMan::instance()->setSyncEnabled(true);
+
+    if (_lastEtag != etag) {
+        _lastEtag = etag;
+        evaluateSync(QStringList());
+    }
+}
+
+void Folder::slotNetworkUnavailable()
+{
+    AccountManager::instance()->account()->setState(Account::Disconnected);
+    _syncResult.setStatus(SyncResult::Unavailable);
+    emit syncStateChange();
 }
 
 void Folder::slotChanged(const QStringList &pathList)
@@ -283,26 +310,109 @@ void Folder::slotChanged(const QStringList &pathList)
     evaluateSync(pathList);
 }
 
-void Folder::slotSyncStarted()
+void Folder::bubbleUpSyncResult()
 {
-    // disable events until syncing is done
-    _watcher->setEventsEnabled(false);
+    // count new, removed and updated items
+    int newItems = 0;
+    int removedItems = 0;
+    int updatedItems = 0;
+    int ignoredItems = 0;
+    int renamedItems = 0;
+
+    SyncFileItem firstItemNew;
+    SyncFileItem firstItemDeleted;
+    SyncFileItem firstItemUpdated;
+    SyncFileItem firstItemRenamed;
+    Logger *logger = Logger::instance();
+
+    foreach (const SyncFileItem &item, _syncResult.syncFileItemVector() ) {
+        if( item._status == SyncFileItem::FatalError || item._status == SyncFileItem::NormalError ) {
+            slotCSyncError( tr("File %1: %2").arg(item._file).arg(item._errorString) );
+            logger->postOptionalGuiLog(tr("File %1").arg(item._file), item._errorString);
+
+        } else {
+            if (item._dir == SyncFileItem::Down) {
+                switch (item._instruction) {
+                case CSYNC_INSTRUCTION_NEW:
+                    newItems++;
+                    if (firstItemNew.isEmpty())
+                        firstItemNew = item;
+
+                    if (item._type == SyncFileItem::Directory) {
+                        _watcher->addPath(path() + item._file);
+                    }
+
+                    break;
+                case CSYNC_INSTRUCTION_REMOVE:
+                    removedItems++;
+                    if (firstItemDeleted.isEmpty())
+                        firstItemDeleted = item;
+
+                    if (item._type == SyncFileItem::Directory) {
+                        _watcher->removePath(path() + item._file);
+                    }
+
+                    break;
+                case CSYNC_INSTRUCTION_CONFLICT:
+                case CSYNC_INSTRUCTION_SYNC:
+                    updatedItems++;
+                    if (firstItemUpdated.isEmpty())
+                        firstItemUpdated = item;
+                    break;
+                case CSYNC_INSTRUCTION_ERROR:
+                    qDebug() << "Got Instruction ERROR. " << _syncResult.errorString();
+                    break;
+                case CSYNC_INSTRUCTION_RENAME:
+                    if (firstItemRenamed.isEmpty()) {
+                        firstItemRenamed = item;
+                    }
+                    renamedItems++;
+                    break;
+                default:
+                    // nothing.
+                    break;
+                }
+            } else if( item._dir == SyncFileItem::None ) { // ignored files counting.
+                if( item._instruction == CSYNC_INSTRUCTION_IGNORE ) {
+                    ignoredItems++;
+                }
+            }
+        }
+    }
+
+    _syncResult.setWarnCount(ignoredItems);
+
+
+    createGuiLog( firstItemNew._file,     tr("downloaded"), newItems );
+    createGuiLog( firstItemDeleted._file, tr("removed"), removedItems );
+    createGuiLog( firstItemUpdated._file, tr("updated"), updatedItems );
+
+    if( !firstItemRenamed.isEmpty() ) {
+        QString renameVerb = tr("renamed");
+        // if the path changes it's rather a move
+        QDir renTarget = QFileInfo(firstItemRenamed._renameTarget).dir();
+        QDir renSource = QFileInfo(firstItemRenamed._file).dir();
+        if(renTarget != renSource) {
+            renameVerb = tr("moved");
+        }
+        createGuiLog( firstItemRenamed._file, tr("%1 to %2").arg(renameVerb).arg(firstItemRenamed._renameTarget), renamedItems );
+    }
+
+    qDebug() << "OO folder slotSyncFinished: result: " << int(_syncResult.status());
 }
 
-void Folder::slotSyncFinished(const SyncResult &result)
+void Folder::createGuiLog( const QString& filename, const QString& verb, int count )
 {
-    _watcher->setEventsEnabledDelayed(2000);
+    if(count > 0) {
+        Logger *logger = Logger::instance();
 
-    qDebug() << "OO folder slotSyncFinished: result: " << int(result.status());
-    emit syncStateChange();
-
-    // reenable the poll timer if folder is sync enabled
-    if( syncEnabled() ) {
-        qDebug() << "* " << alias() << "Poll timer enabled with " << _pollTimer->interval() << "milliseconds";
-        _pollTimer->start();
-    } else {
-        qDebug() << "* Not enabling poll timer for " << alias();
-        _pollTimer->stop();
+        QString file = QDir::toNativeSeparators(filename);
+        if (count == 1) {
+            logger->postOptionalGuiLog(tr("File %1").arg(verb), tr("'%1' has been %2.").arg(file).arg(verb));
+        } else {
+            logger->postOptionalGuiLog(tr("Files %1").arg(verb),
+                                       tr("'%1' and %2 other files have been %3.").arg(file).arg(count-1).arg(verb));
+        }
     }
 }
 
@@ -341,36 +451,33 @@ void Folder::slotThreadTreeWalkResult(const SyncFileItemVector& items)
     _syncResult.setSyncFileItemVector(items);
 }
 
-void Folder::slotTerminateSync()
+void Folder::slotCatchWatcherError(const QString& error)
+{
+    Logger::instance()->postOptionalGuiLog(tr("Error"), error);
+}
+
+void Folder::slotTerminateSync(bool block)
 {
     qDebug() << "folder " << alias() << " Terminating!";
-    MirallConfigFile cfg;
-    QString configDir = cfg.configPath();
-    qDebug() << "csync's Config Dir: " << configDir;
 
     if( _thread && _csync ) {
-        csync_request_abort(_csync_ctx);
-        _thread->quit();
+        _csync->abort();
+
+        // Do not display an error message, user knows his own actions.
+        // _errors.append( tr("The CSync thread terminated.") );
+        // _csyncError = true;
+        if (!block) {
+            setSyncState(SyncResult::SyncAbortRequested);
+            return;
+        }
+
         _thread->wait();
         _csync->deleteLater();
         delete _thread;
-        _csync = 0;
         _thread = 0;
-        csync_resume(_csync_ctx);
+        slotCSyncFinished();
     }
-
-    if( ! configDir.isEmpty() ) {
-        QFile file( configDir + QLatin1String("/lock"));
-        if( file.exists() ) {
-            qDebug() << "After termination, lock file exists and gets removed.";
-            file.remove();
-        }
-    }
-
-    _errors.append( tr("The CSync thread terminated.") );
-    _csyncError = true;
-    qDebug() << "-> CSync Terminated!";
-    slotCSyncFinished();
+    setSyncEnabled(false);
 }
 
 // This removes the csync File database if the sync folder definition is removed
@@ -417,29 +524,37 @@ void Folder::setIgnoredFiles()
 
 void Folder::setProxy()
 {
-    if( _csync_ctx ) {
-        /* Store proxy */
-        QUrl proxyUrl(ownCloudInfo::instance()->webdavUrl());
-        QList<QNetworkProxy> proxies = QNetworkProxyFactory::proxyForQuery(proxyUrl);
-        // We set at least one in Application
-        Q_ASSERT(proxies.count() > 0);
-        QNetworkProxy proxy = proxies.first();
-        if (proxy.type() == QNetworkProxy::NoProxy) {
-            qDebug() << "Passing NO proxy to csync for" << proxyUrl;
-        } else {
-            qDebug() << "Passing" << proxy.hostName() << "of proxy type " << proxy.type()
-                     << " to csync for" << proxyUrl;
-        }
-        int proxyPort = proxy.port();
 
-        csync_set_module_property(_csync_ctx, "proxy_type", (char*) proxyTypeToCStr(proxy.type()) );
-        csync_set_module_property(_csync_ctx, "proxy_host", proxy.hostName().toUtf8().data() );
-        csync_set_module_property(_csync_ctx, "proxy_port", &proxyPort );
-        csync_set_module_property(_csync_ctx, "proxy_user", proxy.user().toUtf8().data()     );
-        csync_set_module_property(_csync_ctx, "proxy_pwd" , proxy.password().toUtf8().data() );
+    /* Store proxy */
+    QUrl proxyUrl(AccountManager::instance()->account()->url());
+    QList<QNetworkProxy> proxies = QNetworkProxyFactory::proxyForQuery(QNetworkProxyQuery(proxyUrl));
+    // We set at least one in Application
+    Q_ASSERT(proxies.count() > 0);
+    QNetworkProxy proxy = proxies.first();
+    if (proxy.type() == QNetworkProxy::NoProxy) {
+        qDebug() << "Passing NO proxy to csync for" << proxyUrl;
+    } else {
+        qDebug() << "Passing" << proxy.hostName() << "of proxy type " << proxy.type()
+                    << " to csync for" << proxyUrl;
     }
+    _proxy_type = proxyTypeToCStr(proxy.type());
+    _proxy_host = proxy.hostName().toUtf8();
+    _proxy_port = proxy.port();
+    _proxy_user = proxy.user().toUtf8();
+    _proxy_pwd  = proxy.password().toUtf8();
+
+    setProxyDirty(false);
 }
 
+void Folder::setProxyDirty(bool value)
+{
+    _proxyDirty = value;
+}
+
+bool Folder::proxyDirty()
+{
+    return _proxyDirty;
+}
 
 const char* Folder::proxyTypeToCStr(QNetworkProxy::ProxyType type)
 {
@@ -461,70 +576,6 @@ const char* Folder::proxyTypeToCStr(QNetworkProxy::ProxyType type)
     }
 }
 
-int Folder::getauth(const char *prompt,
-                         char *buf,
-                         size_t len,
-                         int echo,
-                         int verify,
-                         void *userdata
-                         )
-{
-    int re = 0;
-    QMutex mutex;
-
-    QString qPrompt = QString::fromLatin1( prompt ).trimmed();
-    QString user = CredentialStore::instance()->user();
-    QString pwd  = CredentialStore::instance()->password();
-
-    if( qPrompt == QLatin1String("Enter your username:") ) {
-        // qDebug() << "OOO Username requested!";
-        QMutexLocker locker( &mutex );
-        qstrncpy( buf, user.toUtf8().constData(), len );
-    } else if( qPrompt == QLatin1String("Enter your password:") ) {
-        QMutexLocker locker( &mutex );
-        // qDebug() << "OOO Password requested!";
-        qstrncpy( buf, pwd.toUtf8().constData(), len );
-    } else {
-        if( qPrompt.startsWith( QLatin1String("There are problems with the SSL certificate:"))) {
-            // SSL is requested. If the program came here, the SSL check was done by mirall
-            // It needs to be checked if the  chain is still equal to the one which
-            // was verified by the user.
-            QRegExp regexp("fingerprint: ([\\w\\d:]+)");
-            bool certOk = false;
-
-            int pos = 0;
-
-            // This is the set of certificates which QNAM accepted, so we should accept
-            // them as well
-            QList<QSslCertificate> certs = ownCloudInfo::instance()->certificateChain();
-
-            while (!certOk && (pos = regexp.indexIn(qPrompt, 1+pos)) != -1) {
-                QString neon_fingerprint = regexp.cap(1);
-
-                foreach( const QSslCertificate& c, certs ) {
-                    QString verified_shasum = Utility::formatFingerprint(c.digest(QCryptographicHash::Sha1).toHex());
-                    qDebug() << "SSL Fingerprint from neon: " << neon_fingerprint << " compared to verified: " << verified_shasum;
-                    if( verified_shasum == neon_fingerprint ) {
-                        certOk = true;
-                        break;
-                    }
-                }
-            }
-            // certOk = false;     DEBUG setting, keep disabled!
-            if( !certOk ) { // Problem!
-                qstrcpy( buf, "no" );
-                re = -1;
-            } else {
-                qstrcpy( buf, "yes" ); // Certificate is fine!
-            }
-        } else {
-            qDebug() << "Unknown prompt: <" << prompt << ">";
-            re = -1;
-        }
-    }
-    return re;
-}
-
 void Folder::startSync(const QStringList &pathList)
 {
     Q_UNUSED(pathList)
@@ -538,7 +589,15 @@ void Folder::startSync(const QStringList &pathList)
             QMetaObject::invokeMethod(this, "slotCSyncFinished", Qt::QueuedConnection);
             return;
         }
+        setProxy();
+    } else if (proxyDirty()) {
+        setProxy();
     }
+    csync_set_module_property(_csync_ctx, "proxy_type", const_cast<char*>(_proxy_type) );
+    csync_set_module_property(_csync_ctx, "proxy_host", _proxy_host.data() );
+    csync_set_module_property(_csync_ctx, "proxy_port", &_proxy_port );
+    csync_set_module_property(_csync_ctx, "proxy_user", _proxy_user.data() );
+    csync_set_module_property(_csync_ctx, "proxy_pwd", _proxy_pwd.data() );
 
     if (_thread && _thread->isRunning()) {
         qCritical() << "* ERROR csync is still running and new sync requested.";
@@ -559,12 +618,9 @@ void Folder::startSync(const QStringList &pathList)
 
     qDebug() << "*** Start syncing";
     _thread = new QThread(this);
-    _thread->setPriority(QThread::LowPriority);
     setIgnoredFiles();
-    _csync = new CSyncThread( _csync_ctx );
-    _csync->setLastAuthCookies(ownCloudInfo::instance()->getLastAuthCookies());
+    _csync = new CSyncThread( _csync_ctx, path(), remoteUrl().path(), &_journal);
     _csync->moveToThread(_thread);
-
 
     qRegisterMetaType<SyncFileItemVector>("SyncFileItemVector");
     qRegisterMetaType<SyncFileItem::Direction>("SyncFileItem::Direction");
@@ -580,14 +636,17 @@ void Folder::startSync(const QStringList &pathList)
     //blocking connection so the message box happens in this thread, but block the csync thread.
     connect(_csync, SIGNAL(aboutToRemoveAllFiles(SyncFileItem::Direction,bool*)),
                     SLOT(slotAboutToRemoveAllFiles(SyncFileItem::Direction,bool*)), Qt::BlockingQueuedConnection);
-    connect(_csync, SIGNAL(fileTransmissionProgress(Progress::Kind, QString,qint64,qint64)),
-             SLOT(slotFileTransmissionProgress(Progress::Kind, QString,qint64,qint64)));
-    connect(_csync, SIGNAL(overallTransmissionProgress(QString, int, int, qint64, qint64)),
-             SLOT(slotOverallTransmissionProgress(QString, int, int, qint64, qint64)));
-
+    connect(_csync, SIGNAL(transmissionProgress(Progress::Info)), this, SLOT(slotTransmissionProgress(Progress::Info)));
+    connect(_csync, SIGNAL(transmissionProblem(Progress::SyncProblem)), this, SLOT(slotTransmissionProblem(Progress::SyncProblem)));
 
     _thread->start();
+    _thread->setPriority(QThread::LowPriority);
+
     QMetaObject::invokeMethod(_csync, "startSync", Qt::QueuedConnection);
+
+    // disable events until syncing is done
+    _watcher->setEventsEnabled(false);
+    _pollTimer.stop();
     emit syncStarted();
 }
 
@@ -611,16 +670,23 @@ void Folder::slotCsyncUnavailable()
 
 void Folder::slotCSyncFinished()
 {
-    qDebug() << "-> CSync Finished slot with error " << _csyncError;
+    qDebug() << "-> CSync Finished slot with error " << _csyncError << "warn count" << _syncResult.warnCount();
+    _watcher->setEventsEnabledDelayed(2000);
+    _pollTimer.start();
+    _timeSinceLastSync.restart();
+
+    bubbleUpSyncResult();
 
     if (_csyncError) {
         _syncResult.setStatus(SyncResult::Error);
-
         qDebug() << "  ** error Strings: " << _errors;
         _syncResult.setErrorStrings( _errors );
         qDebug() << "    * owncloud csync thread finished with error";
     } else if (_csyncUnavail) {
         _syncResult.setStatus(SyncResult::Unavailable);
+    } else if( _syncResult.warnCount() > 0 ) {
+        // there have been warnings on the way.
+        _syncResult.setStatus(SyncResult::Problem);
     } else {
         _syncResult.setStatus(SyncResult::Success);
     }
@@ -628,89 +694,58 @@ void Folder::slotCSyncFinished()
     if( _thread && _thread->isRunning() ) {
         _thread->quit();
     }
-    ownCloudInfo::instance()->getQuotaRequest("/");
+    emit syncStateChange();
     emit syncFinished( _syncResult );
 }
 
-
-void Folder::slotFileTransmissionProgress(Progress::Kind kind, const QString& file ,qint64 p1, qint64 p2)
+// the problem comes without a folder and the valid path set. Add that here
+// and hand the result over to the progress dispatcher.
+void Folder::slotTransmissionProblem( const Progress::SyncProblem& problem )
 {
-    ProgressDispatcher::instance()->setFolderProgress( kind, alias(), file, p1, p2 );
+    Progress::SyncProblem newProb = problem;
+    newProb.folder = alias();
+
+    if(newProb.current_file.startsWith(QLatin1String("ownclouds://")) ||
+            newProb.current_file.startsWith(QLatin1String("owncloud://")) ) {
+        // rip off the whole ownCloud URL.
+        newProb.current_file.remove(Utility::toCSyncScheme(remoteUrl().toString()));
+    }
+    QString localPath = path();
+    if( newProb.current_file.startsWith(localPath) ) {
+        // remove the local dir.
+        newProb.current_file = newProb.current_file.right( newProb.current_file.length() - localPath.length());
+    }
+
+    // Count all error conditions.
+    _syncResult.setWarnCount( _syncResult.warnCount()+1 );
+
+    ProgressDispatcher::instance()->setProgressProblem(alias(), newProb);
 }
 
-void Folder::slotOverallTransmissionProgress( const QString& fileName, int fileNo, int fileCnt,
-                                                      qint64 o1, qint64 o2)
+// the progress comes without a folder and the valid path set. Add that here
+// and hand the result over to the progress dispatcher.
+void Folder::slotTransmissionProgress(const Progress::Info& progress)
 {
-    ProgressDispatcher::instance()->setOverallProgress( alias(), fileName, fileNo, fileCnt, o1, o2);
-}
+    Progress::Info newInfo = progress;
+    newInfo.folder = alias();
 
-
-ServerActionNotifier::ServerActionNotifier(QObject *parent)
-    : QObject(parent)
-{
-}
-
-void ServerActionNotifier::slotSyncFinished(const SyncResult &result)
-{
-    SyncFileItemVector items = result.syncFileItemVector();
-    if (items.count() == 0)
-        return;
-
-    int newItems = 0;
-    int removedItems = 0;
-    int updatedItems = 0;
-    SyncFileItem firstItemNew;
-    SyncFileItem firstItemDeleted;
-    SyncFileItem firstItemUpdated;
-    foreach (const SyncFileItem &item, items) {
-        if (item._dir == SyncFileItem::Down) {
-            switch (item._instruction) {
-            case CSYNC_INSTRUCTION_NEW:
-                newItems++;
-                if (firstItemNew.isEmpty())
-                    firstItemNew = item;
-                break;
-            case CSYNC_INSTRUCTION_REMOVE:
-                removedItems++;
-                if (firstItemDeleted.isEmpty())
-                    firstItemDeleted = item;
-                break;
-            case CSYNC_INSTRUCTION_UPDATED:
-                updatedItems++;
-                if (firstItemUpdated.isEmpty())
-                    firstItemUpdated = item;
-        break;
-        default:
-        // nothing.
-        break;
-            }
-        }
+    if(newInfo.current_file.startsWith(QLatin1String("ownclouds://")) ||
+            newInfo.current_file.startsWith(QLatin1String("owncloud://")) ) {
+        // rip off the whole ownCloud URL.
+        newInfo.current_file.remove(Utility::toCSyncScheme(remoteUrl().toString()));
+    }
+    QString localPath = path();
+    if( newInfo.current_file.startsWith(localPath) ) {
+        // remove the local dir.
+        newInfo.current_file = newInfo.current_file.right( newInfo.current_file.length() - localPath.length());
     }
 
-    if (newItems > 0) {
-        QString file = QDir::toNativeSeparators(firstItemNew._file);
-        if (newItems == 1)
-            emit guiLog(tr("New file available"), tr("'%1' has been synced to this machine.").arg(file));
-        else
-            emit guiLog(tr("New files available"), tr("'%1' and %n other file(s) have been synced to this machine.",
-                                                      "", newItems-1).arg(file));
+    // remember problems happening to set the correct Sync status in slot slotCSyncFinished.
+    if( newInfo.kind == Progress::StartSync ) {
+        _syncResult.setWarnCount(0);
     }
-    if (removedItems > 0) {
-        QString file = QDir::toNativeSeparators(firstItemDeleted._file);
-        if (removedItems == 1)
-            emit guiLog(tr("File removed"), tr("'%1' has been removed.").arg(file));
-        else
-            emit guiLog(tr("Files removed"), tr("'%1' and %n other file(s) have been removed.",
-                                                      "", removedItems-1).arg(file));
-    }
-    if (updatedItems > 0) {
-        QString file = QDir::toNativeSeparators(firstItemUpdated._file);
-        if (updatedItems == 1)
-            emit guiLog(tr("File updated"), tr("'%1' has been updated.").arg(file));
-        else
-            emit guiLog(tr("Files updated"), tr("'%1' and %n other file(s) have been updated.",
-                                                      "", updatedItems-1).arg(file));
-    }
+
+    ProgressDispatcher::instance()->setProgressInfo(alias(), newInfo);
 }
 
 void Folder::slotAboutToRemoveAllFiles(SyncFileItem::Direction direction, bool *cancel)
@@ -737,6 +772,65 @@ void Folder::slotAboutToRemoveAllFiles(SyncFileItem::Direction direction, bool *
     }
 }
 
+SyncFileStatus Folder::fileStatus( const QString& fileName )
+{
+    /*
+    STATUS_NONE,
+    + STATUS_EVAL,
+    STATUS_REMOVE, (invalid for this case because it asks for local files)
+    STATUS_RENAME,
+    + STATUS_NEW,
+    STATUS_CONFLICT,(probably also invalid as we know the conflict only with server involvement)
+    + STATUS_IGNORE,
+    + STATUS_SYNC,
+    + STATUS_STAT_ERROR,
+    STATUS_ERROR,
+    STATUS_UPDATED
+    */
+
+    // FIXME: Find a way for STATUS_ERROR
+    SyncFileStatus stat = FILE_STATUS_NONE;
+
+    QString file = path() + fileName;
+    QFileInfo fi(file);
+
+    if( !fi.exists() ) {
+        stat = FILE_STATUS_STAT_ERROR; // not really possible.
+    }
+
+    // file is ignored?
+    if( fi.isSymLink() ) {
+        stat = FILE_STATUS_IGNORE;
+    }
+    int type = CSYNC_FTW_TYPE_FILE;
+    if( fi.isDir() ) {
+        type = CSYNC_FTW_TYPE_DIR;
+    }
+
+    if( stat == FILE_STATUS_NONE ) {
+        CSYNC_EXCLUDE_TYPE excl = csync_excluded(_csync_ctx, file.toUtf8(), type);
+
+        if( excl != CSYNC_NOT_EXCLUDED ) {
+            stat = FILE_STATUS_IGNORE;
+        }
+    }
+
+    SyncJournalFileRecord rec = _journal.getFileRecord(fileName);
+    if( stat == FILE_STATUS_NONE && !rec.isValid() ) {
+        stat = FILE_STATUS_NEW;
+    }
+
+    // file was locally modified.
+    if( stat == FILE_STATUS_NONE && fi.lastModified() != rec._modtime ) {
+        stat = FILE_STATUS_EVAL;
+    }
+
+    if( stat == FILE_STATUS_NONE ) {
+        stat = FILE_STATUS_SYNC;
+    }
+
+    return stat;
+}
 
 } // namespace Mirall
 

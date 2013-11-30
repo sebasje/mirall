@@ -1,5 +1,6 @@
 /*
  * Copyright (C) by Klaas Freitag <freitag@owncloud.com>
+ * Copyright (C) by Daniel Molkentin <danimo@owncloud.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +24,7 @@ namespace Mirall {
 
 namespace Utility
 {
+    void sleep(int sec);
     QString formatFingerprint( const QByteArray& );
     void setupFavLink( const QString &folder );
     QString octetsToString( qint64 octets );
@@ -32,6 +34,8 @@ namespace Utility
     bool hasLaunchOnStartup(const QString &appName);
     void setLaunchOnStartup(const QString &appName, const QString& guiName, bool launch);
     qint64 freeDiskSpace(const QString &path, bool *ok = 0);
+    QString toCSyncScheme(const QString &urlStr);
+    void showInFileManager(const QString &localPath);
     /** Like QLocale::toString(double, 'f', prec), but drops trailing zeros after the decimal point */
 
     /**
@@ -43,6 +47,15 @@ namespace Utility
      * @return the formatted string.
      */
     QString compactFormatDouble(double value, int prec, const QString& unit = QString::null);
+
+    // porting methods
+    QString escape(const QString&);
+    QString dataLocation();
+
+    // convinience OS detection methods
+    bool isWindows();
+    bool isMac();
+    bool isUnix();
 }
 
 }

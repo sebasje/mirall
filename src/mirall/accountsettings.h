@@ -37,8 +37,8 @@ class AccountSettings;
 }
 
 class FolderMan;
-class FileItemDialog;
 class IgnoreListEditor;
+class Account;
 
 class AccountSettings : public QWidget
 {
@@ -49,11 +49,10 @@ public:
     ~AccountSettings();
 
     void setFolderList( const Folder::Map& );
-    void buttonsSetEnabled();
-    void setListWidgetItem(QListWidgetItem* item);
 
 signals:
     void folderChanged();
+    void openProtocol();
     void openFolderAlias( const QString& );
     void infoFolderAlias( const QString& );
 
@@ -61,22 +60,24 @@ public slots:
     void slotFolderActivated( const QModelIndex& );
     void slotOpenOC();
     void slotUpdateFolderState( Folder* );
-    void slotCheckConnection();
-    void slotOCInfo( const QString&, const QString&, const QString&, const QString& );
-    void slotOCInfoFail( QNetworkReply* );
     void slotDoubleClicked( const QModelIndex& );
     void slotFolderOpenAction( const QString& );
-    void slotSetProgress( Progress::Kind, const QString&, const QString&, qint64, qint64);
-    void slotSetOverallProgress( const QString&, const QString&, int, int, qint64, qint64);
+    void slotSetProgress(const QString&, const Progress::Info& progress);
+    void slotProgressProblem(const QString& folder, const Progress::SyncProblem& problem);
+    void slotButtonsSetEnabled();
+
     void slotUpdateQuota( qint64,qint64 );
     void slotIgnoreFilesEditor();
+    void slotAccountStateChanged(int state);
+
+    void setGeneralErrors( const QStringList& errors );
 
 protected slots:
     void slotAddFolder();
     void slotAddFolder( Folder* );
     void slotEnableCurrentFolder();
+    void slotSyncCurrentFolderNow();
     void slotRemoveCurrentFolder();
-    void slotInfoAboutCurrentFolder();
     void slotResetCurrentFolder();
     void slotFolderWizardAccepted();
     void slotFolderWizardRejected();
@@ -87,26 +88,17 @@ private:
     QString shortenFilename( const QString& folder, const QString& file ) const;
     void folderToModelItem( QStandardItem *, Folder * );
     QStandardItem* itemForFolder(const QString& );
+    void showConnectionLabel( const QString& message, const QString& tooltip = QString() );
 
     Ui::AccountSettings *ui;
-    QPointer<FileItemDialog> _fileItemDialog;
     QPointer<IgnoreListEditor> _ignoreEditor;
     QStandardItemModel *_model;
-    QListWidgetItem *_item;
     QUrl   _OCUrl;
-    double _progressFactor;
     QHash<QStandardItem*, QTimer*> _hideProgressTimers;
-    QTimer *_timer;
-
-    QString _previousFileProgressString;
     QString _kindContext;
-    QString _overallFolder;
-    QString _overallFile;
-    int _overallFileNo;
-    int _overallFileCnt;
-    qint64 _overallFileSize;
-    qint64 _overallProgressBase;
-    qint64 _lastProgress;
+    QStringList _generalErrors;
+    bool _wasDisabledBefore;
+    Account *_account;
 };
 
 } // namespace Mirall

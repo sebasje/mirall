@@ -15,6 +15,7 @@
 #ifndef MIRALLCONFIGFILE_H
 #define MIRALLCONFIGFILE_H
 
+#include <QSharedPointer>
 #include <QString>
 #include <QVariant>
 
@@ -22,35 +23,23 @@ class QWidget;
 
 namespace Mirall {
 
+class AbstractCredentials;
+
 class MirallConfigFile
 {
-    /* let only CredentialStore read the password from the file. All other classes
-     *  should work with CredentialStore to get the credentials.  */
-    friend class CredentialStore;
-    friend class ConnectionValidator;
 public:
-    MirallConfigFile( const QString& appendix = QString() );
+    MirallConfigFile();
 
     enum Scope { UserScope, SystemScope };
 
     QString configPath() const;
+    QString configPathWithAppName() const;
     QString configFile() const;
     QString excludeFile(Scope scope) const;
 
     bool exists();
 
-    bool connectionExists( const QString& = QString() );
     QString defaultConnection() const;
-
-    void writeOwncloudConfig( const QString& connection,
-                              const QString& url,
-                              const QString& user,
-                              const QString& passwd );
-
-    void removeConnection( const QString& connection = QString() );
-
-    QString ownCloudUser( const QString& connection = QString() ) const;
-    QString ownCloudUrl( const QString& connection = QString() ) const;
 
     // the certs do not depend on a connection.
     QByteArray caCerts();
@@ -73,10 +62,8 @@ public:
     /* Set poll interval. Value in microseconds has to be larger than 5000 */
     void setRemotePollInterval(int interval, const QString& connection = QString() );
 
-    // Custom Config: accept the custom config to become the main one.
-    void acceptCustomConfig();
-    // Custom Config: remove the custom config file.
-    void cleanupCustomConfig();
+    /* Force sync interval, in milliseconds */
+    quint64 forceSyncInterval(const QString &connection = QString()) const;
 
     bool monoIcons() const;
     void setMonoIcons(bool);
@@ -100,6 +87,7 @@ public:
     bool useDownloadLimit() const;
     void setUseUploadLimit(int);
     void setUseDownloadLimit(bool);
+    /** in kbyte/s */
     int uploadLimit() const;
     int downloadLimit() const;
     void setUploadLimit(int kbytes);
@@ -117,11 +105,10 @@ public:
     void restoreGeometry(QWidget *w);
 
 protected:
-    // these classes can only be access from CredentialStore as a friend class.
-    bool ownCloudPasswordExists( const QString& connection = QString() ) const;
-    QString ownCloudPasswd( const QString& connection = QString() ) const;
-    void clearPasswordFromConfig( const QString& connect = QString() );
-    bool writePassword( const QString& passwd, const QString& connection = QString() );
+    void storeData(const QString& group, const QString& key, const QVariant& value);
+    QVariant retrieveData(const QString& group, const QString& key) const;
+    void removeData(const QString& group, const QString& key);
+    bool dataExists(const QString& group, const QString& key) const;
 
 private:
     QVariant getValue(const QString& param, const QString& group = QString::null,
@@ -129,10 +116,11 @@ private:
     void setValue(const QString& key, const QVariant &value);
 
 private:
+    typedef QSharedPointer< AbstractCredentials > SharedCreds;
+
     static bool    _askedUser;
     static QString _oCVersion;
     static QString _confDir;
-    QString        _customHandle;
 };
 
 }

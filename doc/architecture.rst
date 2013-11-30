@@ -1,5 +1,6 @@
-Architecture
-============
+Appendix B: Architecture
+========================
+
 .. index:: architecture 
 
 The ownCloud project provides desktop sync clients to synchronize the
@@ -11,11 +12,10 @@ csync was written to synchronize with ownCloud’s built-in WebDAV server.
 
 The ownCloud sync client is based on a tool called mirall initially written by
 Duncan Mac Vicar. Later Klaas Freitag joined the project and enhanced it to work
-with ownCloud server. Both mirall and ownCloud Client (oCC) build from the same
-source, currently hosted in the ownCloud source repo on gitorious.
+with ownCloud server.
 
-oCC is written in C++ using the `Qt Framework`_. As a result oCC runs on the
-three important platforms Linux, Windows and MacOS.
+ownCloud Client is written in C++ using the `Qt Framework`_. As a result, the
+ownCloud Client runs on the three important platforms Linux, Windows and MacOS.
 
 .. _csync: http://www.csync.org
 .. _`Qt Framework`: http://www.qt-project.org
@@ -23,8 +23,8 @@ three important platforms Linux, Windows and MacOS.
 The Sync Process
 ----------------
 
-First it is important to recall what syncing is. Syncing tries to keep the files
-on both repositories the same. That means if a file is added to one repository
+First it is important to recall what syncing is: It tries to keep the files
+on two repositories the same. That means if a file is added to one repository
 it is going to be copied to the other repository. If a file is changed on one
 repository, the change is propagated to the other repository. Also, if a file
 is deleted on one side, it is deleted on the other. As a matter of fact, in
@@ -34,8 +34,13 @@ server is always master.
 This is the major difference to other systems like a file backup where just
 changes and new files are propagated but files never get deleted.
 
-Sync Direction and Strategies
------------------------------
+The ownCloud Client checks both repositories for changes frequently after a
+certain time span. That is refered to as a sync run. In between the local
+repository is monitored by a file system monitor system that starts a sync run
+immediately if something was edited, added or removed.
+
+Sync by Time versus ETag
+------------------------
 .. index:: time stamps, file times, etag, unique id 
 
 Until the release of ownCloud 4.5 and ownCloud Client 1.1, ownCloud employed
@@ -44,7 +49,7 @@ synced to the other repository: the files modification time.
 
 The *modification timestamp* is part of the files metadata. It is available on
 every relevant filesystem and is the natural indicator for a file change.
-modification timestamps do not require special action to create and have
+Modification timestamps do not require special action to create and have
 a general meaning. One design goal of csync is to not require a special server
 component, that’s why it was chosen as the backend component.
 
@@ -57,29 +62,24 @@ machines.
 Since this strategy is rather fragile without NTP, ownCloud 4.5 introduced a
 unique number, which changes whenever the file changes. Although it is a unique
 value, it is not a hash of the file, but a randomly chosen number, which it will
-transmit in the Etag_ field. The client will store this number in a
-per-directory database, located in the application directory (version 1.1) or
-as a hidden file right in the directory to be synced (later versions).
-Since the file number is guaranteed to change if the file changes, it can now be
-used to determine if one of the files has changed.
+transmit in the Etag_ field. Since the file number is guaranteed to change if
+the file changes, it can now be used to determine if one of the files has
+changed.
 
-.. todo:: describe what happens if both sides change
+.. note:: ownCloud Client 1.1 and newer require file ID capabilities on the
+   ownCloud server, hence using them with a server earlier than 4.5.0 is
+   not supported.
 
-If the per-directory database gets removed, oCC's CSync backend will fall back
-to a time-stamp based sync process to rebuild the database. Thus it should be
-made sure that both server and client synchronized to NTP time before
-restarting the client after a database removal. If time deviates, the sync
-process might create faux conflict files, which only differ in their time.
-Those need to be cleaned up manually later on and will not be synced back
-to the server. However, no files will get deleted in this process.
-  
+Before the 1.3.0 release of the client the sync process might create faux
+conflict files if time deviates. The original and the conflict files only
+differed in the timestamp, but not in content. This behaviour was changed
+towards a binary check if the files are different.
+
 Just like files, directories also hold a unique id, which changes whenever
 one of the contained files or directories gets modified. Since this is a
 recursive process, it significantly reduces the effort required for a sync
 cycle, because the client will only walk directories with a modified unique id.
 
-.. note:: oCC 1.1 and newer require file ID capabilities on the ownCloud server,
-  hence using them with a server earlier than 4.5.0 is not supported.
 
 This table outlines the different sync methods attempted depending
 on server/client combination:
@@ -106,3 +106,56 @@ are involved and one of them is not in sync with NTP time.
 .. _`NTP time synchronisation`: http://en.wikipedia.org/wiki/Network_Time_Protocol
 .. _Etag: http://en.wikipedia.org/wiki/HTTP_ETag
 
+Comparison and Conflict Cases
+-----------------------------
+
+In a sync run the client first has to detect if one of the two repositories have
+changed files. On the local repository, the client traverses the file
+tree and compares the modification time of each file with the value it was 
+before. The previous value is stored in the client's database. If it is not, it
+means that the file has been added to the local repository. Note that on 
+the local side, the modificaton time a good attribute to detect changes because
+it does not depend on time shifts and such.
+
+For the remote (ie. ownCloud) repository, the client compares the ETag of each
+file with it's previous value. Again the previous value is queried from the
+database. If the ETag is still the same, the file has not changed.
+
+In case a file has changed on both, the local and the remote repository since
+the last sync run, it can not easily be decided which version of the file is
+ the one that should be used. However, changes to any side must not be lost.
+
+That is called a **conflict case**. The client solves it by creating a conflict
+file of the older of the two files and save the newer one under the original
+file name. Conflict files are always created on the client and never on the
+server. The conflict file has the same name as the original file appended with
+the timestamp of the conflict detection.
+
+
+.. _ignored-files-label:
+
+Ignored Files
+-------------
+
+ownCloud Client will refuse to sync the following files:
+
+* Files matched by one of the pattern in :ref:`ignoredFilesEditor-label`
+* Files containing characters that do not work on certain file systems.
+  Currently, these characters are: `\, :, ?, *, ", >, <, |`
+* Files starting in ``.csync_journal.db`` (reserved for journalling)
+
+The Sync Journal
+----------------
+
+The client stores the ETag number in a per-directory database,
+called the journal.  It is a hidden file right in the directory
+to be synced.
+
+If the journal database gets removed, ownCloud Client's CSync backend will
+rebuild the database by comparing the files and their modification times. Thus
+it should be made sure that both server and client synchronized with NTP time
+before restarting the client after a database removal.
+
+Pressing ``F5`` in the Account Settings Dialog that allows to "reset" the
+journal. That can be used to recreate the journal database. Use this only
+if advised to do so by the developer or support staff.

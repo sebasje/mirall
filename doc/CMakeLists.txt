@@ -22,16 +22,21 @@ if(SPHINX_FOUND)
        add_custom_target(doc DEPENDS doc-html doc-man COMMENT "Building documentation...")
     endif(WITH_DOC)
 
+    if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ocdoc/_shared_assets")
+       add_dependencies(doc doc-html-org)
+       add_dependencies(doc doc-html-com)
+    endif()
+
     if(PDFLATEX_FOUND)
         # if this still fails on Debian/Ubuntu, run
         # apt-get install texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
         add_custom_target(doc-latex  ${SPHINX_EXECUTABLE}
 		                     -q -c . -b latex
-				     -d ${SPHINX_CACHE_DIR}
+				     -d ${SPHINX_CACHE_DIR}/latex
 				     -D latex_logo=${LATEX_LOGO}
 				     ${CMAKE_CURRENT_SOURCE_DIR}
 				     ${SPHINX_PDF_DIR} )
-        add_custom_target(doc-pdf make -C ${SPHINX_PDF_DIR} all-pdf
+        add_custom_target(doc-pdf $(MAKE) -C ${SPHINX_PDF_DIR} all-pdf
 		                  DEPENDS doc-latex )
         add_dependencies(doc doc-pdf)
         if (WITH_DOC)
@@ -41,7 +46,7 @@ if(SPHINX_FOUND)
     if (EXISTS ${QT_QCOLLECTIONGENERATOR_EXECUTABLE})
         add_custom_target( doc-qch-sphinx ${SPHINX_EXECUTABLE}
 		                          -q -c . -b qthelp
-				          -d ${SPHINX_CACHE_DIR}
+				          -d ${SPHINX_CACHE_DIR}/qthelp
 					  ${CMAKE_CURRENT_SOURCE_DIR}
 					  ${SPHINX_QCH_DIR} )
         add_custom_target( doc-qch ${QT_QCOLLECTIONGENERATOR_EXECUTABLE}
@@ -54,12 +59,24 @@ if(SPHINX_FOUND)
     endif()
     add_custom_target( doc-html ${SPHINX_EXECUTABLE}
 	                        -q -c . -b html
-				-d ${SPHINX_CACHE_DIR}
+				-d ${SPHINX_CACHE_DIR}/html
 				${CMAKE_CURRENT_SOURCE_DIR}
-				${SPHINX_HTML_DIR} )
+				${SPHINX_HTML_DIR}/unthemed )
+    add_custom_target( doc-html-org ${SPHINX_EXECUTABLE}
+	                        -q -c . -b html
+				-d ${SPHINX_CACHE_DIR}/html
+                                -D html_theme=owncloud_org
+				${CMAKE_CURRENT_SOURCE_DIR}
+				${SPHINX_HTML_DIR}/org )
+    add_custom_target( doc-html-com ${SPHINX_EXECUTABLE}
+	                        -q -c . -b html
+				-d ${SPHINX_CACHE_DIR}/html
+                                -D html_theme=owncloud_com
+				${CMAKE_CURRENT_SOURCE_DIR}
+				${SPHINX_HTML_DIR}/com )
     add_custom_target( doc-man  ${SPHINX_EXECUTABLE}
 	                        -q -c . -b man
-				-d ${SPHINX_CACHE_DIR}
+				-d ${SPHINX_CACHE_DIR}/man
 				${CMAKE_CURRENT_SOURCE_DIR}
 				${SPHINX_MAN_DIR} )
 
@@ -71,7 +88,7 @@ if(SPHINX_FOUND)
     add_custom_target( doc-chm-sphinx  ${SPHINX_EXECUTABLE}
 	                               -q -c . -b htmlhelp
 	                               -D html_theme=basic
-                                       -d ${SPHINX_CACHE_DIR}
+                                       -d ${SPHINX_CACHE_DIR}/htmlhelp
                                        ${CMAKE_CURRENT_SOURCE_DIR}
                                        ${SPHINX_HTMLHELP_DIR} )
     add_custom_target( doc-chm pushd ${SPHINX_HTMLHELP_DIR}; ${MSHTML_COMPILER} *.hhp; popd

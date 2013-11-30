@@ -21,81 +21,81 @@
 #include <QNetworkReply>
 #include <QPointer>
 
-#include "mirall/owncloudwizard.h"
 #include "mirall/theme.h"
+#include "mirall/networkjobs.h"
+
+#include "wizard/owncloudwizardcommon.h"
 
 namespace Mirall {
 
-class SiteCopyFolder;
-class SyncResult;
-class ownCloudInfo;
+class OwncloudWizard;
+class Account;
+
+class ValidateDavAuthJob : public AbstractNetworkJob {
+    Q_OBJECT
+public:
+    ValidateDavAuthJob(Account* account, QObject *parent = 0);
+    void start();
+signals:
+    void authResult(QNetworkReply*);
+private slots:
+    void finished();
+};
+
+class DetermineAuthTypeJob : public AbstractNetworkJob {
+    Q_OBJECT
+public:
+    explicit DetermineAuthTypeJob(Account *account, QObject *parent = 0);
+    void start();
+signals:
+    void authType(WizardCommon::AuthType);
+private slots:
+    void finished();
+private:
+    int _redirects;
+};
+
 
 class OwncloudSetupWizard : public QObject
 {
     Q_OBJECT
 public:
-    explicit OwncloudSetupWizard(QObject *parent = 0 );
-
-    ~OwncloudSetupWizard();
-
-    /**
-     * @intro wether or not to show the intro wizard page
-     */
-    void startWizard();
-
-    void installServer();
-
-    bool isBusy();
-
-    void writeOwncloudConfig();
-
-    /**
-   * returns the configured owncloud url if its already configured, otherwise an empty
-   * string.
-   */
-
-    void    setupLocalSyncFolder();
-
-    OwncloudWizard *wizard();
-
     /** Run the wizard */
     static void runWizard(QObject *obj, const char* amember, QWidget *parent = 0 );
 
 signals:
-    // issued if the oC Setup process (owncloud-admin) is finished.
-    void    ownCloudSetupFinished( bool );
     // overall dialog close signal.
-    void    ownCloudWizardDone( int );
-
-public slots:
-
-protected slots:
-    // wizard dialog signals
-    void slotConnectToOCUrl( const QString& );
+    void ownCloudWizardDone( int );
 
 private slots:
-    void slotOwnCloudFound( const QString&, const QString&, const QString&, const QString& );
-    void slotNoOwnCloudFound( QNetworkReply* );
-    void slotCreateRemoteFolderFinished( QNetworkReply::NetworkError );
+    void slotDetermineAuthType(const QString&);
+    void slotOwnCloudFoundAuth(const QUrl&, const QVariantMap&);
+    void slotNoOwnCloudFoundAuth(QNetworkReply *reply);
+    void slotNoOwnCloudFoundAuthTimeout(const QUrl&url);
+
+    void slotConnectToOCUrl(const QString&);
+    void slotConnectionCheck(QNetworkReply*);
+
+    void slotCreateLocalAndRemoteFolders(const QString&, const QString&);
+    void slotAuthCheckReply(QNetworkReply*);
+    void slotCreateRemoteFolderFinished(QNetworkReply::NetworkError);
     void slotAssistantFinished( int );
-    void slotClearPendingRequests();
-    void slotAuthCheckReply( const QString&, QNetworkReply * );
+
 private:
-    bool createRemoteFolder();
-    void checkRemoteFolder();
+    explicit OwncloudSetupWizard(QObject *parent = 0 );
+    ~OwncloudSetupWizard();
 
-    void finalizeSetup( bool );
-
-    /* Start a request to the newly installed ownCloud to check the connection */
+    void startWizard();
     void testOwnCloudConnect();
+    void createRemoteFolder();
+    void finalizeSetup( bool );
+    bool ensureStartFromScratch(const QString &localFolder);
+    void replaceDefaultAccountWith(Account *newAccount);
 
-    OwncloudWizard *_ocWizard;
-    QPointer<QNetworkReply>  _mkdirRequestReply;
-    QPointer<QNetworkReply>  _checkInstallationRequest;
-    QPointer<QNetworkReply>  _checkRemoteFolderRequest;
+    Account* _account;
+    OwncloudWizard* _ocWizard;
+    QString _remoteFolder;
 
-    QString         _configHandle;
-    QString         _remoteFolder;
 };
 
 }

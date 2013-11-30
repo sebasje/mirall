@@ -79,7 +79,7 @@ void FolderWatcher::addIgnoreListFile( const QString& file )
 
     while (!infile.atEnd()) {
         QString line = QString::fromLocal8Bit( infile.readLine() ).trimmed();
-        if( !line.startsWith( QLatin1Char('#') ) && line.isEmpty() ) {
+        if( !(line.startsWith( QLatin1Char('#') ) || line.isEmpty()) ) {
             _ignores.append(line);
         }
     }
@@ -171,6 +171,17 @@ void FolderWatcher::changeDetected(const QString& f)
     _pendingPathes[f] = 1; //_pendingPathes[path]+mask;
     setProcessTimer();
 }
+
+void FolderWatcher::addPath(const QString &path )
+{
+    _d->addPath(path);
+}
+
+void FolderWatcher::removePath(const QString &path )
+{
+    _d->removePath(path);
+}
+
 
 } // namespace Mirall
 

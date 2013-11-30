@@ -48,7 +48,7 @@ public:
     void setLogFile(const QString& , bool );
 
 protected:
-    void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *);
 
 protected slots:
     void slotNewLog( const QString &msg );
@@ -64,9 +64,6 @@ private:
     QPushButton *_clearBtn;
     QLabel      *_statusLabel;
 
-    QFile       _logFile;
-    bool        _doFileFlush;
-    QScopedPointer<QTextStream> _logstream;
 };
 
 } // namespace

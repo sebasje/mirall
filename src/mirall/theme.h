@@ -48,7 +48,8 @@ public:
      * Use and redefine this if the human readable name contains spaces,
      * special chars and such.
      *
-     * By default, appName() is returned.
+     * By default, the name is derived from the APPLICATION_NAME
+     * cmake variable.
      *
      * @return QString with human readable app name.
      */
@@ -61,9 +62,16 @@ public:
      * it is used for config files etc. If you need a more sophisticated
      * name in the GUI, redefine appNameGUI.
      *
+     * By default, the name is derived from the APPLICATION_SHORTNAME
+     * cmake variable, and should be the same. This method is only
+     * reimplementable for legacy reasons.
+     *
+     * Warning: Do not modify this value, as many things, e.g. settings
+     * depend on it! You most likely want to modify \ref appNameGUI().
+     *
      * @return QString with app name.
      */
-    virtual QString appName() const = 0;
+    virtual QString appName() const;
 
     /**
      * @brief configFileName
@@ -82,7 +90,6 @@ public:
     virtual QIcon   syncStateIcon( SyncResult::Status, bool sysTray = false ) const;
 
     virtual QIcon   folderDisabledIcon() const = 0;
-
     virtual QIcon   applicationIcon() const = 0;
 
     virtual QString statusHeaderText( SyncResult::Status ) const;
@@ -120,6 +127,8 @@ public:
      */
     virtual QString enforcedLocale() const { return QString::null; }
 
+    /** colored, white or black */
+    QString systrayIconFlavor(bool mono) const;
 
     /**
      * Override to use a string or a custom image name.

@@ -13,27 +13,47 @@
  */
 
 #include "mirall/folderwizard.h"
-#include "mirall/owncloudinfo.h"
+#include "mirall/folderman.h"
 #include "mirall/mirallconfigfile.h"
 #include "mirall/theme.h"
+#include "mirall/networkjobs.h"
+#include "mirall/account.h"
 
 #include <QDebug>
 #include <QDesktopServices>
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFileIconProvider>
 #include <QInputDialog>
 #include <QUrl>
 #include <QValidator>
 #include <QWizardPage>
+#include <QTreeWidget>
 
 #include <stdlib.h>
 
 namespace Mirall
 {
 
+QString FormatWarningsWizardPage::formatWarnings(const QStringList &warnings) const
+{
+    QString ret;
+    if (warnings.count() == 1) {
+        ret = tr("<b>Warning:</b> ") + warnings.first();
+    } else if (warnings.count() > 1) {
+        ret = tr("<b>Warning:</b> ") + "<ul>";
+        Q_FOREACH(QString warning, warnings) {
+            ret += QString::fromLatin1("<li>%1</li>").arg(warning);
+        }
+        ret += "</ul>";
+    }
+
+    return ret;
+}
+
 FolderWizardSourcePage::FolderWizardSourcePage()
-    : QWizardPage()
+    : FormatWarningsWizardPage()
 {
     _ui.setupUi(this);
     registerField(QLatin1String("sourceFolder*"), _ui.localFolderLineEdit);
@@ -41,7 +61,7 @@ FolderWizardSourcePage::FolderWizardSourcePage()
     _ui.localFolderLineEdit->setText( QDir::toNativeSeparators( defaultPath ) );
     registerField(QLatin1String("alias*"), _ui.aliasLineEdit);
     _ui.aliasLineEdit->setText( Theme::instance()->appNameGUI() );
-
+    _ui.warnLabel->setTextFormat(Qt::RichText);
     _ui.warnLabel->hide();
 }
 
@@ -65,16 +85,16 @@ bool FolderWizardSourcePage::isComplete() const
   QFileInfo selFile( QDir::fromNativeSeparators(_ui.localFolderLineEdit->text()) );
   QString   userInput = selFile.canonicalFilePath();
 
-  QString warnString;
+  QStringList warnStrings;
 
   bool isOk = selFile.isDir();
   if( !isOk ) {
-    warnString = tr("No local folder selected!");
+    warnStrings.append(tr("No valid local folder selected!"));
   }
 
   if (isOk && !selFile.isWritable()) {
       isOk = false;
-      warnString += tr("You have no permission to write to the selected folder!");
+      warnStrings.append(tr("You have no permission to write to the selected folder!"));
   }
 
   // check if the local directory isn't used yet in another ownCloud sync
@@ -95,21 +115,40 @@ bool FolderWizardSourcePage::isComplete() const
       if( ! folderDir.endsWith(QLatin1Char('/')) ) folderDir.append(QLatin1Char('/'));
 
       qDebug() << "Checking local path: " << folderDir << " <-> " << userInput;
-      if( QFileInfo( f->path() ) == userInput ) {
+      if( QDir::cleanPath(f->path())  == QDir::cleanPath(userInput)  &&
+              QDir::cleanPath(QDir(f->path()).canonicalPath()) == QDir(userInput).canonicalPath() ) {
         isOk = false;
-        warnString.append( tr("The local path %1 is already an upload folder.<br/>Please pick another one!")
+        warnStrings.append( tr("The local path %1 is already an upload folder. Please pick another one!")
                            .arg(QDir::toNativeSeparators(userInput)) );
       }
-      if( isOk && folderDir.startsWith( userInput )) {
+      if( isOk && QDir::cleanPath(folderDir).startsWith(QDir::cleanPath(userInput)+'/') ) {
         qDebug() << "A already configured folder is child of the current selected";
-        warnString.append( tr("An already configured folder is contained in the current entry."));
+        warnStrings.append( tr("An already configured folder is contained in the current entry."));
         isOk = false;
       }
-      if( isOk && userInput.startsWith( folderDir ) ) {
+
+      QString absCleanUserFolder = QDir::cleanPath(QDir(userInput).canonicalPath())+'/';
+      if( isOk && QDir::cleanPath(folderDir).startsWith(absCleanUserFolder) ) {
+          qDebug() << "A already configured folder is child of the current selected";
+          warnStrings.append( tr("The selected folder is a symbolic link. An already configured"
+                                "folder is contained in the folder this link is pointing to."));
+          isOk = false;
+      }
+
+      if( isOk && QDir::cleanPath(QString(userInput+'/')).startsWith( QDir::cleanPath(folderDir)) ) {
         qDebug() << "An already configured folder is parent of the current selected";
-        warnString.append( tr("An already configured folder contains the currently entered directory."));
+        warnStrings.append( tr("An already configured folder contains the currently entered folder."));
         isOk = false;
       }
+      if( isOk && absCleanUserFolder.startsWith( QDir::cleanPath(folderDir)) ) {
+          qDebug() << "The selected folder is a symbolic link. An already configured folder is\n"
+                      "the parent of the current selected contains the folder this link is pointing to.";
+          warnStrings.append( tr("The selected folder is a symbolic link. An already configured folder "
+                                "is the parent of the current selected contains the folder this link is "
+                                "pointing to."));
+          isOk = false;
+      }
+
       i++;
     }
   }
@@ -117,7 +156,7 @@ bool FolderWizardSourcePage::isComplete() const
   // check if the alias is unique.
   QString alias = _ui.aliasLineEdit->text();
   if( alias.isEmpty() ) {
-    warnString.append( tr("The alias can not be empty. Please provide a descriptive alias word.") );
+    warnStrings.append( tr("The alias can not be empty. Please provide a descriptive alias word.") );
     isOk = false;
   }
 
@@ -128,7 +167,7 @@ bool FolderWizardSourcePage::isComplete() const
     qDebug() << "Checking local alias: " << f->alias();
     if( f ) {
       if( f->alias() == alias ) {
-        warnString.append( tr("<br/>The alias <i>%1</i> is already in use. Please pick another alias.").arg(alias) );
+        warnStrings.append( tr("The alias <i>%1</i> is already in use. Please pick another alias.").arg(alias) );
         isOk = false;
         goon = false;
       }
@@ -136,12 +175,14 @@ bool FolderWizardSourcePage::isComplete() const
     i++;
   }
 
+  _ui.warnLabel->setWordWrap(true);
   if( isOk ) {
     _ui.warnLabel->hide();
     _ui.warnLabel->setText( QString::null );
   } else {
     _ui.warnLabel->show();
-    _ui.warnLabel->setText( warnString );
+    QString warnings = formatWarnings(warnStrings);
+    _ui.warnLabel->setText( warnings );
   }
   return isOk;
 }
@@ -164,56 +205,139 @@ void FolderWizardSourcePage::on_localFolderLineEdit_textChanged()
 
 // =================================================================================
 FolderWizardTargetPage::FolderWizardTargetPage()
-: _warnWasVisible(false)
+    : FormatWarningsWizardPage()
+    ,_warnWasVisible(false)
 {
     _ui.setupUi(this);
     _ui.warnFrame->hide();
 
     connect(_ui.addFolderButton, SIGNAL(clicked()), SLOT(slotAddRemoteFolder()));
-    connect(_ui.refreshButton, SIGNAL(clicked()), SLOT(slotRefreshFolders())),
-    connect(_ui.folderListWidget, SIGNAL(currentTextChanged(QString)),
-            SIGNAL(completeChanged()));
+    connect(_ui.refreshButton, SIGNAL(clicked()), SLOT(slotRefreshFolders()));
+    connect(_ui.folderTreeWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), SIGNAL(completeChanged()));
+    connect(_ui.folderTreeWidget, SIGNAL(itemActivated(QTreeWidgetItem*,int)), SIGNAL(completeChanged()));
+    connect(_ui.folderTreeWidget, SIGNAL(itemExpanded(QTreeWidgetItem*)), SLOT(slotItemExpanded(QTreeWidgetItem*)));
+
 }
 
 void FolderWizardTargetPage::slotAddRemoteFolder()
 {
+    QTreeWidgetItem *current = _ui.folderTreeWidget->currentItem();
+
+    QString parent('/');
+    if (current) {
+        parent = current->data(0, Qt::UserRole).toString();
+    }
+
     QInputDialog *dlg = new QInputDialog(this);
+
+    dlg->setWindowTitle(tr("Add Remote Folder"));
+    dlg->setLabelText(tr("Enter the name of the new folder:"));
+    dlg->setTextValue(parent);
     dlg->open(this, SLOT(slotCreateRemoteFolder(QString)));
     dlg->setAttribute(Qt::WA_DeleteOnClose);
 }
 
-void FolderWizardTargetPage::slotCreateRemoteFolder(QString folder)
+void FolderWizardTargetPage::slotCreateRemoteFolder(const QString &folder)
 {
     if( folder.isEmpty() ) return;
-    ownCloudInfo::instance()->mkdirRequest( folder );
+
+    MkColJob *job = new MkColJob(AccountManager::instance()->account(), folder, this);
+    /* check the owncloud configuration file and query the ownCloud */
+    connect(job, SIGNAL(finished(QNetworkReply::NetworkError)),
+                 SLOT(slotCreateRemoteFolderFinished(QNetworkReply::NetworkError)));
+    connect(job, SIGNAL(networkError(QNetworkReply*)), SLOT(slotHandleNetworkError(QNetworkReply*)));
+    job->start();
 }
 
-void FolderWizardTargetPage::slotCreateRemoteFolderFinished( QNetworkReply::NetworkError error )
+void FolderWizardTargetPage::slotCreateRemoteFolderFinished(QNetworkReply::NetworkError error)
 {
-  qDebug() << "** webdav mkdir request finished " << error;
-
-  // the webDAV server seems to return a 202 even if mkdir was successful.
-  if( error == QNetworkReply::NoError ||
-          error == QNetworkReply::ContentOperationNotPermittedError) {
-    showWarn( tr("Folder was successfully created on %1.").arg( Theme::instance()->appNameGUI() ) );
-    slotRefreshFolders();
-  } else {
-    showWarn( tr("Failed to create the folder on %1.<br/>Please check manually.").arg( Theme::instance()->appNameGUI() ) );
-  }
-}
-
-void FolderWizardTargetPage::slotUpdateDirectories(QStringList list)
-{
-    _ui.folderListWidget->clear();
-    foreach (QString item, list) {
-        item.remove(QLatin1String("/remote.php/webdav"));
-        _ui.folderListWidget->addItem(item);
+    if (error == QNetworkReply::NoError) {
+        qDebug() << "** webdav mkdir request finished";
+        showWarn(tr("Folder was successfully created on %1.").arg(Theme::instance()->appNameGUI()));
+        slotRefreshFolders();
     }
+}
+
+void FolderWizardTargetPage::slotHandleNetworkError(QNetworkReply *reply)
+{
+    qDebug() << "** webdav mkdir request failed:" << reply->error();
+    showWarn(tr("Failed to create the folder on %1. Please check manually.")
+             .arg(Theme::instance()->appNameGUI()));
+}
+
+static QTreeWidgetItem* findFirstChild(QTreeWidgetItem *parent, const QString& text)
+{
+    for (int i = 0; i < parent->childCount(); ++i) {
+        QTreeWidgetItem *child = parent->child(i);
+        if (child->text(0) == text) {
+            return child;
+        }
+    }
+    return 0;
+}
+
+void FolderWizardTargetPage::recursiveInsert(QTreeWidgetItem *parent, QStringList pathTrail, QString path)
+{
+    QFileIconProvider prov;
+    QIcon folderIcon = prov.icon(QFileIconProvider::Folder);
+    if (pathTrail.size() == 0) {        
+        if (path.endsWith('/')) {
+            path.chop(1);
+        }
+        parent->setToolTip(0, path);
+        parent->setData(0, Qt::UserRole, path);
+    } else {
+        QTreeWidgetItem *item = findFirstChild(parent, pathTrail.first());
+        if (!item) {
+            item = new QTreeWidgetItem(parent);
+            item->setIcon(0, folderIcon);
+            item->setText(0, pathTrail.first());
+            item->setData(0, Qt::UserRole, pathTrail.first());
+            item->setChildIndicatorPolicy(QTreeWidgetItem::ShowIndicator);
+        }
+
+        pathTrail.removeFirst();
+        recursiveInsert(item, pathTrail, path);
+    }
+}
+
+void FolderWizardTargetPage::slotUpdateDirectories(const QStringList &list)
+{
+    QString webdavFolder = QUrl(AccountManager::instance()->account()->davUrl()).path();
+
+    QTreeWidgetItem *root = _ui.folderTreeWidget->topLevelItem(0);
+    if (!root) {
+        root = new QTreeWidgetItem(_ui.folderTreeWidget);
+        root->setText(0, Theme::instance()->appNameGUI());
+        root->setIcon(0, Theme::instance()->applicationIcon());
+        root->setToolTip(0, tr("Choose this to sync the entire account"));
+        root->setData(0, Qt::UserRole, "/");
+    }
+    foreach (QString path, list) {
+        path.remove(webdavFolder);
+        QStringList paths = path.split('/');
+        if (paths.last().isEmpty()) paths.removeLast();
+        recursiveInsert(root, paths, path);
+    }
+    root->setExpanded(true);
 }
 
 void FolderWizardTargetPage::slotRefreshFolders()
 {
-    ownCloudInfo::instance()->getDirectoryListing("/");
+    LsColJob *job = new LsColJob(AccountManager::instance()->account(), "/", this);
+    connect(job, SIGNAL(directoryListing(QStringList)),
+            SLOT(slotUpdateDirectories(QStringList)));
+    job->start();
+    _ui.folderTreeWidget->clear();
+}
+
+void FolderWizardTargetPage::slotItemExpanded(QTreeWidgetItem *item)
+{
+    QString dir = item->data(0, Qt::UserRole).toString();
+    LsColJob *job = new LsColJob(AccountManager::instance()->account(), dir, this);
+    connect(job, SIGNAL(directoryListing(QStringList)),
+            SLOT(slotUpdateDirectories(QStringList)));
+    job->start();
 }
 
 FolderWizardTargetPage::~FolderWizardTargetPage()
@@ -222,19 +346,39 @@ FolderWizardTargetPage::~FolderWizardTargetPage()
 
 bool FolderWizardTargetPage::isComplete() const
 {
-    if (!_ui.folderListWidget->currentItem())
+    if (!_ui.folderTreeWidget->currentItem())
         return false;
 
-    QString dir = _ui.folderListWidget->currentItem()->text();
+    QStringList warnStrings;
+    QString dir = _ui.folderTreeWidget->currentItem()->data(0, Qt::UserRole).toString();
+    if (!dir.startsWith(QLatin1Char('/'))) {
+        dir.prepend(QLatin1Char('/'));
+    }
     wizard()->setProperty("targetPath", dir);
 
-    if( dir == QLatin1String("/") ) {
-        showWarn( tr("If you sync the root folder, you can <b>not</b> configure another sync directory."));
-        return true;
-    } else {
-        showWarn();
-        return true;
+    Folder::Map map = _folderMap;
+    Folder::Map::const_iterator i = map.constBegin();
+    for(i = map.constBegin();i != map.constEnd(); i++ ) {
+        Folder *f = static_cast<Folder*>(i.value());
+        QString curDir = f->remotePath();
+        if (!curDir.startsWith(QLatin1Char('/'))) {
+            curDir.prepend(QLatin1Char('/'));
+        }
+        if (QDir::cleanPath(dir) == QDir::cleanPath(curDir)) {
+            warnStrings.append(tr("This folder is already being synced."));
+        } else if (dir.startsWith(curDir + QLatin1Char('/'))) {
+            warnStrings.append(tr("You are already syncing <i>%1</i>, which is a parent folder of <i>%2</i>.").arg(curDir).arg(dir));
+        }
+
+        if (curDir == QLatin1String("/")) {
+            warnStrings.append(tr("You are already syncing all your files. Syncing another folder is <b>not</b> supported. "
+                                  "If you want to sync multiple folders, please remove the currently configured "
+                                  "root folder sync."));
+        }
     }
+
+    showWarn(formatWarnings(warnStrings));
+    return warnStrings.isEmpty();
 }
 
 void FolderWizardTargetPage::cleanupPage()
@@ -245,19 +389,7 @@ void FolderWizardTargetPage::cleanupPage()
 void FolderWizardTargetPage::initializePage()
 {
     showWarn();
-
-    /* check the owncloud configuration file and query the ownCloud */
-    ownCloudInfo *ocInfo = ownCloudInfo::instance();
-    if( ocInfo->isConfigured() ) {
-        connect( ocInfo, SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
-                 SLOT(slotDirCheckReply(QString,QNetworkReply*)));
-        connect( ocInfo, SIGNAL(webdavColCreated(QNetworkReply::NetworkError)),
-                 SLOT(slotCreateRemoteFolderFinished( QNetworkReply::NetworkError )));
-        connect( ocInfo, SIGNAL(directoryListingUpdated(QStringList)),
-                 SLOT(slotUpdateDirectories(QStringList)));
-
-        slotRefreshFolders();
-    }
+    slotRefreshFolders();
 }
 
 void FolderWizardTargetPage::showWarn( const QString& msg ) const
@@ -282,16 +414,16 @@ FolderWizard::FolderWizard( QWidget *parent )
     _folderWizardSourcePage(new FolderWizardSourcePage),
     _folderWizardTargetPage(0)
 {
+    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setPage(Page_Source, _folderWizardSourcePage );
     if (!Theme::instance()->singleSyncFolder()) {
         _folderWizardTargetPage = new FolderWizardTargetPage();
         setPage(Page_Target, _folderWizardTargetPage );
     }
 
-    setWindowTitle( tr( "%1 Folder Wizard" ).arg( Theme::instance()->appNameGUI() ) );
-#ifdef Q_WS_MAC
-    setWizardStyle( QWizard::ModernStyle );
-#endif
+    setWindowTitle( tr("Add Folder") );
+    setOptions(QWizard::CancelButtonOnLeft);
+    setButtonText(QWizard::FinishButton, tr("Add Folder"));
 }
 
 FolderWizard::~FolderWizard()
@@ -301,6 +433,7 @@ FolderWizard::~FolderWizard()
 void FolderWizard::setFolderMap( const Folder::Map& fm)
 {
     _folderWizardSourcePage->setFolderMap( fm );
+    _folderWizardTargetPage->setFolderMap( fm );
 }
 
 } // end namespace

@@ -16,17 +16,18 @@
 
 #include <QObject>
 #include <QStringList>
-
-class QNetworkReply;
+#include <QVariantMap>
+#include <QNetworkReply>
 
 namespace Mirall {
+
+class Account;
 
 class ConnectionValidator : public QObject
 {
     Q_OBJECT
 public:
-    explicit ConnectionValidator(QObject *parent = 0);
-    explicit ConnectionValidator(const QString& connection, QObject *parent = 0);
+    explicit ConnectionValidator(Account *account, QObject *parent = 0);
 
     enum Status {
         Undefined,
@@ -42,6 +43,7 @@ public:
     };
 
     QStringList errors() const;
+    bool networkError() const;
 
     void checkConnection();
 
@@ -55,17 +57,17 @@ signals:
 public slots:
 
 protected slots:
-    void slotStatusFound( const QString&, const QString&, const QString&, const QString& );
-    void slotNoStatusFound(QNetworkReply *);
+    void slotStatusFound(const QUrl&url, const QVariantMap &info);
+    void slotNoStatusFound(QNetworkReply *reply);
 
-    void slotFetchCredentials();
-    void slotCredentialsFetched( bool );
     void slotCheckAuthentication();
-    void slotAuthCheck( const QString& ,QNetworkReply * );
+    void slotAuthFailed(QNetworkReply *reply);
+    void slotAuthSuccess();
 
 private:
     QStringList _errors;
-    QString     _connection;
+    Account   *_account;
+    bool  _networkError;
 };
 
 }

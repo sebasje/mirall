@@ -14,18 +14,53 @@
 #include "mirall/mirallconfigfile.h"
 #include "mirall/utility.h"
 #include "mirall/sslerrordialog.h"
-#include "mirall/owncloudinfo.h"
 
 #include <QtGui>
 #include <QtNetwork>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets>
+#endif
+
 
 #include "ui_sslerrordialog.h"
 
 namespace Mirall
 {
-SslErrorDialog::SslErrorDialog(QWidget *parent) :
-    QDialog(parent), _allTrusted(false), _ui(new Ui::SslErrorDialog)
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+namespace Utility {
+    //  Used for QSSLCertificate::subjectInfo which returns a QStringList in Qt5, but a QString in Qt4
+    QString escape(const QStringList &l) { return escape(l.join(';')); }
+}
+#endif
+
+bool SslDialogErrorHandler::handleErrors(QList<QSslError> errors, QList<QSslCertificate> *certs, Account *account)
 {
+    if (!certs) {
+        qDebug() << "Certs parameter required but is NULL!";
+        return false;
+    }
+
+    SslErrorDialog dlg(account);
+    // whether the failing certs have previously been accepted
+    if (dlg.checkFailingCertsKnown(errors)) {
+        *certs = dlg.unknownCerts();
+        return true;
+    }
+    // whether the user accepted the certs
+    if (dlg.exec() == QDialog::Accepted) {
+        if (dlg.trustConnection()) {
+            *certs = dlg.unknownCerts();
+            return true;
+        }
+    }
+    return false;
+}
+
+SslErrorDialog::SslErrorDialog(Account *account, QWidget *parent) :
+    QDialog(parent), _allTrusted(false), _ui(new Ui::SslErrorDialog), _account(account)
+{
+    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     _ui->setupUi( this );
     setWindowTitle( tr("SSL Connection") );
     QPushButton *okButton =
@@ -64,29 +99,24 @@ QString SslErrorDialog::styleSheet() const
 }
 #define QL(x) QLatin1String(x)
 
-QList<QSslCertificate> SslErrorDialog::storedCACerts()
-{
-    MirallConfigFile cfg( _customConfigHandle );
-    QList<QSslCertificate> cacerts = QSslCertificate::fromData(cfg.caCerts());
-    return cacerts;
-}
-
-bool SslErrorDialog::setErrorList( QList<QSslError> errors )
+bool SslErrorDialog::checkFailingCertsKnown( const QList<QSslError> &errors )
 {
     // check if unknown certs caused errors.
     _unknownCerts.clear();
 
     QStringList errorStrings;
 
-    QList<QSslCertificate> trustedCerts = SslErrorDialog::storedCACerts();
+    QList<QSslCertificate> trustedCerts = _account->approvedCerts();
 
     for (int i = 0; i < errors.count(); ++i) {
-        if (trustedCerts.contains(errors.at(i).certificate()) ||
-            _unknownCerts.contains(errors.at(i).certificate() ))
+        QSslError error = errors.at(i);
+        if (trustedCerts.contains(error.certificate()) ||
+            _unknownCerts.contains(error.certificate() )) {
             continue;
-        errorStrings += errors.at(i).errorString();
-        if (!errors.at(i).certificate().isNull()) {
-            _unknownCerts.append(errors.at(i).certificate());
+        }
+        errorStrings += error.errorString();
+        if (!error.certificate().isNull()) {
+            _unknownCerts.append(error.certificate());
         }
     }
 
@@ -137,14 +167,14 @@ QString SslErrorDialog::certDiv( QSslCertificate cert ) const
 {
     QString msg;
     msg += QL("<div id=\"cert\">");
-    msg += QL("<h3>") + tr("with Certificate %1").arg( cert.subjectInfo( QSslCertificate::CommonName )) + QL("</h3>");
+    msg += QL("<h3>") + tr("with Certificate %1").arg( Utility::escape(cert.subjectInfo( QSslCertificate::CommonName ))) + QL("</h3>");
 
     msg += QL("<div id=\"ccert\">");
     QStringList li;
 
-    QString org = Qt::escape(cert.subjectInfo( QSslCertificate::Organization));
-    QString unit = Qt::escape(cert.subjectInfo( QSslCertificate::OrganizationalUnitName));
-    QString country = Qt::escape(cert.subjectInfo( QSslCertificate::CountryName));
+    QString org = Utility::escape(cert.subjectInfo( QSslCertificate::Organization));
+    QString unit = Utility::escape(cert.subjectInfo( QSslCertificate::OrganizationalUnitName));
+    QString country = Utility::escape(cert.subjectInfo( QSslCertificate::CountryName));
     if (unit.isEmpty()) unit = tr("&lt;not specified&gt;");
     if (org.isEmpty()) org = tr("&lt;not specified&gt;");
     if (country.isEmpty()) country = tr("&lt;not specified&gt;");
@@ -165,12 +195,12 @@ QString SslErrorDialog::certDiv( QSslCertificate cert ) const
 
     msg += QL("</div>" );
 
-    msg += QL("<h3>") + tr("Issuer: %1").arg(Qt::escape(cert.issuerInfo( QSslCertificate::CommonName))) + QL("</h3>");
+    msg += QL("<h3>") + tr("Issuer: %1").arg(Utility::escape(cert.issuerInfo( QSslCertificate::CommonName))) + QL("</h3>");
     msg += QL("<div id=\"issuer\">");
     li.clear();
-    li << tr("Organization: %1").arg(Qt::escape(cert.issuerInfo( QSslCertificate::Organization)));
-    li << tr("Unit: %1").arg(Qt::escape(cert.issuerInfo( QSslCertificate::OrganizationalUnitName)));
-    li << tr("Country: %1").arg(Qt::escape(cert.issuerInfo( QSslCertificate::CountryName)));
+    li << tr("Organization: %1").arg(Utility::escape(cert.issuerInfo( QSslCertificate::Organization)));
+    li << tr("Unit: %1").arg(Utility::escape(cert.issuerInfo( QSslCertificate::OrganizationalUnitName)));
+    li << tr("Country: %1").arg(Utility::escape(cert.issuerInfo( QSslCertificate::CountryName)));
     msg += QL("<p>") + li.join(QL("<br/>")) + QL("</p>");
     msg += QL("</div>" );
     msg += QL("</div>" );
@@ -186,29 +216,6 @@ bool SslErrorDialog::trustConnection()
     qDebug() << "SSL-Connection is trusted: " << stat;
 
     return stat;
-}
-
-void SslErrorDialog::accept()
-{
-    // Save the contents of _unknownCerts to the settings file.
-    if( trustConnection() && _unknownCerts.count() > 0 ) {
-        QSslSocket::addDefaultCaCertificates(_unknownCerts);
-
-        MirallConfigFile cfg( _customConfigHandle );
-        QByteArray certs = cfg.caCerts();
-        qDebug() << "Saving " << _unknownCerts.count() << " unknown certs.";
-        foreach( const QSslCertificate& cert, _unknownCerts ) {
-            certs += cert.toPem() + '\n';
-        }
-        cfg.setCaCerts( certs );
-    }
-
-    QDialog::accept();
-}
-
-void SslErrorDialog::setCustomConfigHandle( const QString& handle )
-{
-    _customConfigHandle = handle;
 }
 
 } // end namespace

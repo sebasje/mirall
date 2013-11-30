@@ -16,43 +16,119 @@
 #include <QObject>
 #include <QMetaType>
 #include <QDebug>
-
+#include <QCoreApplication>
 
 namespace Mirall {
 
 ProgressDispatcher* ProgressDispatcher::_instance = 0;
-
-QString Progress::asString( Kind kind )
+QString Progress::asResultString( Kind kind )
 {
     QString re;
 
     switch(kind) {
     case Download:
-        re = QObject::tr("downloading");
+    case EndDownload:
+        re = QCoreApplication::translate( "progress", "Download");
         break;
     case Upload:
-        re = QObject::tr("uploading");
+        re = QCoreApplication::translate( "progress", "Upload");
         break;
     case Context:
-        re = QObject::tr("Context");
+        re = QCoreApplication::translate( "progress", "Context" );
         break;
     case Inactive:
-        re = QObject::tr("inactive");
+        re = QCoreApplication::translate( "progress", "Inactive");
         break;
     case StartDownload:
-        re = QObject::tr("downloading");
+        re = QCoreApplication::translate( "progress", "Download");
         break;
     case StartUpload:
-        re = QObject::tr("uploading");
-        break;
-    case EndDownload:
-        re = QObject::tr("downloading");
-        break;
     case EndUpload:
-        re = QObject::tr("uploading");
+        re = QCoreApplication::translate( "progress", "Upload");
+        break;
+    case StartSync:
+        re = QCoreApplication::translate( "progress", "Start");
+        break;
+    case EndSync:
+        re = QCoreApplication::translate( "progress", "Finished");
+        break;
+    case StartDelete:
+        re = QCoreApplication::translate( "progress", "For deletion");
+        break;
+    case EndDelete:
+        re = QCoreApplication::translate( "progress", "deleted");
+        break;
+    case StartRename:
+        re = QCoreApplication::translate( "progress", "Move");
+        break;
+    case EndRename:
+        re = QCoreApplication::translate( "progress", "Move");
         break;
     default:
-        re = QObject::tr("What do I know?");
+        Q_ASSERT(false);
+    }
+    return re;
+
+}
+
+QString Progress::asActionString( Kind kind )
+{
+    QString re;
+
+    switch(kind) {
+    case Download:
+        re = QCoreApplication::translate( "progress", "downloading");
+        break;
+    case Upload:
+        re = QCoreApplication::translate( "progress", "uploading");
+        break;
+    case Context:
+        re = QCoreApplication::translate( "progress", "Context");
+        break;
+    case Inactive:
+        re = QCoreApplication::translate( "progress", "inactive");
+        break;
+    case StartDownload:
+        re = QCoreApplication::translate( "progress", "downloading");
+        break;
+    case StartUpload:
+        re = QCoreApplication::translate( "progress", "uploading");
+        break;
+    case EndDownload:
+        re = QCoreApplication::translate( "progress", "downloading");
+        break;
+    case EndUpload:
+        re = QCoreApplication::translate( "progress", "uploading");
+        break;
+    case StartSync:
+        re = QCoreApplication::translate( "progress", "starting");
+        break;
+    case EndSync:
+        re = QCoreApplication::translate( "progress", "finished");
+        break;
+    case StartDelete:
+        re = QCoreApplication::translate( "progress", "delete");
+        break;
+    case EndDelete:
+        re = QCoreApplication::translate( "progress", "deleted");
+        break;
+    case StartRename:
+        re = QCoreApplication::translate( "progress", "move");
+        break;
+    case EndRename:
+        re = QCoreApplication::translate( "progress", "moved");
+        break;
+    default:
+        Q_ASSERT(false);
+    }
+    return re;
+}
+
+bool Progress::isErrorKind( Kind kind )
+{
+    bool re = false;
+    if( kind == SoftError || kind == NormalError || kind == FatalError ) {
+        re = true;
     }
     return re;
 }
@@ -65,7 +141,8 @@ ProgressDispatcher* ProgressDispatcher::instance() {
 }
 
 ProgressDispatcher::ProgressDispatcher(QObject *parent) :
-    QObject(parent)
+    QObject(parent),
+    _QueueSize(50)
 {
 
 }
@@ -75,16 +152,81 @@ ProgressDispatcher::~ProgressDispatcher()
 
 }
 
-void ProgressDispatcher::setFolderProgress( Progress::Kind kind, const QString& folder, const QString& file,
-                                            qint64 p1, qint64 p2)
+QList<Progress::Info> ProgressDispatcher::recentChangedItems(int count)
 {
-    emit itemProgress( kind, folder, file, p1, p2 );
+    if( count > 0 ) {
+        return _recentChanges.mid(0, count);
+    }
+    return _recentChanges;
 }
 
-void ProgressDispatcher::setOverallProgress( const QString& folder, const QString& file, int fileNo, int fileCnt,
-                                             qint64 p1, qint64 p2 )
+QList<Progress::SyncProblem> ProgressDispatcher::recentProblems(int count)
 {
-    emit overallProgress( folder, file, fileNo, fileCnt, p1, p2 );
+    if( count > 0 ) {
+        return _recentProblems.mid(0, count);
+    }
+    return _recentProblems;
+}
+
+void ProgressDispatcher::setProgressProblem(const QString& folder, const Progress::SyncProblem &problem)
+{
+    Q_ASSERT( Progress::isErrorKind(problem.kind));
+
+    _recentProblems.prepend( problem );
+    if( _recentProblems.size() > _QueueSize ) {
+        _recentProblems.removeLast();
+    }
+    emit progressSyncProblem( folder, problem );
+}
+
+void ProgressDispatcher::setProgressInfo(const QString& folder, const Progress::Info& progress)
+{
+    if( folder.isEmpty() ) {
+        return;
+    }
+    Progress::Info newProgress(progress);
+
+    Q_ASSERT( !Progress::isErrorKind(progress.kind));
+
+    if( newProgress.kind == Progress::StartSync ) {
+        _recentProblems.clear();
+        _timer.start();
+    }
+    if( newProgress.kind == Progress::EndSync ) {
+        newProgress.overall_current_bytes = newProgress.overall_transmission_size;
+        newProgress.current_file_no = newProgress.overall_file_count;
+        _currentAction.remove(newProgress.folder);
+        qint64 msecs = _timer.elapsed();
+
+        qDebug()<< "[PROGRESS] progressed " << newProgress.overall_transmission_size
+                << " bytes in " << newProgress.overall_file_count << " files"
+                << " in msec " << msecs;
+    }
+    if( newProgress.kind == Progress::EndDownload ||
+            newProgress.kind == Progress::EndUpload ||
+            newProgress.kind == Progress::EndDelete ||
+            newProgress.kind == Progress::EndRename ) {
+        _recentChanges.prepend(newProgress);
+        if( _recentChanges.size() > _QueueSize ) {
+            _recentChanges.removeLast();
+        }
+    }
+    // store the last real action to help clients that start during
+    // the Context-phase of an upload or download.
+    if( newProgress.kind != Progress::Context ) {
+        _currentAction[folder] = newProgress.kind;
+    }
+
+    emit progressInfo( folder, newProgress );
+
+}
+
+Progress::Kind ProgressDispatcher::currentFolderContext( const QString& folder )
+{
+    if( _currentAction.contains(folder)) {
+        return _currentAction[folder];
+    }
+    return Progress::Invalid;
 }
 
 }

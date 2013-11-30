@@ -16,32 +16,25 @@
 #define APPLICATION_H
 
 #include <QApplication>
-#include <QNetworkReply>
-#include <QSslError>
 #include <QPointer>
+#include <QQueue>
 
 #include "qtsingleapplication.h"
 
 #include "mirall/syncresult.h"
 #include "mirall/logbrowser.h"
-#include "mirall/systray.h"
+#include "mirall/owncloudgui.h"
 #include "mirall/connectionvalidator.h"
+#include "mirall/progressdispatcher.h"
 
-class QAction;
-class QMenu;
+class QMessageBox;
 class QSystemTrayIcon;
-class QNetworkConfigurationManager;
-class QSignalMapper;
-class QNetworkReply;
 
 namespace Mirall {
 class Theme;
 class Folder;
-class FolderWatcher;
-class FolderWizard;
-class ownCloudInfo;
 class SslErrorDialog;
-class SettingsDialog;
+class SocketApi;
 
 class Application : public SharedTools::QtSingleApplication
 {
@@ -60,14 +53,9 @@ public slots:
 protected:
     void parseOptions(const QStringList& );
     void setupTranslations();
-    void setupActions();
-    void setupSystemTray();
-    void setupContextMenu();
-    void setupLogBrowser();
+    void setupLogging();
     void enterNextLogFile();
-
-    //folders have to be disabled while making config changes
-    void computeOverallSyncStatus();
+    bool checkConfigExists(bool openSettings);
 
     // reimplemented
 #if defined(Q_WS_WIN)
@@ -79,58 +67,42 @@ signals:
     void folderStateChanged(Folder*);
 
 protected slots:
-    void slotFoldersChanged();
-    void slotCheckConfig();
-    void slotSettings();
     void slotParseOptions( const QString& );
-    void slotShowTrayMessage(const QString&, const QString&);
-    void slotShowOptionalTrayMessage(const QString&, const QString&);
     void slotCheckConnection();
     void slotConnectionValidatorResult(ConnectionValidator::Status);
-    void slotSyncStateChange( const QString& );
-    void slotTrayClicked( QSystemTrayIcon::ActivationReason );
-    void slotFolderOpenAction(const QString & );
-    void slotOpenOwnCloud();
-    void slotOpenLogBrowser();
-    void slotSSLFailed( QNetworkReply *reply, QList<QSslError> errors );
     void slotStartUpdateDetector();
     void slotSetupProxy();
-    void slotRefreshQuotaDisplay( qint64 total, qint64 used );
     void slotUseMonoIconsChanged( bool );
-    void slotUpdateProgress(QString,QString,int,int,qlonglong,qlonglong);
-    void slotDisplayIdle();
-    void slotHelp();
+    void slotCredentialsFetched();
+    void slotLogin();
+    void slotLogout();
+    void slotCleanup();
+    void slotAccountChanged(Account *newAccount, Account *oldAccount);
+
 private:
     void setHelp();
-    void raiseDialog( QWidget* );
+    void runValidator();
 
-    Systray *_tray;
-    QAction *_actionOpenoC;
-    QAction *_actionSettings;
-    QAction *_actionQuota;
-    QAction *_actionStatus;
-    QAction *_actionHelp;
-    QAction *_actionQuit;
+    QPointer<ownCloudGui> _gui;
+    QPointer<SocketApi> _socketApi;
 
-    QNetworkConfigurationManager *_networkMgr;
-
-    QPointer<FolderWizard> _folderWizard;
-    SslErrorDialog *_sslErrorDialog;
     ConnectionValidator *_conValidator;
 
-    // tray's menu
-    QMenu *_contextMenu;
-
     Theme *_theme;
-    QSignalMapper *_folderOpenActionMapper;
-    LogBrowser *_logBrowser;
-    QPointer<SettingsDialog> _settingsDialog;
-    QString _logFile;
-    QString _logDirectory;
-    int _logExpire;
-    bool _showLogWindow;
-    bool _logFlush;
+
     bool _helpOnly;
+    bool _startupNetworkError;
+
+    // options from command line:
+    bool _showLogWindow;
+    QString _logFile;
+    QString _logDir;
+    int     _logExpire;
+    bool    _logFlush;
+    bool    _userTriggeredConnect;
+    QPointer<QMessageBox> _connectionMsgBox;
+
+    friend class ownCloudGui; // for _startupNetworkError
 };
 
 } // namespace Mirall

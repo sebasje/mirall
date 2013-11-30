@@ -28,30 +28,38 @@ namespace Ui {
 class SettingsDialog;
 }
 class AccountSettings;
+class ProtocolWidget;
 class Application;
 class FolderMan;
+class ownCloudGui;
 
 class SettingsDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit SettingsDialog(Application *app, QWidget *parent = 0);
+    explicit SettingsDialog(ownCloudGui *gui, QWidget *parent = 0);
     ~SettingsDialog();
 
     void addAccount(const QString &title, QWidget *widget);
+    void setGeneralErrors( const QStringList& errors );
+
+public slots:
+    void slotSyncStateChange(const QString& alias);
+    void slotRefreshResultList();
+    void showActivityPage();
 
 protected:
-    void closeEvent(QCloseEvent *event);
-
-protected slots:
-    void slotUpdateAccountState();
+    void reject();
+    void accept();
 
 private:
     Ui::SettingsDialog *_ui;
     AccountSettings *_accountSettings;
     QListWidgetItem *_accountItem;
+    ProtocolWidget  *_protocolWidget;
 
+    int _protocolIdx;
 };
 
 }

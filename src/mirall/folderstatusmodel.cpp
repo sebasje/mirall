@@ -17,6 +17,9 @@
 
 #include <QtCore>
 #include <QtGui>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets>
+#endif
 
 namespace Mirall {
 
@@ -26,9 +29,9 @@ FolderStatusModel::FolderStatusModel()
 
 }
 
-Qt::ItemFlags FolderStatusModel::flags ( const QModelIndex&  )
+Qt::ItemFlags FolderStatusModel::flags ( const QModelIndex&  ) const
 {
-    return Qt::ItemIsSelectable;
+    return Qt::ItemIsSelectable | Qt::ItemIsEnabled;
 }
 
 QVariant FolderStatusModel::data(const QModelIndex &index, int role) const
@@ -81,8 +84,9 @@ QSize FolderStatusDelegate::sizeHint(const QStyleOptionViewItem & option ,
   h += aliasMargin;            // bottom margin
 
   // add some space to show an error condition.
-  if( ! qvariant_cast<QString>(index.data(FolderErrorMsg)).isEmpty() ) {
-      h += aliasMargin*2+fm.height();
+  if( ! qvariant_cast<QStringList>(index.data(FolderErrorMsg)).isEmpty() ) {
+      QStringList errMsgs = qvariant_cast<QStringList>(index.data(FolderErrorMsg));
+      h += aliasMargin*2 + errMsgs.count()*fm.height();
   }
 
   if( qvariant_cast<bool>(index.data(AddProgressSpace)) ) {
@@ -118,16 +122,17 @@ void FolderStatusDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
   int aliasMargin = aliasFm.height()/2;
   int margin = subFm.height()/4;
 
-  QIcon statusIcon          = qvariant_cast<QIcon>(index.data(FolderStatusIconRole));
-  QString aliasText         = qvariant_cast<QString>(index.data(FolderAliasRole));
-  QString pathText          = qvariant_cast<QString>(index.data(FolderPathRole));
-  QString remotePath        = qvariant_cast<QString>(index.data(FolderSecondPathRole));
-  QString errorText         = qvariant_cast<QString>(index.data(FolderErrorMsg));
+  QIcon statusIcon      = qvariant_cast<QIcon>(index.data(FolderStatusIconRole));
+  QString aliasText     = qvariant_cast<QString>(index.data(FolderAliasRole));
+  QString pathText      = qvariant_cast<QString>(index.data(FolderPathRole));
+  QString remotePath    = qvariant_cast<QString>(index.data(FolderSecondPathRole));
+  QStringList errorTexts= qvariant_cast<QStringList>(index.data(FolderErrorMsg));
 
   int overallPercent    = qvariant_cast<int>(index.data(SyncProgressOverallPercent));
   QString overallString = qvariant_cast<QString>(index.data(SyncProgressOverallString));
   QString itemString    = qvariant_cast<QString>(index.data(SyncProgressItemString));
-
+  int warningCount      = qvariant_cast<int>(index.data(WarningCount));
+  bool syncOngoing      = qvariant_cast<bool>(index.data(SyncRunning));
   // QString statusText = qvariant_cast<QString>(index.data(FolderStatus));
   bool syncEnabled = index.data(FolderSyncEnabled).toBool();
   // QString syncStatus = syncEnabled? tr( "Enabled" ) : tr( "Disabled" );
@@ -166,6 +171,20 @@ void FolderStatusDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
   QPixmap pm = statusIcon.pixmap(iconSize, iconSize, syncEnabled ? QIcon::Normal : QIcon::Disabled );
   painter->drawPixmap(QPoint(iconRect.left(), iconRect.top()), pm);
 
+  // only show the warning icon if the sync is running. Otherwise its
+  // encoded in the status icon.
+  if( warningCount > 0 && syncOngoing) {
+      QRect warnRect;
+      warnRect.setLeft(iconRect.left());
+      warnRect.setTop(iconRect.bottom()-17);
+      warnRect.setWidth(16);
+      warnRect.setHeight(16);
+
+      QIcon warnIcon(":/mirall/resources/warning-16");
+      QPixmap pm = warnIcon.pixmap(16,16, syncEnabled ? QIcon::Normal : QIcon::Disabled );
+      painter->drawPixmap(QPoint(warnRect.left(), warnRect.top()),pm );
+  }
+
   if ((option.state & QStyle::State_Selected)
           && (option.state & QStyle::State_Active)
           // Hack: Windows Vista's light blue is not contrasting enough for white
@@ -196,33 +215,31 @@ void FolderStatusDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
   // paint an error overlay if there is an error string
 
   int h = iconRect.bottom();
-  if( !errorText.isEmpty() ) {
+  if( !errorTexts.isEmpty() ) {
+      h += aliasMargin;
       QRect errorRect = localPathRect;
       errorRect.setLeft( iconRect.left());
       errorRect.setTop( h );
-      errorRect.setHeight(subFm.height()+aliasMargin);
+      errorRect.setHeight(errorTexts.count() * subFm.height()+aliasMargin);
       errorRect.setRight( option.rect.right()-aliasMargin );
 
       painter->setBrush( QColor(0xbb, 0x4d, 0x4d) );
       painter->setPen( QColor(0xaa, 0xaa, 0xaa));
       painter->drawRoundedRect( errorRect, 4, 4 );
 
-      QIcon warnIcon(":/mirall/resources/warning-16");
-      QPoint warnPos(errorRect.left()+aliasMargin/2, errorRect.top()+aliasMargin/2);
-      painter->drawPixmap( warnPos, warnIcon.pixmap(QSize(16,16)));
-
       painter->setPen( Qt::white );
       painter->setFont(errorFont);
       QRect errorTextRect = errorRect;
-      errorTextRect.setLeft( errorTextRect.left()+aliasMargin +16);
+      errorTextRect.setLeft( errorTextRect.left()+aliasMargin );
       errorTextRect.setTop( errorTextRect.top()+aliasMargin/2 );
 
-      int linebreak = errorText.indexOf(QLatin1String("<br"));
-      QString eText = errorText;
-      if(linebreak) {
-          eText = errorText.left(linebreak);
+      int x = errorTextRect.left();
+      int y = errorTextRect.top()+aliasMargin/2 + subFm.height()/2;
+
+      foreach( QString eText, errorTexts ) {
+          painter->drawText(x, y, subFm.elidedText( eText, Qt::ElideLeft, errorTextRect.width()-2*aliasMargin));
+          y += subFm.height();
       }
-      painter->drawText(errorTextRect, eText);
 
       h = errorRect.bottom();
   }
@@ -231,14 +248,14 @@ void FolderStatusDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
   // Sync File Progress Bar: Show it if syncFile is not empty.
   if( !overallString.isEmpty()) {
       int fileNameTextHeight = subFm.boundingRect(tr("File")).height();
-      int barHeight = fileNameTextHeight;
+      int barHeight = qMax(fileNameTextHeight, aliasFm.height()+2); ;
       int overallWidth = option.rect.width()-2*aliasMargin;
 
       painter->save();
 
       // Sizes-Text
-      QRect octetRect = subFm.boundingRect( overallString );
-      int progressTextWidth = octetRect.width();
+      QRect octetRect = progressFm.boundingRect( overallString );
+      int progressTextWidth = octetRect.width() + 2;
 
       // Overall Progress Bar.
       QRect pBRect;
@@ -248,6 +265,7 @@ void FolderStatusDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
       pBRect.setWidth( overallWidth - progressTextWidth - margin );
 
       QStyleOptionProgressBarV2 pBarOpt;
+
       pBarOpt.state    = option.state | QStyle::State_Horizontal;
       pBarOpt.minimum  = 0;
       pBarOpt.maximum  = 100;
@@ -265,7 +283,9 @@ void FolderStatusDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
       overallProgressRect.setLeft( pBRect.right()+margin);
       overallProgressRect.setWidth( progressTextWidth );
       painter->setFont(progressFont);
+
       painter->drawText( overallProgressRect, Qt::AlignRight+Qt::AlignVCenter, overallString);
+    // painter->drawRect(overallProgressRect);
 
       // Individual File Progress
       QRect fileRect;
@@ -273,15 +293,16 @@ void FolderStatusDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
       fileRect.setLeft( iconRect.left());
       fileRect.setWidth(overallWidth);
       fileRect.setHeight(fileNameTextHeight);
+      QString elidedText = progressFm.elidedText(itemString, Qt::ElideLeft, fileRect.width());
 
-      painter->drawText( fileRect, Qt::AlignLeft+Qt::AlignVCenter, itemString);
+      painter->drawText( fileRect, Qt::AlignLeft+Qt::AlignVCenter, elidedText);
 
       painter->restore();
   }
   painter->restore();
 }
 
-bool FolderStatusDelegate::editorEvent ( QEvent * event, QAbstractItemModel * model, const QStyleOptionViewItem & option, const QModelIndex & index )
+bool FolderStatusDelegate::editorEvent ( QEvent * /*event*/, QAbstractItemModel * /*model*/, const QStyleOptionViewItem & /*option*/, const QModelIndex & /*index*/ )
 {
     return false;
 }

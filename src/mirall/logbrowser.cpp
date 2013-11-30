@@ -29,6 +29,7 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <QSettings>
+#include <QAction>
 
 #include "mirall/mirallconfigfile.h"
 #include "mirall/logger.h"
@@ -45,21 +46,15 @@ LogWidget::LogWidget(QWidget *parent)
     font.setFamily(QLatin1String("Courier New"));
     font.setFixedPitch(true);
     document()->setDefaultFont( font );
-
-    MirallConfigFile cfg;
-    int lines = cfg.maxLogLines();
-    // qDebug() << "#        ##  Have " << lines << " Loglines!";
-    document()->setMaximumBlockCount( lines );
 }
 
 // ==============================================================================
 
 LogBrowser::LogBrowser(QWidget *parent) :
     QDialog(parent),
-    _logWidget( new LogWidget(parent) ),
-    _logstream(0),
-    _doFileFlush(false)
+    _logWidget( new LogWidget(parent) )
 {
+    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setObjectName("LogBrowser"); // for save/restoreGeometry()
     setWindowTitle(tr("Log Output"));
     setMinimumWidth(600);
@@ -118,45 +113,37 @@ LogBrowser::LogBrowser(QWidget *parent) :
     // Direct connection for log comming from this thread, and queued for the one in a different thread
     connect(Logger::instance(), SIGNAL(newLog(QString)),this,SLOT(slotNewLog(QString)), Qt::AutoConnection);
 
+    QAction *showLogWindow = new QAction(this);
+    showLogWindow->setShortcut(QKeySequence("F12"));
+    connect(showLogWindow, SIGNAL(triggered()), SLOT(close()));
+    addAction(showLogWindow);
+
     MirallConfigFile cfg;
     cfg.restoreGeometry(this);
+    int lines = cfg.maxLogLines();
+    // qDebug() << "#        ##  Have " << lines << " Loglines!";
+    _logWidget->document()->setMaximumBlockCount( lines );
+
 }
 
 LogBrowser::~LogBrowser()
 {
 }
 
+void LogBrowser::closeEvent(QCloseEvent *)
+{
+    MirallConfigFile cfg;
+    cfg.saveGeometry(this);
+}
+
+
 void LogBrowser::slotNewLog( const QString& msg )
 {
     if( _logWidget->isVisible() ) {
         _logWidget->appendPlainText( msg );
     }
-
-    if( _logstream ) {
-        (*_logstream) << msg << endl;
-        if( _doFileFlush ) _logstream->flush();
-    }
 }
 
-void LogBrowser::setLogFile( const QString & name, bool flush )
-{
-    if( _logstream ) {
-        _logFile.close();
-    }
-    _logFile.setFileName( name );
-
-    if(!_logFile.open(QIODevice::WriteOnly)) {
-        QMessageBox::warning(
-                    this,
-                    tr("Error"),
-                    QString(tr("<nobr>File '%1'<br/>cannot be opened for writing.<br/><br/>"
-                               "The log output can <b>not</b> be saved!</nobr>"))
-                    .arg(name));
-        return;
-    }
-    _doFileFlush = flush;
-    _logstream.reset(new QTextStream( &_logFile ));
-}
 
 void LogBrowser::slotFind()
 {
@@ -214,13 +201,6 @@ void LogBrowser::slotSave()
 void LogBrowser::slotClearLog()
 {
     _logWidget->clear();
-}
-
-void LogBrowser::closeEvent(QCloseEvent *event)
-{
-    MirallConfigFile cfg;
-    cfg.saveGeometry(this);
-    QWidget::closeEvent(event);
 }
 
 } // namespace

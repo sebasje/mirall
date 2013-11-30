@@ -1,5 +1,6 @@
 /*
  * Copyright (C) by Klaas Freitag <freitag@owncloud.com>
+ * Copyright (C) by Daniel Molkentin <danimo@owncloud.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,25 +18,36 @@
 
 #include <QCoreApplication>
 #include <QSettings>
+#include <QTextStream>
 #include <QDir>
 #include <QFile>
 #include <QUrl>
 #include <QWidget>
 #include <QDebug>
+#include <QDesktopServices>
+#include <QProcess>
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+#include <QDesktopServices>
+#include <QTextDocument>
+#else
+#include <QStandardPaths>
+#endif
 
 #ifdef Q_OS_UNIX
 #include <sys/statvfs.h>
 #include <sys/types.h>
+#include <unistd.h>
 #endif
 
 #include <stdarg.h>
 
-#if defined(Q_OS_MAC)
-#include <CoreServices/CoreServices.h>
-#include <CoreFoundation/CoreFoundation.h>
-#elif defined(Q_OS_WIN)
-#include <shlobj.h>
-#include <winbase.h>
+#if defined(Q_OS_WIN)
+#include "mirall/utility_win.cpp"
+#elif defined(Q_OS_MAC)
+#include "mirall/utility_mac.cpp"
+#else
+#include "mirall/utility_unix.cpp"
 #endif
 
 namespace Mirall {
@@ -50,7 +62,7 @@ QString Utility::formatFingerprint( const QByteArray& fmhash )
         hash.append(' ');
     }
 
-    QString fp = QString::fromAscii( hash.trimmed() );
+    QString fp = QString::fromLatin1( hash.trimmed() );
     fp.replace(QChar(' '), QChar(':'));
 
     return fp;
@@ -58,46 +70,7 @@ QString Utility::formatFingerprint( const QByteArray& fmhash )
 
 void Utility::setupFavLink(const QString &folder)
 {
-#ifdef Q_OS_WIN
-    // Windows Explorer: Place under "Favorites" (Links)
-    wchar_t path[MAX_PATH];
-    SHGetSpecialFolderPath(0, path, CSIDL_PROFILE, FALSE);
-    QString profile =  QDir::fromNativeSeparators(QString::fromWCharArray(path));
-    QDir folderDir(QDir::fromNativeSeparators(folder));
-    QString linkName = profile+QLatin1String("/Links/") + folderDir.dirName() + QLatin1String(".lnk");
-    if (!QFile::link(folder, linkName))
-        qDebug() << Q_FUNC_INFO << "linking" << folder << "to" << linkName << "failed!";
-#elif defined (Q_OS_MAC)
-    // Finder: Place under "Places"/"Favorites" on the left sidebar
-    CFStringRef folderCFStr = CFStringCreateWithCString(0, folder.toUtf8().data(), kCFStringEncodingUTF8);
-    CFURLRef urlRef = CFURLCreateWithFileSystemPath (0, folderCFStr, kCFURLPOSIXPathStyle, true);
-
-    LSSharedFileListRef placesItems = LSSharedFileListCreate(0, kLSSharedFileListFavoriteItems, 0);
-    if (placesItems) {
-        //Insert an item to the list.
-        LSSharedFileListItemRef item = LSSharedFileListInsertItemURL(placesItems,
-                                                                     kLSSharedFileListItemLast, 0, 0,
-                                                                     urlRef, 0, 0);
-        if (item)
-            CFRelease(item);
-    }
-    CFRelease(placesItems);
-    CFRelease(folderCFStr);
-    CFRelease(urlRef);
-#elif defined (Q_OS_UNIX)
-    // Nautilus: add to ~/.gtk-bookmarks
-    QFile gtkBookmarks(QDir::homePath()+QLatin1String("/.gtk-bookmarks"));
-    QByteArray folderUrl = "file://" + folder.toUtf8();
-    if (gtkBookmarks.open(QFile::ReadWrite)) {
-        QByteArray places = gtkBookmarks.readAll();
-        if (!places.contains(folderUrl)) {
-            places += folderUrl;
-            gtkBookmarks.reset();
-            gtkBookmarks.write(places + '\n');
-        }
-    }
-
-#endif
+    setupFavLink_private(folder);
 }
 
 QString Utility::octetsToString( qint64 octets )
@@ -107,26 +80,25 @@ QString Utility::octetsToString( qint64 octets )
     static const qint64 gb = 1024 * mb;
     static const qint64 tb = 1024 * gb;
 
+    QString s;
+    qreal value = octets;
     if (octets >= tb) {
-        if (octets < 10*tb) {
-            return compactFormatDouble(double(octets)/double(tb), 1, QLatin1String("TB"));
-        }
-        return QString::number(octets/tb) + QLatin1String(" TB");
+        s = QCoreApplication::translate("Utility", "%L1 TB");
+        value /= tb;
     } else if (octets >= gb) {
-        if (octets < 10*gb) {
-            return compactFormatDouble(double(octets)/double(gb), 1, QLatin1String("GB"));
-        }
-        return QString::number(octets/gb) + QLatin1String(" GB");
+        s = QCoreApplication::translate("Utility", "%L1 GB");
+        value /= gb;
     } else if (octets >= mb) {
-        if (octets < 10*mb) {
-            return compactFormatDouble(double(octets)/double(mb), 1, QLatin1String("MB"));
-        }
-        return QString::number(octets/mb) + QLatin1String(" MB");
+        s = QCoreApplication::translate("Utility", "%L1 MB");
+        value /= mb;
     } else if (octets >= kb) {
-        return QString::number(octets/kb) + QLatin1String(" KB");
-    } else {
-        return QString::number(octets) + QLatin1String(" bytes");
+        s = QCoreApplication::translate("Utility", "%L1 kB");
+        value /= kb;
+    } else  {
+        s = QCoreApplication::translate("Utility", "%L1 B");
     }
+
+    return (value > 9.95)  ? s.arg(qRound(value)) : s.arg(value, 0, 'g', 2);
 }
 
 // Qtified version of get_platforms() in csync_owncloud.c
@@ -139,7 +111,7 @@ QString Utility::platform()
 #elif defined(Q_OS_LINUX)
     return QLatin1String("Linux");
 #elif defined(__DragonFly__) // Q_OS_FREEBSD also defined
-    return "DragonFlyBSD";
+    return QLatin1String("DragonFlyBSD");
 #elif defined(Q_OS_FREEBSD)
     return QLatin1String("FreeBSD");
 #elif defined(Q_OS_NETBSD)
@@ -147,9 +119,9 @@ QString Utility::platform()
 #elif defined(Q_OS_OPENBSD)
     return QLatin1String("OpenBSD");
 #elif defined(Q_OS_SOLARIS)
-    return "Solaris";
+    return QLatin1String("Solaris");
 #else
-    return "Unknown OS"
+    return QLatin1String("Unknown OS");
 #endif
 }
 
@@ -165,7 +137,7 @@ void Utility::raiseDialog( QWidget *raiseWidget )
 {
     // viel hilft viel ;-)
     if( raiseWidget ) {
-#if defined(Q_WS_WIN) || defined (Q_OS_MAC)
+#if defined(Q_OS_WIN) || defined (Q_OS_MAC)
         Qt::WindowFlags eFlags = raiseWidget->windowFlags();
         eFlags |= Qt::WindowStaysOnTopHint;
         raiseWidget->setWindowFlags(eFlags);
@@ -179,133 +151,19 @@ void Utility::raiseDialog( QWidget *raiseWidget )
     }
 }
 
-static const char runPathC[] = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
-
 bool Utility::hasLaunchOnStartup(const QString &appName)
 {
-#if defined(Q_OS_WIN)
-    QString runPath = QLatin1String(runPathC);
-    QSettings settings(runPath, QSettings::NativeFormat);
-    return settings.contains(appName);
-#elif defined(Q_OS_MAC)
-    // this is quite some duplicate code with setLaunchOnStartup, at some point we should fix this FIXME.
-    bool returnValue = false;
-    QString filePath = QDir(QCoreApplication::applicationDirPath()+QLatin1String("/../..")).absolutePath();
-    CFStringRef folderCFStr = CFStringCreateWithCString(0, filePath.toUtf8().data(), kCFStringEncodingUTF8);
-    CFURLRef urlRef = CFURLCreateWithFileSystemPath (0, folderCFStr, kCFURLPOSIXPathStyle, true);
-    LSSharedFileListRef loginItems = LSSharedFileListCreate(0, kLSSharedFileListSessionLoginItems, 0);
-    if (loginItems) {
-        // We need to iterate over the items and check which one is "ours".
-        UInt32 seedValue;
-        CFArrayRef itemsArray = LSSharedFileListCopySnapshot(loginItems, &seedValue);
-        CFStringRef appUrlRefString = CFURLGetString(urlRef); // no need for release
-        for (int i = 0; i < CFArrayGetCount(itemsArray); i++) {
-            LSSharedFileListItemRef item = (LSSharedFileListItemRef)CFArrayGetValueAtIndex(itemsArray, i);
-            CFURLRef itemUrlRef = NULL;
-
-            if (LSSharedFileListItemResolve(item, 0, &itemUrlRef, NULL) == noErr) {
-                CFStringRef itemUrlString = CFURLGetString(itemUrlRef);
-                if (CFStringCompare(itemUrlString,appUrlRefString,0) == kCFCompareEqualTo) {
-                    returnValue = true;
-                }
-                CFRelease(itemUrlRef);
-            }
-        }
-        CFRelease(itemsArray);
-    }
-    CFRelease(loginItems);
-    CFRelease(folderCFStr);
-    CFRelease(urlRef);
-    return returnValue;
-#elif defined(Q_OS_UNIX)
-    QString userAutoStartPath = QDir::homePath()+QLatin1String("/.config/autostart/");
-    QString desktopFileLocation = userAutoStartPath+appName+QLatin1String(".desktop");
-    return QFile::exists(desktopFileLocation);
-#endif
-}
-
-namespace {
+    return hasLaunchOnStartup_private(appName);
 }
 
 void Utility::setLaunchOnStartup(const QString &appName, const QString& guiName, bool enable)
 {
-#if defined(Q_OS_WIN)
-    Q_UNUSED(guiName)
-    QString runPath = QLatin1String(runPathC);
-    QSettings settings(runPath, QSettings::NativeFormat);
-    if (enable) {
-        settings.setValue(appName, QCoreApplication::applicationFilePath().replace('/','\\'));
-    } else {
-        settings.remove(appName);
-    }
-#elif defined(Q_OS_MAC)
-    Q_UNUSED(guiName)
-    QString filePath = QDir(QCoreApplication::applicationDirPath()+QLatin1String("/../..")).absolutePath();
-    CFStringRef folderCFStr = CFStringCreateWithCString(0, filePath.toUtf8().data(), kCFStringEncodingUTF8);
-    CFURLRef urlRef = CFURLCreateWithFileSystemPath (0, folderCFStr, kCFURLPOSIXPathStyle, true);
-    LSSharedFileListRef loginItems = LSSharedFileListCreate(0, kLSSharedFileListSessionLoginItems, 0);
-
-    if (loginItems && enable) {
-        //Insert an item to the list.
-        LSSharedFileListItemRef item = LSSharedFileListInsertItemURL(loginItems,
-                                                                     kLSSharedFileListItemLast, 0, 0,
-                                                                     urlRef, 0, 0);
-        if (item)
-            CFRelease(item);
-        CFRelease(loginItems);
-    } else if (loginItems && !enable){
-        // We need to iterate over the items and check which one is "ours".
-        UInt32 seedValue;
-        CFArrayRef itemsArray = LSSharedFileListCopySnapshot(loginItems, &seedValue);
-        CFStringRef appUrlRefString = CFURLGetString(urlRef);
-        for (int i = 0; i < CFArrayGetCount(itemsArray); i++) {
-            LSSharedFileListItemRef item = (LSSharedFileListItemRef)CFArrayGetValueAtIndex(itemsArray, i);
-            CFURLRef itemUrlRef = NULL;
-
-            if (LSSharedFileListItemResolve(item, 0, &itemUrlRef, NULL) == noErr) {
-                CFStringRef itemUrlString = CFURLGetString(itemUrlRef);
-                if (CFStringCompare(itemUrlString,appUrlRefString,0) == kCFCompareEqualTo) {
-                    LSSharedFileListItemRemove(loginItems,item); // remove it!
-                }
-                CFRelease(itemUrlRef);
-            }
-        }
-        CFRelease(itemsArray);
-        CFRelease(loginItems);
-    };
-
-    CFRelease(folderCFStr);
-    CFRelease(urlRef);
-#elif defined(Q_OS_UNIX)
-    QString userAutoStartPath = QDir::homePath()+QLatin1String("/.config/autostart/");
-    QString desktopFileLocation = userAutoStartPath+appName+QLatin1String(".desktop");
-    if (enable) {
-        if (!QDir().exists(userAutoStartPath) && !QDir().mkdir(userAutoStartPath)) {
-            qDebug() << "Could not create autostart directory";
-            return;
-        }
-        QSettings desktopFile(desktopFileLocation, QSettings::IniFormat);
-        desktopFile.beginGroup("Desktop Entry");
-        desktopFile.setValue(QLatin1String("Name"), guiName);
-        desktopFile.setValue(QLatin1String("GenericName"), QLatin1String("File Synchronizer"));
-        desktopFile.setValue(QLatin1String("Exec"), QCoreApplication::applicationFilePath());
-        desktopFile.setValue(QLatin1String("Terminal"), false);
-        desktopFile.setValue(QLatin1String("Icon"), appName);
-        desktopFile.setValue(QLatin1String("Categories"), QLatin1String("Network"));
-        desktopFile.setValue(QLatin1String("StartupNotify"), false);
-        desktopFile.endGroup();
-    } else {
-        if (!QFile::remove(desktopFileLocation)) {
-            qDebug() << "Could not remove autostart desktop file";
-        }
-    }
-
-#endif
+    setLaunchOnStartup_private(appName, guiName, enable);
 }
 
 qint64 Utility::freeDiskSpace(const QString &path, bool *ok)
 {
-#ifdef Q_OS_MAC
+#if defined(Q_OS_MAC) || defined(Q_OS_FREEBSD)
     struct statvfs stat;
     statvfs(path.toUtf8().data(), &stat);
     return (qint64) stat.f_bavail * stat.f_frsize;
@@ -344,5 +202,220 @@ QString Utility::compactFormatDouble(double value, int prec, const QString& unit
         str += (QLatin1Char(' ')+unit);
     return str;
 }
+
+QString Utility::toCSyncScheme(const QString &urlStr)
+{
+
+    QUrl url( urlStr );
+    if( url.scheme() == QLatin1String("http") ) {
+        url.setScheme( QLatin1String("owncloud") );
+    } else {
+        // connect SSL!
+        url.setScheme( QLatin1String("ownclouds") );
+    }
+    return url.toString();
+}
+
+QString Utility::escape(const QString &in)
+{
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+    return Qt::escape(in);
+#else
+    return in.toHtmlEscaped();
+#endif
+}
+
+QString Utility::dataLocation()
+{
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+    return QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+#else
+    return QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+#endif
+}
+
+void Utility::sleep(int sec)
+{
+#ifdef Q_OS_WIN
+    ::Sleep(sec*1000);
+#else
+    ::sleep(sec);
+#endif
+}
+
+// ### helper functions for showInFileManager() ###
+
+// according to the QStandardDir impl from Qt5
+static QStringList xdgDataDirs()
+{
+    QStringList dirs;
+    // http://standards.freedesktop.org/basedir-spec/latest/
+    QString xdgDataDirsEnv = QFile::decodeName(qgetenv("XDG_DATA_DIRS"));
+    if (xdgDataDirsEnv.isEmpty()) {
+        dirs.append(QString::fromLatin1("/usr/local/share"));
+        dirs.append(QString::fromLatin1("/usr/share"));
+    } else {
+        dirs = xdgDataDirsEnv.split(QLatin1Char(':'));
+    }
+    // local location
+    QString xdgDataHome = QFile::decodeName(qgetenv("XDG_DATA_HOME"));
+    if (xdgDataHome.isEmpty()) {
+        xdgDataHome = QDir::homePath()+"/.local/share";
+    }
+    dirs.prepend(xdgDataHome);
+    return dirs;
+}
+
+// Linux impl only, make sure to process %u and %U which might be returned
+static QString findDefaultFileManager()
+{
+    QProcess p;
+    p.start("xdg-mime", QStringList() << "query" << "default" << "inode/directory", QFile::ReadOnly);
+    p.waitForFinished();
+    QString fileName = QString::fromUtf8(p.readAll().trimmed());
+    if (fileName.isEmpty())
+        return QString();
+
+    QFileInfo fi;
+    QStringList dirs = xdgDataDirs();
+    QStringList subdirs;
+    subdirs << "/applications/" << "/applications/kde4/";
+    foreach(QString dir, dirs) {
+        foreach(QString subdir, subdirs) {
+            fi.setFile(dir + subdir + fileName);
+            if (fi.exists()) {
+                return fi.absoluteFilePath();
+            }
+        }
+    }
+    return QString();
+}
+
+// early dolphin versions did not have --select
+static bool checkDolphinCanSelect()
+{
+    QProcess p;
+    p.start("dolphin", QStringList() << "--help", QFile::ReadOnly);
+    p.waitForFinished();
+    return p.readAll().contains("--select");
+}
+
+// inspired by Qt Creator's showInGraphicalShell();
+void Utility::showInFileManager(const QString &localPath)
+{
+    if (isWindows()) {
+        const QString explorer = "explorer.exe"; // FIXME: we trust it's in PATH
+        QStringList param;
+        if (!QFileInfo(localPath).isDir())
+            param += QLatin1String("/select,");
+        param += QDir::toNativeSeparators(localPath);
+        QProcess::startDetached(explorer, param);
+    } else if (isMac()) {
+        QStringList scriptArgs;
+        scriptArgs << QLatin1String("-e")
+                   << QString::fromLatin1("tell application \"Finder\" to reveal POSIX file \"%1\"")
+                      .arg(localPath);
+        QProcess::execute(QLatin1String("/usr/bin/osascript"), scriptArgs);
+        scriptArgs.clear();
+        scriptArgs << QLatin1String("-e")
+                   << QLatin1String("tell application \"Finder\" to activate");
+        QProcess::execute(QLatin1String("/usr/bin/osascript"), scriptArgs);
+    } else {
+        QString app;
+        QStringList args;
+
+        static QString defaultManager = findDefaultFileManager();
+        QSettings desktopFile(defaultManager, QSettings::IniFormat);
+        QString exec = desktopFile.value("Desktop Entry/Exec").toString();
+
+        QString fileToOpen = QFileInfo(localPath).absoluteFilePath();
+        QString pathToOpen = QFileInfo(localPath).absolutePath();
+        bool canHandleFile = false; // assume dumb fm
+
+        args = exec.split(' ');
+        if (args.count() > 0) app = args.takeFirst();
+
+        QString kdeSelectParam("--select");
+
+        if (app.contains("konqueror") && !args.contains(kdeSelectParam)) {
+            // konq needs '--select' in order not to launch the file
+            args.prepend(kdeSelectParam);
+            canHandleFile = true;
+        }
+
+        if (app.contains("dolphin"))
+        {
+            static bool dolphinCanSelect = checkDolphinCanSelect();
+            if (dolphinCanSelect && !args.contains(kdeSelectParam)) {
+                args.prepend(kdeSelectParam);
+                canHandleFile = true;
+            }
+        }
+
+        // whitelist
+        if (app.contains("nautilus") || app.contains("nemo")) {
+            canHandleFile = true;
+        }
+
+        static QString name;
+        if (name.isEmpty()) {
+            name = desktopFile.value(QString::fromLatin1("Desktop Entry/Name[%1]").arg(qApp->property("ui_lang").toString())).toString();
+            if (name.isEmpty()) {
+                name = desktopFile.value(QString::fromLatin1("Desktop Entry/Name")).toString();
+            }
+        }
+
+        std::replace(args.begin(), args.end(), QString::fromLatin1("%c"), name);
+        std::replace(args.begin(), args.end(), QString::fromLatin1("%u"), fileToOpen);
+        std::replace(args.begin(), args.end(), QString::fromLatin1("%U"), fileToOpen);
+        std::replace(args.begin(), args.end(), QString::fromLatin1("%f"), fileToOpen);
+        std::replace(args.begin(), args.end(), QString::fromLatin1("%F"), fileToOpen);
+
+        // fixme: needs to append --icon, according to http://standards.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
+        QStringList::iterator it = std::find(args.begin(), args.end(), QString::fromLatin1("%i"));
+        if (it != args.end()) {
+            (*it) = desktopFile.value("Desktop Entry/Icon").toString();
+            args.insert(it, QString::fromLatin1("--icon")); // before
+        }
+
+
+        if (args.count() == 0) args << fileToOpen;
+
+        if (app.isEmpty() || args.isEmpty() || !canHandleFile) {
+            // fall back: open the default file manager, without ever selecting the file
+            QDesktopServices::openUrl(QUrl::fromLocalFile(pathToOpen));
+        } else {
+            QProcess::execute(app, args);
+        }
+    }
+}
+
+bool Utility::isWindows()
+{
+#ifdef Q_OS_WIN
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool Utility::isMac()
+{
+#ifdef Q_OS_MAC
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool Utility::isUnix()
+{
+#ifdef Q_OS_UNIX
+    return true;
+#else
+    return false;
+#endif
+}
+
 
 } // namespace Mirall

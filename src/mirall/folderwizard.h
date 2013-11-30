@@ -28,10 +28,15 @@ namespace Mirall {
 
 class ownCloudInfo;
 
+class FormatWarningsWizardPage : public QWizardPage {
+protected:
+    QString formatWarnings(const QStringList &warnings) const;
+};
+
 /**
  * page to ask for the local source folder
  */
-class FolderWizardSourcePage : public QWizardPage
+class FolderWizardSourcePage : public FormatWarningsWizardPage
 {
     Q_OBJECT
 public:
@@ -57,7 +62,7 @@ private:
  * page to ask for the target folder
  */
 
-class FolderWizardTargetPage : public QWizardPage
+class FolderWizardTargetPage : public FormatWarningsWizardPage
 {
     Q_OBJECT
 public:
@@ -69,20 +74,25 @@ public:
     virtual void initializePage();
     virtual void cleanupPage();
 
+    void setFolderMap( const Folder::Map &fm ) { _folderMap = fm; }
+
 protected slots:
 
     void showWarn( const QString& = QString() ) const;
     void slotAddRemoteFolder();
-    void slotCreateRemoteFolder(QString);
-    void slotCreateRemoteFolderFinished( QNetworkReply::NetworkError error );
-    void slotUpdateDirectories(QStringList);
+    void slotCreateRemoteFolder(const QString&);
+    void slotCreateRemoteFolderFinished(QNetworkReply::NetworkError error);
+    void slotHandleNetworkError(QNetworkReply*);
+    void slotUpdateDirectories(const QStringList&);
     void slotRefreshFolders();
-
+    void slotItemExpanded(QTreeWidgetItem*);
 private:
+    void recursiveInsert(QTreeWidgetItem *parent, QStringList pathTrail, QString path);
     Ui_FolderWizardTargetPage _ui;
     ownCloudInfo *_ownCloudDirCheck;
     bool _dirChecked;
     bool _warnWasVisible;
+    Folder::Map _folderMap;
 };
 
 /**
