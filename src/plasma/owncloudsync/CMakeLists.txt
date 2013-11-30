@@ -12,7 +12,7 @@ set(owncloudsyncd_SRCS
   owncloudsync.cpp
   owncloudsyncdaemon.cpp
   kfilesync.cpp
-  ../../mirall/owncloudinfo.cpp # FIXME: Ouch. :/
+  #  ../../mirall/owncloudinfo.cpp # FIXME: Ouch. :/
   main.cpp
   )
 

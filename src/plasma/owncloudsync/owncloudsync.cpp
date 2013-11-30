@@ -28,11 +28,12 @@
 #include <QVariant>
 #include <QTimer>
 
-#include "mirall/credentialstore.h"
+//#include "mirall/credentialstore.h"
 #include "mirall/syncresult.h"
 #include "mirall/folder.h"
 #include "mirall/mirallconfigfile.h"
 #include "mirall/progressdispatcher.h"
+#include "creds/abstractcredentials.h"
 
 class OwncloudSyncPrivate {
 public:
@@ -265,7 +266,7 @@ void OwncloudSync::updateFolder(const Mirall::Folder* folder)
     QVariantMap m;
     m["name"] = folder->alias();
     m["localPath"] = folder->path();
-    m["remotePath"] = folder->secondPath();
+    m["remotePath"] = folder->remotePath();
     m["syncTime"] = d->syncTime[folder->alias()].toMSecsSinceEpoch();
 //     qDebug() << "OC updateFolder:: path, secondPath: " << folder->path() << ", " << d->syncTime[folder->alias()];
 
@@ -389,7 +390,7 @@ void OwncloudSync::slotOwnCloudFound( const QString& url, const QString& version
     qDebug() << "OCD : ownCloud found: " << url << " with version " << versionStr << "(" << version << ")";
     // now check the authentication
 
-    Mirall::MirallConfigFile cfgFile(d->configHandle);
+    Mirall::MirallConfigFile cfgFile;
     cfgFile.setOwnCloudVersion( version );
     qDebug() << " OC polling interval: " << cfgFile.remotePollInterval();
 
@@ -409,15 +410,20 @@ void OwncloudSync::slotOwnCloudFound( const QString& url, const QString& version
 
 void OwncloudSync::slotFetchCredentials()
 {
-    connect( Mirall::CredentialStore::instance(), SIGNAL(fetchCredentialsFinished(bool)),
-                this, SLOT(slotCredentialsFetched(bool)) );
-    qDebug() << " ======= fetchCredentials()";
-    Mirall::CredentialStore::instance()->fetchCredentials();
+#warning "FIXME: port slotFetchCredentials"
+    // FIXME
+//     connect( Mirall::CredentialStore::instance(), SIGNAL(fetchCredentialsFinished(bool)),
+//                 this, SLOT(slotCredentialsFetched(bool)) );
+//     qDebug() << " ======= fetchCredentials()";
+//     Mirall::CredentialStore::instance()->fetchCredentials();
 }
 
 
 void OwncloudSync::slotCredentialsFetched(bool ok)
 {
+#warning "FIXME: port slotCredentialsFetched"
+
+    /*
     qDebug() << "OC Credentials successfully fetched: " << ok;
     QString trayMessage;
     if( ! ok ) {
@@ -443,6 +449,7 @@ void OwncloudSync::slotCredentialsFetched(bool ok)
         QTimer::singleShot(0, this, SLOT(slotCheckAuthentication()));
     }
     disconnect( Mirall::CredentialStore::instance(), SIGNAL(fetchCredentialsFinished(bool)) );
+    */
 }
 
 
@@ -506,7 +513,7 @@ void OwncloudSync::slotAuthCheck()
 
 void OwncloudSync::setupOwncloud(const QString &server, const QString &user, const QString &password)
 {
-    Mirall::MirallConfigFile cfgFile(d->configHandle);
+    Mirall::MirallConfigFile cfgFile;
     cfgFile.setRemotePollInterval(600000); // ten minutes for now
 
     bool https = server.startsWith("https");
@@ -516,12 +523,14 @@ void OwncloudSync::setupOwncloud(const QString &server, const QString &user, con
         _srv.append('/');
     }
 
-    cfgFile.writeOwncloudConfig(QLatin1String("ownCloud"), _srv, user, password);
+///    cfgFile.writeOwncloudConfig(QLatin1String("ownCloud"), _srv, user, password);
+#warning "FIXME: port writeOwncloudConfig"
+/*
     Mirall::CredentialStore::instance()->saveCredentials();
     d->ocInfo->setCredentials(user, password); // add server
     kDebug() << "OC - - - - -  Setting up OwnCloud: " << _srv << user << password << https;
-    cfgFile.acceptCustomConfig();
-
+    //cfgFile.acceptCustomConfig(); // FIXME: Port!
+*/
     if( d->folderMan ) {
         d->folderMan->removeAllFolderDefinitions();
     }
