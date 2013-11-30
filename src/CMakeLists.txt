@@ -327,23 +327,22 @@ endif(NOT WIN32)
     add_executable( ${APPLICATION_EXECUTABLE} WIN32 main.cpp ${final_src})
 #<<<<<<< HEAD
 
-    # mirall is not built for the bundle
-    add_executable( mirall WIN32 main.cpp ${final_src})
-
-    target_link_libraries(mirall ${QT_LIBRARIES} )
-    target_link_libraries(mirall owncloudsync)
-    target_link_libraries(mirall ${CSYNC_LIBRARY})
-
-    set_target_properties( mirall PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY  ${BIN_OUTPUT_DIRECTORY} )
-    install(TARGETS mirall
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    )
-
-    target_link_libraries(owncloudsync ${QT_LIBRARIES} )
-    target_link_libraries(owncloudsync ${CSYNC_LIBRARY})
+#     # mirall is not built for the bundle
+#     add_executable( mirall WIN32 main.cpp ${final_src})
+#
+#     target_link_libraries(mirall ${QT_LIBRARIES} )
+#     target_link_libraries(mirall owncloudsync)
+#     target_link_libraries(mirall ${CSYNC_LIBRARY})
+#
+#     set_target_properties( mirall PROPERTIES
+#         RUNTIME_OUTPUT_DIRECTORY  ${BIN_OUTPUT_DIRECTORY} )
+#     install(TARGETS mirall
+#         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+#         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#     )
+#
+    target_link_libraries(owncloudsync ${QT_LIBRARIES}  ${CSYNC_LIBRARY} ${HTTPBF_LIBRARY})
 
     set_target_properties(owncloudsync PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY  ${BIN_OUTPUT_DIRECTORY} )
