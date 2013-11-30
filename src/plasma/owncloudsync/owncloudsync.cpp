@@ -73,7 +73,7 @@ OwncloudSync::OwncloudSync(QObject *parent)
 
     //d->account = Mirall::AccountManager::instance()->account();
 // //     KIO::AccessManager *nam = new KIO::AccessManager(this);
-// //     kDebug() << "OC Seetting KIO::NAM";
+// //     qDebug() << "OC Seetting KIO::NAM";
 // //     d->ocInfo->setNetworkAccessManager(nam);
     init();
 
@@ -100,7 +100,7 @@ void OwncloudSync::init()
 //     connect(d->ocInfo,SIGNAL(noOwncloudFound(QNetworkReply*)),
 //              SLOT(slotNoOwnCloudFound(QNetworkReply*)));
 //
-//     kDebug() << "OC connecting to slotAuthCheck";
+//     qDebug() << "OC connecting to slotAuthCheck";
 //     connect(d->ocInfo,SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
 //              this,SLOT(slotAuthCheck(QString,QNetworkReply*)));
 //
@@ -503,7 +503,7 @@ void OwncloudSync::slotNoOwnCloudFound(QNetworkReply* reply)
 
 void OwncloudSync::slotCheckAuthentication()
 {
-    kDebug() << "OwncloudSync::slotCheckAuthentication()";
+    qDebug() << "OwncloudSync::slotCheckAuthentication()";
     //QNetworkReply *reply = d->ocInfo->getDirectoryListing(QString::fromLatin1("/")); // this call needs to be authenticated.
     QNetworkReply *reply = account()->getRequest(d->owncloudInfo["url"].toString());
 
@@ -565,7 +565,7 @@ void OwncloudSync::setupOwncloud(const QString &server, const QString &user, con
 /*
     Mirall::CredentialStore::instance()->saveCredentials();
     d->ocInfo->setCredentials(user, password); // add server
-    kDebug() << "OC - - - - -  Setting up OwnCloud: " << _srv << user << password << https;
+    qDebug() << "OC - - - - -  Setting up OwnCloud: " << _srv << user << password << https;
     //cfgFile.acceptCustomConfig(); // FIXME: Port!
 */
     if( d->folderMan ) {
@@ -582,7 +582,7 @@ void OwncloudSync::setupOwncloud(const QString &server, const QString &user, con
         d->ocInfo->checkInstallation();
         loadFolders();
     } else {
-        kDebug() << " OC  ownCloud seems not configured.";
+        qDebug() << " OC  ownCloud seems not configured.";
     }
     */
     QTimer::singleShot(0, this, SLOT(slotCheckAuthentication()));
