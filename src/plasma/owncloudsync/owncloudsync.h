@@ -33,9 +33,15 @@
 #include <QStringListModel>
 
 class OwncloudSyncPrivate;
+
+
+
 namespace Mirall {
     class Folder;
+    class Account;
 }
+
+using namespace Mirall;
 
 class OwncloudSync : public QObject
 {
@@ -49,7 +55,7 @@ class OwncloudSync : public QObject
         void init();
 
         Mirall::FolderMan* folderMan();
-        Mirall::ownCloudInfo* ocInfo();
+        Mirall::Account* account();
 
     public Q_SLOTS:
         QString display();
@@ -80,12 +86,14 @@ class OwncloudSync : public QObject
         void remoteFolderExists(QString, bool);
 
     protected Q_SLOTS:
+        void slotAccountChanged(Account *newAccount, Account *oldAccount);
         void slotSyncStateChange(const QString&);
         void slotOwnCloudFound( const QString&, const QString&, const QString&, const QString& );
         void slotNoOwnCloudFound( QNetworkReply* );
+        void slotAccountStateChanged(int state);
         void slotCheckAuthentication();
         void slotAuthCheck();
-        void slotCreateRemoteFolderFinished();
+        void slotCreateRemoteFolderFinished(QNetworkReply::NetworkError err);
         void slotDirCheckReply( const QString&, QNetworkReply* );
         void slotDirectoryListingUpdated(const QStringList &directories );
         void slotCheckRemoteFolderFinished();

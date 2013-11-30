@@ -28,11 +28,12 @@
 #include <QVariant>
 #include <QTimer>
 
-//#include "mirall/credentialstore.h"
+#include "mirall/account.h"
 #include "mirall/syncresult.h"
 #include "mirall/folder.h"
 #include "mirall/mirallconfigfile.h"
 #include "mirall/progressdispatcher.h"
+#include "mirall/networkjobs.h"
 #include "creds/abstractcredentials.h"
 
 class OwncloudSyncPrivate {
@@ -49,7 +50,7 @@ public:
     QHash<QString, QDateTime> syncTime;
 
     Mirall::FolderMan* folderMan;
-    Mirall::ownCloudInfo* ocInfo;
+    Mirall::AccountManager* accountManager;
     QString configHandle;
     QTimer *delay;
     int ocStatus;
@@ -67,7 +68,10 @@ OwncloudSync::OwncloudSync(QObject *parent)
     d->delay = 0;
     d->ocStatus = OwncloudSettings::Disconnected;
     d->ocError = OwncloudSettings::NoError;
-    d->ocInfo = Mirall::ownCloudInfo::instance();
+    //d->ocInfo = Mirall::ownCloudInfo::instance();
+    //d->account = new Account(""
+
+    //d->account = Mirall::AccountManager::instance()->account();
 // //     KIO::AccessManager *nam = new KIO::AccessManager(this);
 // //     kDebug() << "OC Seetting KIO::NAM";
 // //     d->ocInfo->setNetworkAccessManager(nam);
@@ -76,25 +80,32 @@ OwncloudSync::OwncloudSync(QObject *parent)
     slotFetchCredentials();
 }
 
+using namespace Mirall;
+
 void OwncloudSync::init()
 {
     d->folderMan = Mirall::FolderMan::instance();
     connect( d->folderMan, SIGNAL(folderSyncStateChange(const QString&)),
              this,SLOT(slotSyncStateChange(const QString&)));
 
+//     connect(account(), SIGNAL(stateChanged(int)),
+//             this, SLOT(slotAccountStateChanged(int)));
+    connect(Mirall::AccountManager::instance(), SIGNAL(accountChanged(Account*,Account*)),
+            this, SLOT(slotAccountChanged(Account*,Account*)));
+
     //d->ocInfo->setCustomConfigHandle("mirall");
-    connect(d->ocInfo,SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
-             SLOT(slotOwnCloudFound(QString,QString,QString,QString)));
-
-    connect(d->ocInfo,SIGNAL(noOwncloudFound(QNetworkReply*)),
-             SLOT(slotNoOwnCloudFound(QNetworkReply*)));
-
-    kDebug() << "OC connecting to slotAuthCheck";
-    connect(d->ocInfo,SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
-             this,SLOT(slotAuthCheck(QString,QNetworkReply*)));
-
-    connect(d->ocInfo, SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
-             SLOT(slotDirCheckReply(QString,QNetworkReply*)));
+//     connect(d->ocInfo,SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
+//              SLOT(slotOwnCloudFound(QString,QString,QString,QString)));
+//
+//     connect(d->ocInfo,SIGNAL(noOwncloudFound(QNetworkReply*)),
+//              SLOT(slotNoOwnCloudFound(QNetworkReply*)));
+//
+//     kDebug() << "OC connecting to slotAuthCheck";
+//     connect(d->ocInfo,SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
+//              this,SLOT(slotAuthCheck(QString,QNetworkReply*)));
+//
+//     connect(d->ocInfo, SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
+//              SLOT(slotDirCheckReply(QString,QNetworkReply*)));
 
 
     connect(Mirall::ProgressDispatcher::instance(),
@@ -119,9 +130,15 @@ Mirall::FolderMan* OwncloudSync::folderMan()
     return d->folderMan;
 }
 
-Mirall::ownCloudInfo* OwncloudSync::ocInfo()
+Mirall::Account* OwncloudSync::account()
 {
-    return d->ocInfo;
+    return Mirall::AccountManager::instance()->account();
+}
+
+void OwncloudSync::slotAccountChanged(Account *newAccount, Account *oldAccount)
+{
+    disconnect(oldAccount, SIGNAL(stateChanged(int)), this, SLOT(slotAccountStateChanged(int)));
+    connect(newAccount, SIGNAL(stateChanged(int)), this, SLOT(slotAccountStateChanged(int)));
 }
 
 void OwncloudSync::slotSyncStateChange(const QString &s)
@@ -209,7 +226,7 @@ QVariantMap OwncloudSync::folderList()
 void OwncloudSync::refresh()
 {
     qDebug() << "POC Syncdaemon refresh()";
-    if (!d->ocInfo->isConfigured()) {
+    if (!account()) {
         d->ocStatus = OwncloudSettings::Error;
         d->ocError = OwncloudSettings::NoConfigurationError;
     } else {
@@ -336,12 +353,16 @@ void OwncloudSync::delayedReadConfig()
 void OwncloudSync::checkRemoteFolder(const QString& f)
 {
     if (d->ocStatus == OwncloudSettings::Connected) {
+#warning "FIXME: port checkRemoteFolders"
+        /*
+         *
         QNetworkReply* reply = d->ocInfo->getDirectoryListing(f);
         connect(d->ocInfo, SIGNAL(directoryListingUpdated(const &QStringList)),
                 this, SLOT(slotDirectoryListingUpdated(const QStringList&)));
         //QNetworkReply* reply = d->ocInfo->getWebDAVPath(f);
         connect(reply, SIGNAL(finished()), SLOT(slotCheckRemoteFolderFinished()));
         //connect(reply, SIGNAL(finished()), SLOT(slotCheckRemoteFolderFinished()));
+        */
     }
 }
 
@@ -370,19 +391,35 @@ void OwncloudSync::createRemoteFolder(const QString &f)
     if(f.isEmpty()) return;
 
     qDebug() << "OC creating folder on ownCloud: " << f;
-    QNetworkReply* reply = d->ocInfo->mkdirRequest(f);
-    connect(reply, SIGNAL(finished()), SLOT(slotCreateRemoteFolderFinished()));
+    //QNetworkReply* reply = d->ocInfo->mkdirRequest(f);
+
+    Mirall::MkColJob *job = new Mirall::MkColJob(account(), f, this);
+    connect(job, SIGNAL(finished(QNetworkReply::NetworkError)),
+                 SLOT(slotCreateRemoteFolderFinished(QNetworkReply::NetworkError)));
+    job->start();
+    //connect(reply, SIGNAL(finished()), SLOT(slotCreateRemoteFolderFinished()));
     //connect(reply, SIGNAL(error()), SLOT(slotCreateRemoteFolderFinished()));
 
 }
 
-void OwncloudSync::slotCreateRemoteFolderFinished()
+void OwncloudSync::slotCreateRemoteFolderFinished(QNetworkReply::NetworkError err)
 {
-    QNetworkReply* reply = static_cast<QNetworkReply*>(sender());
-    bool exists = reply->error() == QNetworkReply::NoError;
-    QString p = reply->url().toString().split("remote.php/webdav/")[1];
-    qDebug() << " === OC slot -- CREATE -- RemoteFolderFinished() : " << reply->url() << reply->error() << p << exists;
+    Mirall::AbstractNetworkJob *job = static_cast<Mirall::AbstractNetworkJob*>(sender());
+    //QNetworkReply* reply = static_cast<QNetworkReply*>(sender());
+    bool exists = err == QNetworkReply::NoError;
+    //QString p = reply->url().toString().split("remote.php/webdav/")[1];
+    const QString p = job->path();
+    qDebug() << " === OC slot -- CREATE -- RemoteFolderFinished() : " << p << exists;
     emit remoteFolderExists(p, exists);
+}
+
+void OwncloudSync::slotAccountStateChanged(int state)
+{
+    if (state == Mirall::Account::Connected) {
+        d->owncloudInfo["url"] = account()->url();
+    } else if (state == Mirall::Account::Disconnected) {
+        d->owncloudInfo["url"] = QString();
+    }
 }
 
 void OwncloudSync::slotOwnCloudFound( const QString& url, const QString& versionStr, const QString& version, const QString& edition)
@@ -468,7 +505,7 @@ void OwncloudSync::slotCheckAuthentication()
 {
     kDebug() << "OwncloudSync::slotCheckAuthentication()";
     //QNetworkReply *reply = d->ocInfo->getDirectoryListing(QString::fromLatin1("/")); // this call needs to be authenticated.
-    QNetworkReply *reply = d->ocInfo->getRequest(d->owncloudInfo["url"].toString());
+    QNetworkReply *reply = account()->getRequest(d->owncloudInfo["url"].toString());
 
     connect(reply, SIGNAL(finished()), this, SLOT(slotAuthCheck()));
 }
@@ -536,9 +573,9 @@ void OwncloudSync::setupOwncloud(const QString &server, const QString &user, con
     }
 
     d->configHandle.clear();
-    d->ocInfo->setCustomConfigHandle(QString());
-
-    d->ocInfo->setCustomConfigHandle(d->configHandle);
+    //d->ocInfo->setCustomConfigHandle(QString());
+    /*
+    //d->ocInfo->setCustomConfigHandle(d->configHandle);
     if (d->ocInfo->isConfigured()) {
         // reset the SSL Untrust flag to let the SSL dialog appear again.
         d->ocInfo->resetSSLUntrust();
@@ -547,6 +584,7 @@ void OwncloudSync::setupOwncloud(const QString &server, const QString &user, con
     } else {
         kDebug() << " OC  ownCloud seems not configured.";
     }
+    */
     QTimer::singleShot(0, this, SLOT(slotCheckAuthentication()));
 }
 
