@@ -34,7 +34,7 @@
 #include "mirall/mirallconfigfile.h"
 #include "mirall/progressdispatcher.h"
 #include "mirall/networkjobs.h"
-#include "creds/abstractcredentials.h"
+#include "creds/httpcredentials.h"
 
 class OwncloudSyncPrivate {
 public:
@@ -93,6 +93,26 @@ void OwncloudSync::init()
     connect(Mirall::AccountManager::instance(), SIGNAL(accountChanged(Account*,Account*)),
             this, SLOT(slotAccountChanged(Account*,Account*)));
 
+
+    // ###
+    Mirall::Account *account = Mirall::Account::restore();
+    if (!account) {
+        qDebug() << "No account found, making a new one";
+        //_ocWizard->setConfigExists(false);
+        account = new Account;
+        account->setUrl(QUrl("http://localhost/owncloud"));
+        HttpCredentials *creds = new HttpCredentials("test", "XXXXXXXXXXXX");
+        account->setCredentials(creds);
+        account->save();
+        slotCredentialsFetched();
+
+    } else {
+        account->credentials()->fetch(account);
+        //_ocWizard->setConfigExists(true);
+    }
+    //account->setSslErrorHandler(new SslDialogErrorHandler);
+    AccountManager::instance()->setAccount(account);
+
     //d->ocInfo->setCustomConfigHandle("mirall");
 //     connect(d->ocInfo,SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
 //              SLOT(slotOwnCloudFound(QString,QString,QString,QString)));
@@ -137,8 +157,16 @@ Mirall::Account* OwncloudSync::account()
 
 void OwncloudSync::slotAccountChanged(Account *newAccount, Account *oldAccount)
 {
-    disconnect(oldAccount, SIGNAL(stateChanged(int)), this, SLOT(slotAccountStateChanged(int)));
-    connect(newAccount, SIGNAL(stateChanged(int)), this, SLOT(slotAccountStateChanged(int)));
+    qDebug() << "Account changed!" << newAccount << oldAccount;
+    if (oldAccount) {
+        disconnect(oldAccount, SIGNAL(stateChanged(int)), this, SLOT(slotAccountStateChanged(int)));
+    }
+    if (newAccount) {
+        connect(newAccount, SIGNAL(stateChanged(int)), this, SLOT(slotAccountStateChanged(int)));
+        connect(newAccount->credentials(), SIGNAL(fetched()), this, SLOT(slotCredentialsFetched()));
+    }
+
+
 }
 
 void OwncloudSync::slotSyncStateChange(const QString &s)
@@ -229,13 +257,16 @@ void OwncloudSync::refresh()
     if (!account()) {
         d->ocStatus = OwncloudSettings::Error;
         d->ocError = OwncloudSettings::NoConfigurationError;
+        qDebug() << "No config";
     } else {
         loadFolders();
         qDebug() << "POC We're good" << (d->ocStatus != OwncloudSettings::Disconnected) << d->ocStatus;
     }
+    qDebug() << "emitting changed signals, connected? " << (d->ocStatus == OwncloudSettings::Connected);
     emit statusChanged(d->ocStatus);
     emit errorChanged(d->ocError);
     emit owncloudChanged(d->owncloudInfo);
+
 }
 
 void OwncloudSync::loadFolders()
@@ -249,6 +280,7 @@ void OwncloudSync::loadFolders()
             updateFolder(f);
         }
     } else {
+        qDebug() << "Not connected";
         d->folderList.clear();
         d->folders.clear();
         emit folderListChanged(d->folderList);
@@ -456,7 +488,7 @@ void OwncloudSync::slotFetchCredentials()
 }
 
 
-void OwncloudSync::slotCredentialsFetched(bool ok)
+void OwncloudSync::slotCredentialsFetched()
 {
 #warning "FIXME: port slotCredentialsFetched"
 
@@ -487,6 +519,8 @@ void OwncloudSync::slotCredentialsFetched(bool ok)
     }
     disconnect( Mirall::CredentialStore::instance(), SIGNAL(fetchCredentialsFinished(bool)) );
     */
+    qDebug() << "Credentials fetched" << account()->credentials()->user();
+    QTimer::singleShot(0, this, SLOT(slotCheckAuthentication()));
 }
 
 
@@ -505,6 +539,9 @@ void OwncloudSync::slotCheckAuthentication()
 {
     qDebug() << "OwncloudSync::slotCheckAuthentication()";
     //QNetworkReply *reply = d->ocInfo->getDirectoryListing(QString::fromLatin1("/")); // this call needs to be authenticated.
+    //QString url = d->owncloudInfo["url"].toString();
+    QString url = account()->url().toString();
+    qDebug() << " INFO : " << url << d->owncloudInfo;
     QNetworkReply *reply = account()->getRequest(d->owncloudInfo["url"].toString());
 
     connect(reply, SIGNAL(finished()), this, SLOT(slotAuthCheck()));

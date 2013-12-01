@@ -99,7 +99,7 @@ class OwncloudSync : public QObject
         void slotCheckRemoteFolderFinished();
         void slotFetchCredentials();
         void slotGuiLog(const QString &err, const QString &msg);
-        void slotCredentialsFetched( bool );
+        void slotCredentialsFetched();
         void itemProgress( int kind, const QString& folder, const QString& file, qint64 p1, qint64 p2);
         void overallProgress(const QString& folder, const QString& file, int fileNo, int fileCnt, qint64 p1, qint64 p2);
 
