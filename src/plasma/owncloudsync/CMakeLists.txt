@@ -12,7 +12,6 @@ set(owncloudsyncd_SRCS
   owncloudsync.cpp
   owncloudsyncdaemon.cpp
   kfilesync.cpp
-  #  ../../mirall/owncloudinfo.cpp # FIXME: Ouch. :/
   main.cpp
   )
 
@@ -28,7 +27,6 @@ ADD_LIBRARY(owncloudsyncd_SRCS STATIC IMPORTED)
 target_link_libraries(kdeinit_owncloudsyncd
   ${QT_QTDBUS_LIBRARY}
   ${QT_QTCORE_LIBRARY}
-  ${KDE4_KIO_LIBS}
   owncloudsync
 )
 
