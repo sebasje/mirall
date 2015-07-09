@@ -1,17 +1,28 @@
-ownCloud Client supports the following command line switches:
+You have the option of starting your ownCloud desktop client with the 
+``owncloud`` command. The following options are supported:
+
+``owncloud -h`` or ``owncloud --help``
+        Displays all command options.
+
+The other options are:
 
 ``--logwindow``
-        open a window to show log output at startup.
+        Opens a window displaying log output.
 
-``--logfile`` `<file>`
-        write log output to a single file
+``--logfile`` `<filename>`
+        Write log output to the file specified. To write to stdout, specify `-` 
+        as the filename.
 
-``--logdir`` `<dir>`
-        write log output to dir, one for each sync run.
+``--logdir`` `<name>`
+        Writes each synchronization log output in a new file in the specified 
+        directory.
+        
+``--logexpire`` `<hours>`
+        Removes logs older than the value specified (in hours). This command is 
+        used with ``--logdir``.
 
-``--flushlog``
-        flush the log file after every write.
+``--logflush``
+        Clears (flushes) the log file after each write action.
 
-``--monoicons``
-        Use black/white pictograms for systray.
-
+``--confdir`` `<dirname>`
+        Uses the specified configuration directory.

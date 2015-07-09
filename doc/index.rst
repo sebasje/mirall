@@ -1,15 +1,20 @@
 .. _contents:
 
-Contents
-========
+ownCloud Desktop Client Manual
+==============================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
-   install
-   usage 
+   introduction
+   installing
+   navigating
+   advancedusage
+   autoupdate
+
    building 
    architecture
    troubleshooting
+   faq
    glossary 
 

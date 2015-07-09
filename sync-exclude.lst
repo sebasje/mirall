@@ -1,36 +1,41 @@
 *.filepart
 *~
-*.bak
 *.part
 *.crdownload
 
 *.unison*
 *csync_timedif.ctmp*
+.csync_journal.db
+.csync_journal.db.ctmp
+.owncloudsync.log
+
 .*.sw?
 .*.*sw?
+].csync-progressdatabase
 
-.DS_Store
-.ds_store
+].DS_Store
+].ds_store
+._*
+]Thumbs.db
 desktop.ini
-Thumbs.db
 
 *.kate-swp
-*.aux
-*.nav
-*.out
-*.toc
 
 *_conflict-*
+]*.~*
 
-.TemporaryItems
-.Trashes
-.DocumentRevisions-V100
+].TemporaryItems
+].Trashes
+].DocumentRevisions-V100
 .fseventd
 .apdisk
 
 .htaccess
 
-Icon\r*
+]Icon\r*
 
 ~$*
 .~lock.*
+~*.tmp
+
+*.gnucash.tmp-*

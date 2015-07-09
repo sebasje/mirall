@@ -4,11 +4,11 @@ Glossary
 .. glossary::
    :sorted:
 
+   ownCloud Sync Client
    ownCloud Client
-   oCC
      Name of the official ownCloud syncing client for desktop, which runs on
-     Windows, Mac OS X and Linux. It is based Mirall, and uses the CSync
-     sync engine for synchronization with the ownCloud server.
+     Windows, Mac OS X and Linux. It uses the CSync sync engine for 
+     synchronization with the ownCloud server.
 
    ownCloud Server
      The server counter part of ownCloud Client as provided by the ownCloud
@@ -23,6 +23,7 @@ Glossary
      exist in the client directory.
 
    unique id
+   ETag
      ID assigned to every file starting with ownCloud server 4.5 and submitted
      via the HTTP ``Etag``. Used to check if files on client and server have
      changed.

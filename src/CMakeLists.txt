@@ -1,15 +1,7 @@
-include(${QT_USE_FILE})
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
-
-QT4_ADD_RESOURCES ( MIRALL_RC_SRC ../mirall.qrc)
-if ( IS_DIRECTORY ${OEM_THEME_DIR} )
-    QT4_ADD_RESOURCES ( MIRALL_RC_SRC ${OEM_THEME_DIR}/theme.qrc)
-    set(theme_dir ${OEM_THEME_DIR}/theme)
-else()
-    QT4_ADD_RESOURCES ( MIRALL_RC_SRC ../theme.qrc)
-    set(theme_dir ${CMAKE_CURRENT_SOURCE_DIR}/../theme)
+# TODO: OSX and LIB_ONLY seem to require this to go to binary dir only
+if(NOT TOKEN_AUTH_ONLY)
 endif()
+set(BIN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 set(synclib_NAME ${APPLICATION_SHORTNAME}sync)
 
@@ -119,34 +111,20 @@ list(APPEND libsync_LINK_TARGETS
     ${CSYNC_LIBRARY}
     dl
 )
+#set(synclib_NAME ${APPLICATION_EXECUTABLE}sync)
 
-if(QTKEYCHAIN_FOUND)
-    list(APPEND libsync_LINK_TARGETS ${QTKEYCHAIN_LIBRARY})
-    include_directories(${QTKEYCHAIN_INCLUDE_DIR})
+if (APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()
 
-add_library(${synclib_NAME} SHARED ${libsync_SRCS} ${syncMoc})
-set_target_properties( ${synclib_NAME}  PROPERTIES
-	VERSION ${VERSION}
-	SOVERSION ${SOVERSION}
-)
+add_subdirectory(libsync)
+if (NOT BUILD_LIBRARIES_ONLY)
+    add_subdirectory(gui)
+    add_subdirectory(cmd)
 
-target_link_libraries(${synclib_NAME} ${libsync_LINK_TARGETS} )
-
-if ( APPLE )
-    target_link_libraries(${synclib_NAME} /System/Library/Frameworks/CoreServices.framework)
-endif()
-
-if(NOT BUILD_OWNCLOUD_OSX_BUNDLE)
-    install(TARGETS ${synclib_NAME}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    )
-    if(NOT WIN32)
-        configure_file(${CMAKE_SOURCE_DIR}/mirall.desktop.in
-		${CMAKE_CURRENT_BINARY_DIR}/${APPLICATION_SHORTNAME}.desktop)
-        install(FILES  ${CMAKE_CURRENT_BINARY_DIR}/${APPLICATION_SHORTNAME}.desktop DESTINATION share/applications )
+    if (WITH_CRASHREPORTER)
+        add_subdirectory(3rdparty/libcrashreporter-qt)
+        add_subdirectory(crashreporter)
     endif()
 else()
     install(TARGETS ${synclib_NAME} DESTINATION ${OWNCLOUD_OSX_BUNDLE}/Contents/MacOS)
@@ -318,9 +296,14 @@ find_program(KRAZY2_EXECUTABLE krazy2)
 if(KRAZY2_EXECUTABLE)
     # s/y k/y ALL k/ for building this target always
     add_custom_target( krazy krazy2 --check-sets c++,qt4,foss
-                       ${PROJECT_SOURCE_DIR}/src/mirall/*.ui
-                       ${PROJECT_SOURCE_DIR}/src/mirall/*.h
-                       ${PROJECT_SOURCE_DIR}/src/mirall/*.cpp
+                       ${PROJECT_SOURCE_DIR}/src/libsync/*.ui
+                       ${PROJECT_SOURCE_DIR}/src/libsync/*.h
+                       ${PROJECT_SOURCE_DIR}/src/libsync/*.cpp
+                       ${PROJECT_SOURCE_DIR}/src/gui/*.ui
+                       ${PROJECT_SOURCE_DIR}/src/gui/*.h
+                       ${PROJECT_SOURCE_DIR}/src/gui/*.cpp
+                       ${PROJECT_SOURCE_DIR}/src/cmd/*.h
+                       ${PROJECT_SOURCE_DIR}/src/cmd/*.cpp
 )
 endif()
 
