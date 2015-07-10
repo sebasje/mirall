@@ -22,8 +22,8 @@
 #ifndef OWNCLOUDSYNC_H
 #define OWNCLOUDSYNC_H
 
-#include "mirall/syncresult.h"
-#include "mirall/folderman.h"
+#include <syncresult.h>
+#include "../gui/folderman.h"
 #include "mirall/owncloudinfo.h"
 
 #include <QObject>

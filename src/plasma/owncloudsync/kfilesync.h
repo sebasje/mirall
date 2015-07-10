@@ -22,7 +22,7 @@
 #ifndef KFILESYNC_H
 #define KFILESYNC_H
 
-#include "mirall/syncresult.h"
+#include <syncresult.h>
 #include "owncloudsync.h"
 
 #include <QObject>
