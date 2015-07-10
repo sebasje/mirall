@@ -23,7 +23,7 @@
 
 #include "owncloudsyncadaptor.h"
 
-#include <QtDBus/QDBusConnection>
+#include <QDBusConnection>
 
 
 OwncloudSyncDaemon* OwncloudSyncDaemon::s_self = 0;

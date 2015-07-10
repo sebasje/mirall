@@ -26,9 +26,9 @@
 #include <kcomponentdata.h>
 #include <QDebug>
 
-#include <QtCore/QCoreApplication>
-#include <QtDBus/QDBusConnection>
-#include <QtDBus/QDBusConnectionInterface>
+#include <QCoreApplication>
+#include <QDBusConnection>
+#include <QDBusConnectionInterface>
 
 #include <signal.h>
 

@@ -36,7 +36,7 @@
 
 #include <QDBusServiceWatcher>
 #include <QtDeclarative/qdeclarative.h>
-#include <QtDeclarative/QDeclarativeItem>
+#include <QDeclarativeItem>
 
 // The DBus interface definition
 #include "../applet/owncloud_interface.h"

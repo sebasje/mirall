@@ -40,8 +40,8 @@
 #include <KGlobalSettings>
 
 #include <QtDeclarative/qdeclarative.h>
-#include <QtDeclarative/QDeclarativeItem>
-#include <QtCore/QDate>
+#include <QDeclarativeItem>
+#include <QDate>
 
 K_PLUGIN_FACTORY(OwncloudSettingsFactory, registerPlugin<OwncloudSettingsPlugin>();)
 K_EXPORT_PLUGIN(OwncloudSettingsFactory("active_settings_owncloud"))

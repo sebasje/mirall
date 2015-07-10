@@ -21,8 +21,8 @@
 #ifndef OWNCLOUDSYNCDAEMON_H
 #define OWNCLOUDSYNCDAEMON_H
 
-#include <QtCore/QObject>
-#include <QtCore/QCoreApplication>
+#include <QObject>
+#include <QCoreApplication>
 
 class OwncloudSyncDaemon : public QObject
 {
