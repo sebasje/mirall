@@ -10,18 +10,18 @@ set(kcm_owncloud_PART_SRCS
     ../lib/createfolderjob.cpp
     ../lib/syncprogress.cpp
 )
-qt4_add_dbus_interface(kcm_owncloud_PART_SRCS ../owncloudsync/org.kde.owncloudsync.xml owncloud_interface )
+qt5_add_dbus_interface(kcm_owncloud_PART_SRCS ../owncloudsync/org.kde.owncloudsync.xml owncloud_interface )
 
 #KDE4_ADD_UI_FILES(kcm_owncloud_PART_SRCS owncloudconfig.ui )
 
-kde4_add_plugin(kcm_owncloud ${kcm_owncloud_PART_SRCS})
+add_library(kcm_owncloud MODULE ${kcm_owncloud_PART_SRCS})
 
 target_link_libraries(kcm_owncloud
-    ${QT_QTDECLARATIVE_LIBRARY}
-    ${KDE4_KCMUTILS_LIBS}
-    ${KDE4_PLASMA_LIBS}
+    Qt5::Declarative
+    KF5::KCMUtils
+    KF5::Plasma
     ${KDECLARATIVE_LIBRARIES}
-    ${KDE4_KIO_LIBS}
+    KF5::KIOWidgets
 )
 
 install(TARGETS kcm_owncloud DESTINATION ${PLUGIN_INSTALL_DIR})

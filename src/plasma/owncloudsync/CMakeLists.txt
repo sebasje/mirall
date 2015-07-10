@@ -16,12 +16,12 @@ set(owncloudsyncd_SRCS
   main.cpp
   )
 
-qt4_add_dbus_adaptor(owncloudsyncd_SRCS
+qt5_add_dbus_adaptor(owncloudsyncd_SRCS
   org.kde.owncloudsync.xml
   owncloudsync.h
   OwncloudSync)
 
-kde4_add_kdeinit_executable(owncloudsyncd ${owncloudsyncd_SRCS})
+kf5_add_kdeinit_executable(owncloudsyncd ${owncloudsyncd_SRCS})
 
 ADD_LIBRARY(owncloudsyncd_SRCS STATIC IMPORTED)
 

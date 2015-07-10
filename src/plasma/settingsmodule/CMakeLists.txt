@@ -18,10 +18,10 @@ set(owncloudsettings_SRCS
     ../lib/syncprogress.cpp
 )
 
-qt4_add_dbus_interface(owncloudsettings_SRCS ../owncloudsync/org.kde.owncloudsync.xml owncloud_interface )
+qt5_add_dbus_interface(owncloudsettings_SRCS ../owncloudsync/org.kde.owncloudsync.xml owncloud_interface )
 
 
-kde4_add_plugin(active_settings_owncloud ${owncloudsettings_SRCS})
-target_link_libraries(active_settings_owncloud ${KDE4_PLASMA_LIBS} ${QT_QTDECLARATIVE_LIBRARY} ${KDE4_KIO_LIBS} )
+add_library(active_settings_owncloud MODULE ${owncloudsettings_SRCS})
+target_link_libraries(active_settings_owncloud KF5::Plasma Qt5::Declarative KF5::KIOWidgets )
 install(TARGETS active_settings_owncloud DESTINATION ${PLUGIN_INSTALL_DIR})
 
