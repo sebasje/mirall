@@ -29,6 +29,7 @@ target_link_libraries(kdeinit_owncloudsyncd
     Qt5::Core
     Qt5::DBus
     Qt5::Qml
+    #Qt5::Quick
     KF5::KIO
     KF5::KDELibs4Support
     owncloudsync

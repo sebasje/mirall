@@ -453,9 +453,9 @@ int OwncloudSettings::globalStatus() const
     return  d->globalStatus;
 }
 
-QDeclarativeListProperty<OwncloudFolder> OwncloudSettings::folders()
+QQmlListProperty<OwncloudFolder> OwncloudSettings::folders()
 {
-    return QDeclarativeListProperty<OwncloudFolder>(this, d->folders);
+    return QQmlListProperty<OwncloudFolder>(this, d->folders);
 }
 
 void OwncloudSettings::refresh()

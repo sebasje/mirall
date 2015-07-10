@@ -49,7 +49,7 @@ class OwncloudSync : public QObject
         void init();
 
         OCC::FolderMan* folderMan();
-        OCC::ownCloudInfo* ocInfo();
+//         OCC::ownCloudInfo* ocInfo();
 
     public Q_SLOTS:
         QString display();

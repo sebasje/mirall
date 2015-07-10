@@ -26,6 +26,7 @@
 #include "owncloudfolder.h"
 #include "syncprogress.h"
 
+#include <QQmlListProperty>
 #include <QQmlComponent>
 #include <QObject>
 #include <QIcon>
@@ -46,7 +47,7 @@ class OwncloudSettings : public QObject
 
     Q_PROPERTY(int owncloudStatus READ owncloudStatus NOTIFY owncloudStatusChanged)
     Q_PROPERTY(int error READ error NOTIFY errorChanged)
-    Q_PROPERTY(QDeclarativeListProperty<OwncloudFolder> folders READ folders NOTIFY foldersChanged)
+    Q_PROPERTY(QQmlListProperty<OwncloudFolder> folders READ folders NOTIFY foldersChanged)
     Q_PROPERTY(QString url READ url WRITE setUrl NOTIFY urlChanged)
     Q_PROPERTY(SyncProgress* progress READ progress NOTIFY progressChanged)
     Q_PROPERTY(int globalStatus READ globalStatus NOTIFY globalStatusChanged)
@@ -80,7 +81,7 @@ class OwncloudSettings : public QObject
         QString version() const;
         QString edition() const;
         int globalStatus() const; // Returns OwncloudFolder::Status
-        QDeclarativeListProperty<OwncloudFolder> folders();
+        QQmlListProperty<OwncloudFolder> folders();
 
         int owncloudStatus() const; // returns OwncloudSettings::Status
         void setOwncloudStatus(int i);

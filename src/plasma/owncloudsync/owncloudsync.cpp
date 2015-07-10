@@ -48,7 +48,7 @@ public:
     QHash<QString, QDateTime> syncTime;
 
     OCC::FolderMan* folderMan;
-    OCC::ownCloudInfo* ocInfo;
+//     OCC::ownCloudInfo* ocInfo;
     QString configHandle;
     QTimer *delay;
     int ocStatus;
@@ -66,7 +66,7 @@ OwncloudSync::OwncloudSync(QObject *parent)
     d->delay = 0;
     d->ocStatus = OwncloudSettings::Disconnected;
     d->ocError = OwncloudSettings::NoError;
-    d->ocInfo = OCC::ownCloudInfo::instance();
+//     d->ocInfo = OCC::ownCloudInfo::instance();
 // //     KIO::AccessManager *nam = new KIO::AccessManager(this);
 // //     qDebug() << "OC Seetting KIO::NAM";
 // //     d->ocInfo->setNetworkAccessManager(nam);
@@ -82,18 +82,18 @@ void OwncloudSync::init()
              this,SLOT(slotSyncStateChange(const QString&)));
 
     //d->ocInfo->setCustomConfigHandle("mirall");
-    connect(d->ocInfo,SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
-             SLOT(slotOwnCloudFound(QString,QString,QString,QString)));
-
-    connect(d->ocInfo,SIGNAL(noOwncloudFound(QNetworkReply*)),
-             SLOT(slotNoOwnCloudFound(QNetworkReply*)));
-
-    qDebug() << "OC connecting to slotAuthCheck";
-    connect(d->ocInfo,SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
-             this,SLOT(slotAuthCheck(QString,QNetworkReply*)));
-
-    connect(d->ocInfo, SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
-             SLOT(slotDirCheckReply(QString,QNetworkReply*)));
+//     connect(d->ocInfo,SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
+//              SLOT(slotOwnCloudFound(QString,QString,QString,QString)));
+//
+//     connect(d->ocInfo,SIGNAL(noOwncloudFound(QNetworkReply*)),
+//              SLOT(slotNoOwnCloudFound(QNetworkReply*)));
+//
+//     qDebug() << "OC connecting to slotAuthCheck";
+//     connect(d->ocInfo,SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
+//              this,SLOT(slotAuthCheck(QString,QNetworkReply*)));
+//
+//     connect(d->ocInfo, SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
+//              SLOT(slotDirCheckReply(QString,QNetworkReply*)));
 
 
     connect(OCC::ProgressDispatcher::instance(),
@@ -118,11 +118,11 @@ OCC::FolderMan* OwncloudSync::folderMan()
     return d->folderMan;
 }
 
-OCC::ownCloudInfo* OwncloudSync::ocInfo()
-{
-    return d->ocInfo;
-}
-
+// OCC::ownCloudInfo* OwncloudSync::ocInfo()
+// {
+//     return d->ocInfo;
+// }
+//
 void OwncloudSync::slotSyncStateChange(const QString &s)
 {
     OCC::Folder *f = d->folderMan->folder(s);
@@ -208,13 +208,14 @@ QVariantMap OwncloudSync::folderList()
 void OwncloudSync::refresh()
 {
     qDebug() << "POC Syncdaemon refresh()";
-    if (!d->ocInfo->isConfigured()) {
-        d->ocStatus = OwncloudSettings::Error;
-        d->ocError = OwncloudSettings::NoConfigurationError;
-    } else {
-        loadFolders();
-        qDebug() << "POC We're good" << (d->ocStatus != OwncloudSettings::Disconnected) << d->ocStatus;
-    }
+// see ./src/gui/owncloudgui.cpp:341:...
+//     if (!d->ocInfo->isConfigured()) {
+//         d->ocStatus = OwncloudSettings::Error;
+//         d->ocError = OwncloudSettings::NoConfigurationError;
+//     } else {
+//         loadFolders();
+//         qDebug() << "POC We're good" << (d->ocStatus != OwncloudSettings::Disconnected) << d->ocStatus;
+//     }
     emit statusChanged(d->ocStatus);
     emit errorChanged(d->ocError);
     emit owncloudChanged(d->owncloudInfo);
@@ -335,12 +336,12 @@ void OwncloudSync::delayedReadConfig()
 void OwncloudSync::checkRemoteFolder(const QString& f)
 {
     if (d->ocStatus == OwncloudSettings::Connected) {
-        QNetworkReply* reply = d->ocInfo->getDirectoryListing(f);
-        connect(d->ocInfo, SIGNAL(directoryListingUpdated(const &QStringList)),
-                this, SLOT(slotDirectoryListingUpdated(const QStringList&)));
-        //QNetworkReply* reply = d->ocInfo->getWebDAVPath(f);
-        connect(reply, SIGNAL(finished()), SLOT(slotCheckRemoteFolderFinished()));
-        //connect(reply, SIGNAL(finished()), SLOT(slotCheckRemoteFolderFinished()));
+//         QNetworkReply* reply = d->ocInfo->getDirectoryListing(f);
+//         connect(d->ocInfo, SIGNAL(directoryListingUpdated(const &QStringList)),
+//                 this, SLOT(slotDirectoryListingUpdated(const QStringList&)));
+//         //QNetworkReply* reply = d->ocInfo->getWebDAVPath(f);
+//         connect(reply, SIGNAL(finished()), SLOT(slotCheckRemoteFolderFinished()));
+//         //connect(reply, SIGNAL(finished()), SLOT(slotCheckRemoteFolderFinished()));
     }
 }
 
@@ -368,10 +369,10 @@ void OwncloudSync::createRemoteFolder(const QString &f)
 {
     if(f.isEmpty()) return;
 
-    qDebug() << "OC creating folder on ownCloud: " << f;
-    QNetworkReply* reply = d->ocInfo->mkdirRequest(f);
-    connect(reply, SIGNAL(finished()), SLOT(slotCreateRemoteFolderFinished()));
-    //connect(reply, SIGNAL(error()), SLOT(slotCreateRemoteFolderFinished()));
+//     qDebug() << "OC creating folder on ownCloud: " << f;
+//     QNetworkReply* reply = d->ocInfo->mkdirRequest(f);
+//     connect(reply, SIGNAL(finished()), SLOT(slotCreateRemoteFolderFinished()));
+//     //connect(reply, SIGNAL(error()), SLOT(slotCreateRemoteFolderFinished()));
 
 }
 
@@ -389,7 +390,7 @@ void OwncloudSync::slotOwnCloudFound( const QString& url, const QString& version
     qDebug() << "OCD : ownCloud found: " << url << " with version " << versionStr << "(" << version << ")";
     // now check the authentication
 
-    OCC::MirallConfigFile cfgFile(d->configHandle);
+    OCC::ConfigFile cfgFile;
     cfgFile.setOwnCloudVersion( version );
     qDebug() << " OC polling interval: " << cfgFile.remotePollInterval();
 
@@ -464,10 +465,10 @@ void OwncloudSync::slotNoOwnCloudFound(QNetworkReply* reply)
 void OwncloudSync::slotCheckAuthentication()
 {
     qDebug() << "OwncloudSync::slotCheckAuthentication()";
-    //QNetworkReply *reply = d->ocInfo->getDirectoryListing(QString::fromLatin1("/")); // this call needs to be authenticated.
-    QNetworkReply *reply = d->ocInfo->getRequest(d->owncloudInfo["url"].toString());
-
-    connect(reply, SIGNAL(finished()), this, SLOT(slotAuthCheck()));
+//     //QNetworkReply *reply = d->ocInfo->getDirectoryListing(QString::fromLatin1("/")); // this call needs to be authenticated.
+//     QNetworkReply *reply = d->ocInfo->getRequest(d->owncloudInfo["url"].toString());
+//
+//     connect(reply, SIGNAL(finished()), this, SLOT(slotAuthCheck()));
 }
 
 void OwncloudSync::slotAuthCheck()
@@ -510,38 +511,40 @@ void OwncloudSync::slotAuthCheck()
 
 void OwncloudSync::setupOwncloud(const QString &server, const QString &user, const QString &password)
 {
-    OCC::MirallConfigFile cfgFile(d->configHandle);
-    cfgFile.setRemotePollInterval(600000); // ten minutes for now
 
-    bool https = server.startsWith("https");
-
-    QString _srv = server;
-    if (!server.endsWith('/')) {
-        _srv.append('/');
-    }
-
-    cfgFile.writeOwncloudConfig(QLatin1String("ownCloud"), _srv, user, password);
-    OCC::CredentialStore::instance()->saveCredentials();
-    d->ocInfo->setCredentials(user, password); // add server
-    qDebug() << "OC - - - - -  Setting up OwnCloud: " << _srv << user << password << https;
-    cfgFile.acceptCustomConfig();
-
-    if( d->folderMan ) {
-        d->folderMan->removeAllFolderDefinitions();
-    }
-
-    d->configHandle.clear();
-    d->ocInfo->setCustomConfigHandle(QString());
-
-    d->ocInfo->setCustomConfigHandle(d->configHandle);
-    if (d->ocInfo->isConfigured()) {
-        // reset the SSL Untrust flag to let the SSL dialog appear again.
-        d->ocInfo->resetSSLUntrust();
-        d->ocInfo->checkInstallation();
-        loadFolders();
-    } else {
-        qDebug() << " OC  ownCloud seems not configured.";
-    }
+//     //OCC::ConfigFile cfgFile(d->configHandle);
+//     OCC::ConfigFile cfgFile();
+//     cfgFile.setRemotePollInterval(600000); // ten minutes for now
+//
+//     bool https = server.startsWith("https");
+//
+//     QString _srv = server;
+//     if (!server.endsWith('/')) {
+//         _srv.append('/');
+//     }
+//
+//     cfgFile.writeOwncloudConfig(QLatin1String("ownCloud"), _srv, user, password);
+//     OCC::CredentialStore::instance()->saveCredentials();
+//     d->ocInfo->setCredentials(user, password); // add server
+//     qDebug() << "OC - - - - -  Setting up OwnCloud: " << _srv << user << password << https;
+//     cfgFile.acceptCustomConfig();
+//
+//     if( d->folderMan ) {
+//         d->folderMan->removeAllFolderDefinitions();
+//     }
+//
+//     d->configHandle.clear();
+//     d->ocInfo->setCustomConfigHandle(QString());
+//
+//     d->ocInfo->setCustomConfigHandle(d->configHandle);
+//     if (d->ocInfo->isConfigured()) {
+//         // reset the SSL Untrust flag to let the SSL dialog appear again.
+//         d->ocInfo->resetSSLUntrust();
+//         d->ocInfo->checkInstallation();
+//         loadFolders();
+//     } else {
+//         qDebug() << " OC  ownCloud seems not configured.";
+//     }
     QTimer::singleShot(0, this, SLOT(slotCheckAuthentication()));
 }
 
