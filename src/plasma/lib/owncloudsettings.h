@@ -1,6 +1,6 @@
 /***************************************************************************
  *                                                                         *
- *   Copyright 2012 Sebastian Kügler <sebas@kde.org>                       *
+ *   Copyright 2012,2015 Sebastian Kügler <sebas@kde.org>                  *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -22,11 +22,9 @@
 #ifndef OWNCLOUDSETTINGS_H
 #define OWNCLOUDSETTINGS_H
 
-#include <KIconLoader>
 
 #include "owncloudfolder.h"
 #include "syncprogress.h"
-//#include "minijob.h"
 
 #include <QQmlComponent>
 #include <QObject>
