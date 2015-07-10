@@ -4,48 +4,55 @@ include_directories(
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}/../../gui/
   ${owncloudsyncdaemon_BINARY_DIR}
   ../..
+  ${QTKEYCHAIN_INCLUDE_DIR}
   )
 
 set(owncloudsyncd_SRCS
   owncloudsync.cpp
   owncloudsyncdaemon.cpp
   kfilesync.cpp
-  #../../mirall/owncloudinfo.cpp # FIXME: Ouch. :/
+  ${LIBSYNC_ADDITIONAL_SRCS}
   main.cpp
   )
+
+# IF( NOT WIN32 AND NOT APPLE )
+# set(owncloudsyncd_SRCS ${owncloudsyncd_SRCS} folderwatcher_linux.cpp)
+# ENDIF()
+# IF( WIN32 )
+# set(owncloudsyncd_SRCS ${owncloudsyncd_SRCS} folderwatcher_win.cpp)
+# ENDIF()
+# IF( APPLE )
+# list(APPEND owncloudsyncd_SRCS folderwatcher_mac.cpp)
+# ENDIF()
+
+
 
 qt5_add_dbus_adaptor(owncloudsyncd_SRCS
   org.kde.owncloudsync.xml
   owncloudsync.h
   OwncloudSync)
 
-kf5_add_kdeinit_executable(owncloudsyncd ${owncloudsyncd_SRCS})
+add_executable(owncloudsyncd ${owncloudsyncd_SRCS})
 
 ADD_LIBRARY(owncloudsyncd_SRCS STATIC IMPORTED)
 
-target_link_libraries(kdeinit_owncloudsyncd
+target_link_libraries(owncloudsyncd
     Qt5::Core
     Qt5::DBus
     Qt5::Qml
     #Qt5::Quick
-    KF5::KIO
+    KF5::KIOCore
     KF5::KDELibs4Support
     owncloudsync
 )
 
-target_link_libraries(owncloudsyncd
-  kdeinit_owncloudsyncd
-)
 
 install(
   FILES owncloudsync.desktop
   DESTINATION ${AUTOSTART_INSTALL_DIR})
-
-install(
-  TARGETS kdeinit_owncloudsyncd
-  DESTINATION ${LIB_INSTALL_DIR})
 
 install(
   TARGETS owncloudsyncd
