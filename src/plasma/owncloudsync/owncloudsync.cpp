@@ -31,6 +31,7 @@
 //#include "mirall/credentialstore.h"
 #include <syncresult.h>
 #include "gui/folder.h"
+#include <gui/accountmanager.h>
 #include <gui/accountstate.h>
 #include <configfile.h>
 #include <progressdispatcher.h>
@@ -101,10 +102,23 @@ void OwncloudSync::init()
 
     new Application(this); // Initializes FolderMan instance
 
+    AccountManager::instance()->restore();
+
+    QList<AccountStatePtr> acl = AccountManager::instance()->accounts();
+    for (auto ac : acl) {
+        ac->checkConnectivity();
+        qDebug() << "AS: " << ac->isConnected() << ac->stateString(ac->state());
+    }
+    qDebug() << "accounts: " << acl.count();
+
+
+
     d->folderMan = OCC::FolderMan::instance();
     qDebug() << "folderMan: " << d->folderMan;
     connect( d->folderMan, &FolderMan::folderSyncStateChange,
              this, &OwncloudSync::slotSyncStateChange);
+    FolderMan::instance()->setSyncEnabled(true);
+    FolderMan::instance()->setupFolders();
 
     //d->ocInfo->setCustomConfigHandle("mirall");
 //     connect(d->ocInfo,SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
@@ -150,6 +164,11 @@ OCC::FolderMan* OwncloudSync::folderMan()
 //
 void OwncloudSync::slotSyncStateChange(OCC::Folder *folder)
 {
+    if (!folder) {
+        qDebug() << "Folder is null";
+        return;
+
+    }
     if (folder && (folder->syncResult().status() == OCC::SyncResult::Success)) {
         d->syncTime[folder->alias()] = QDateTime::currentDateTime();
 //         qDebug() << "OC updated syncTime for " << s << d->syncTime[s];
