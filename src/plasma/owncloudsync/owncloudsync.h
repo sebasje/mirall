@@ -33,7 +33,7 @@
 #include <QStringListModel>
 
 class OwncloudSyncPrivate;
-namespace Mirall {
+namespace OCC {
     class Folder;
 }
 
@@ -48,15 +48,15 @@ class OwncloudSync : public QObject
         virtual ~OwncloudSync();
         void init();
 
-        Mirall::FolderMan* folderMan();
-        Mirall::ownCloudInfo* ocInfo();
+        OCC::FolderMan* folderMan();
+        OCC::ownCloudInfo* ocInfo();
 
     public Q_SLOTS:
         QString display();
         void refresh();
         QVariantMap folder(QString name);
         QVariantMap folderList();
-        void updateFolder(const Mirall::Folder *folder);
+        void updateFolder(const OCC::Folder *folder);
         void enableFolder(const QString &name, bool enabled = true);
         void syncFolder(const QString &name);
         void cancelSync(const QString &name);
@@ -100,7 +100,7 @@ class OwncloudSync : public QObject
 
     private Q_SLOTS:
         void delayedReadConfig();
-        void folderSyncFinished(Mirall::SyncResult r);
+        void folderSyncFinished(OCC::SyncResult r);
 
     private:
         OwncloudSyncPrivate* d;

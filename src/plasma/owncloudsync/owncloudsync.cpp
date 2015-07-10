@@ -28,11 +28,11 @@
 #include <QVariant>
 #include <QTimer>
 
-#include "mirall/credentialstore.h"
-#include "mirall/syncresult.h"
-#include "mirall/folder.h"
-#include "mirall/mirallconfigfile.h"
-#include "mirall/progressdispatcher.h"
+//#include "mirall/credentialstore.h"
+#include <syncresult.h>
+#include "gui/folder.h"
+#include <configfile.h>
+#include <progressdispatcher.h>
 
 class OwncloudSyncPrivate {
 public:
@@ -47,8 +47,8 @@ public:
     QHash<QString, QVariantMap> folders;
     QHash<QString, QDateTime> syncTime;
 
-    Mirall::FolderMan* folderMan;
-    Mirall::ownCloudInfo* ocInfo;
+    OCC::FolderMan* folderMan;
+    OCC::ownCloudInfo* ocInfo;
     QString configHandle;
     QTimer *delay;
     int ocStatus;
@@ -66,7 +66,7 @@ OwncloudSync::OwncloudSync(QObject *parent)
     d->delay = 0;
     d->ocStatus = OwncloudSettings::Disconnected;
     d->ocError = OwncloudSettings::NoError;
-    d->ocInfo = Mirall::ownCloudInfo::instance();
+    d->ocInfo = OCC::ownCloudInfo::instance();
 // //     KIO::AccessManager *nam = new KIO::AccessManager(this);
 // //     qDebug() << "OC Seetting KIO::NAM";
 // //     d->ocInfo->setNetworkAccessManager(nam);
@@ -77,7 +77,7 @@ OwncloudSync::OwncloudSync(QObject *parent)
 
 void OwncloudSync::init()
 {
-    d->folderMan = Mirall::FolderMan::instance();
+    d->folderMan = OCC::FolderMan::instance();
     connect( d->folderMan, SIGNAL(folderSyncStateChange(const QString&)),
              this,SLOT(slotSyncStateChange(const QString&)));
 
@@ -96,12 +96,12 @@ void OwncloudSync::init()
              SLOT(slotDirCheckReply(QString,QNetworkReply*)));
 
 
-    connect(Mirall::ProgressDispatcher::instance(),
+    connect(OCC::ProgressDispatcher::instance(),
             SIGNAL(itemProgress(int, const QString&, const QString&, qint64, qint64)),
             this,
             SLOT(itemProgress(int, const QString&, const QString&, qint64, qint64)));
 
-    connect(Mirall::ProgressDispatcher::instance(),
+    connect(OCC::ProgressDispatcher::instance(),
             SIGNAL(overallProgress(const QString&, const QString&, int, int, qint64, qint64)),
             this,
             SLOT(overallProgress(const QString&, const QString&, int, int, qint64, qint64)));
@@ -113,20 +113,20 @@ OwncloudSync::~OwncloudSync()
     delete d;
 }
 
-Mirall::FolderMan* OwncloudSync::folderMan()
+OCC::FolderMan* OwncloudSync::folderMan()
 {
     return d->folderMan;
 }
 
-Mirall::ownCloudInfo* OwncloudSync::ocInfo()
+OCC::ownCloudInfo* OwncloudSync::ocInfo()
 {
     return d->ocInfo;
 }
 
 void OwncloudSync::slotSyncStateChange(const QString &s)
 {
-    Mirall::Folder *f = d->folderMan->folder(s);
-    if (f && (f->syncResult().status() == Mirall::SyncResult::Success)) {
+    OCC::Folder *f = d->folderMan->folder(s);
+    if (f && (f->syncResult().status() == OCC::SyncResult::Success)) {
         d->syncTime[s] = QDateTime::currentDateTime();
 //         qDebug() << "OC updated syncTime for " << s << d->syncTime[s];
     }
@@ -167,7 +167,7 @@ QVariantMap OwncloudSync::folder(QString name)
 void OwncloudSync::enableFolder(const QString &name, bool enabled)
 {
     qDebug() << " OC enableFolder: " << name << enabled;
-    Mirall::Folder *f = d->folderMan->folder(name);
+    OCC::Folder *f = d->folderMan->folder(name);
     if (f) {
         f->setSyncEnabled(enabled);
         updateFolder(f);
@@ -179,7 +179,7 @@ void OwncloudSync::enableFolder(const QString &name, bool enabled)
 void OwncloudSync::syncFolder(const QString& name)
 {
     qDebug() << " OC syncFolder: " << name;
-    Mirall::Folder *f = d->folderMan->folder(name);
+    OCC::Folder *f = d->folderMan->folder(name);
     if (f) {
         f->startSync(QStringList());
 
@@ -192,7 +192,7 @@ void OwncloudSync::cancelSync(const QString& name)
 {
     qWarning() << "OC Terminating a sync operation is not implemented yet.";
     //qDebug() << " OC syncFolder: " << name;
-    Mirall::Folder *f = d->folderMan->folder(name);
+    OCC::Folder *f = d->folderMan->folder(name);
     if (f) {
         qWarning() << "Terminating a sync operation is not implemented yet.";
     } else {
@@ -224,10 +224,10 @@ void OwncloudSync::loadFolders()
 {
     if (d->ocStatus == OwncloudSettings::Connected) {
         QStringList fs;
-        foreach (Mirall::Folder* f, d->folderMan->map()) {
+        foreach (OCC::Folder* f, d->folderMan->map()) {
             //qDebug() << "OC New folder: " << f->alias() << f->path() << f->secondPath();
             //fs << f->alias();
-            connect(f, SIGNAL(syncFinished(Mirall::SyncResult)), SLOT(folderSyncFinished(Mirall::SyncResult)));
+            connect(f, SIGNAL(syncFinished(OCC::SyncResult)), SLOT(folderSyncFinished(OCC::SyncResult)));
             updateFolder(f);
         }
     } else {
@@ -237,10 +237,10 @@ void OwncloudSync::loadFolders()
     }
 }
 
-void OwncloudSync::folderSyncFinished(Mirall::SyncResult r)
+void OwncloudSync::folderSyncFinished(OCC::SyncResult r)
 {
-    if (r.status() == Mirall::SyncResult::Success) {
-        Mirall::Folder *f = static_cast<Mirall::Folder*>(sender());
+    if (r.status() == OCC::SyncResult::Success) {
+        OCC::Folder *f = static_cast<OCC::Folder*>(sender());
         if (f) {
             d->syncTime[f->alias()] = QDateTime::currentDateTime();
         } else {
@@ -251,16 +251,16 @@ void OwncloudSync::folderSyncFinished(Mirall::SyncResult r)
 
 QString errorMsg(int r) {
     QString s;
-    if (r == Mirall::SyncResult::Success) s = "Mirall::SyncResult::Success -> OwncloudFolder::Idle";
-    if (r == Mirall::SyncResult::Error) s = "Mirall::SyncResult::Error -> OwncloudFolder::Error";
-    if (r == Mirall::SyncResult::NotYetStarted) s = "Mirall::SyncResult::NotYetStarted -> OwncloudFolder::Waiting";
-    if (r == Mirall::SyncResult::SyncRunning) s = "Mirall::SyncResult::SyncRunning -> OwncloudFolder::Running";
-    if (r == Mirall::SyncResult::SetupError) s = "Mirall::SyncResult::SetupError -> OwncloudFolder::Error";
-    if (r == Mirall::SyncResult::Undefined) s = "Mirall::SyncResult::Undefined -> OwncloudFolder::Error";
+    if (r == OCC::SyncResult::Success) s = "OCC::SyncResult::Success -> OwncloudFolder::Idle";
+    if (r == OCC::SyncResult::Error) s = "OCC::SyncResult::Error -> OwncloudFolder::Error";
+    if (r == OCC::SyncResult::NotYetStarted) s = "OCC::SyncResult::NotYetStarted -> OwncloudFolder::Waiting";
+    if (r == OCC::SyncResult::SyncRunning) s = "OCC::SyncResult::SyncRunning -> OwncloudFolder::Running";
+    if (r == OCC::SyncResult::SetupError) s = "OCC::SyncResult::SetupError -> OwncloudFolder::Error";
+    if (r == OCC::SyncResult::Undefined) s = "OCC::SyncResult::Undefined -> OwncloudFolder::Error";
     return s;
 }
 
-void OwncloudSync::updateFolder(const Mirall::Folder* folder)
+void OwncloudSync::updateFolder(const OCC::Folder* folder)
 {
     QVariantMap m;
     m["name"] = folder->alias();
@@ -273,12 +273,12 @@ void OwncloudSync::updateFolder(const Mirall::Folder* folder)
     int r = folder->syncResult().status();
     //qDebug() << " c" << c << " r" << r;
     if (folder->syncEnabled()) {
-        if (r == Mirall::SyncResult::Success) s = OwncloudFolder::Idle;
-        if (r == Mirall::SyncResult::Error) s = OwncloudFolder::Error;
-        if (r == Mirall::SyncResult::NotYetStarted) s = OwncloudFolder::Waiting;
-        if (r == Mirall::SyncResult::SyncRunning) s = OwncloudFolder::Running;
-        if (r == Mirall::SyncResult::SetupError) s = OwncloudFolder::Error;
-        if (r == Mirall::SyncResult::Undefined) s = OwncloudFolder::Error;
+        if (r == OCC::SyncResult::Success) s = OwncloudFolder::Idle;
+        if (r == OCC::SyncResult::Error) s = OwncloudFolder::Error;
+        if (r == OCC::SyncResult::NotYetStarted) s = OwncloudFolder::Waiting;
+        if (r == OCC::SyncResult::SyncRunning) s = OwncloudFolder::Running;
+        if (r == OCC::SyncResult::SetupError) s = OwncloudFolder::Error;
+        if (r == OCC::SyncResult::Undefined) s = OwncloudFolder::Error;
     } else {
         s = OwncloudFolder::Disabled;
     }
@@ -389,7 +389,7 @@ void OwncloudSync::slotOwnCloudFound( const QString& url, const QString& version
     qDebug() << "OCD : ownCloud found: " << url << " with version " << versionStr << "(" << version << ")";
     // now check the authentication
 
-    Mirall::MirallConfigFile cfgFile(d->configHandle);
+    OCC::MirallConfigFile cfgFile(d->configHandle);
     cfgFile.setOwnCloudVersion( version );
     qDebug() << " OC polling interval: " << cfgFile.remotePollInterval();
 
@@ -409,20 +409,23 @@ void OwncloudSync::slotOwnCloudFound( const QString& url, const QString& version
 
 void OwncloudSync::slotFetchCredentials()
 {
-    connect( Mirall::CredentialStore::instance(), SIGNAL(fetchCredentialsFinished(bool)),
+    /* FIXME: credentials
+    connect( OCC::CredentialStore::instance(), SIGNAL(fetchCredentialsFinished(bool)),
                 this, SLOT(slotCredentialsFetched(bool)) );
     qDebug() << " ======= fetchCredentials()";
-    Mirall::CredentialStore::instance()->fetchCredentials();
+    OCC::CredentialStore::instance()->fetchCredentials();
+    */
 }
 
 
 void OwncloudSync::slotCredentialsFetched(bool ok)
 {
+    /*
     qDebug() << "OC Credentials successfully fetched: " << ok;
     QString trayMessage;
     if( ! ok ) {
         trayMessage = tr("Error: Could not retrieve the password!");
-        trayMessage = Mirall::CredentialStore::instance()->errorMessage();
+        trayMessage = OCC::CredentialStore::instance()->errorMessage();
         if( !trayMessage.isEmpty() ) {
             //_tray->showMessage(tr("Credentials"), trayMessage);
         }
@@ -431,8 +434,8 @@ void OwncloudSync::slotCredentialsFetched(bool ok)
     } else {
         // Credential fetched ok.
         const QString _url = d->owncloudInfo["url"].toString();
-        const QString _u = Mirall::CredentialStore::instance()->user();
-        const QString _p = Mirall::CredentialStore::instance()->password();
+        const QString _u = OCC::CredentialStore::instance()->user();
+        const QString _p = OCC::CredentialStore::instance()->password();
         qDebug() << "OC User / password === " << _u << _p << _url;
 //         qDebug() << "OC slotCredentialsFetched" << trayMessage;
         if(d->ocInfo->isConfigured() ) {
@@ -442,7 +445,8 @@ void OwncloudSync::slotCredentialsFetched(bool ok)
         d->ocInfo->setCredentials(_u, _p);
         QTimer::singleShot(0, this, SLOT(slotCheckAuthentication()));
     }
-    disconnect( Mirall::CredentialStore::instance(), SIGNAL(fetchCredentialsFinished(bool)) );
+    disconnect( OCC::CredentialStore::instance(), SIGNAL(fetchCredentialsFinished(bool)) );
+    */
 }
 
 
@@ -506,7 +510,7 @@ void OwncloudSync::slotAuthCheck()
 
 void OwncloudSync::setupOwncloud(const QString &server, const QString &user, const QString &password)
 {
-    Mirall::MirallConfigFile cfgFile(d->configHandle);
+    OCC::MirallConfigFile cfgFile(d->configHandle);
     cfgFile.setRemotePollInterval(600000); // ten minutes for now
 
     bool https = server.startsWith("https");
@@ -517,7 +521,7 @@ void OwncloudSync::setupOwncloud(const QString &server, const QString &user, con
     }
 
     cfgFile.writeOwncloudConfig(QLatin1String("ownCloud"), _srv, user, password);
-    Mirall::CredentialStore::instance()->saveCredentials();
+    OCC::CredentialStore::instance()->saveCredentials();
     d->ocInfo->setCredentials(user, password); // add server
     qDebug() << "OC - - - - -  Setting up OwnCloud: " << _srv << user << password << https;
     cfgFile.acceptCustomConfig();

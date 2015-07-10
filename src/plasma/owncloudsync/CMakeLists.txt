@@ -28,7 +28,9 @@ ADD_LIBRARY(owncloudsyncd_SRCS STATIC IMPORTED)
 target_link_libraries(kdeinit_owncloudsyncd
     Qt5::Core
     Qt5::DBus
+    Qt5::Qml
     KF5::KIO
+    KF5::KDELibs4Support
     owncloudsync
 )
 
