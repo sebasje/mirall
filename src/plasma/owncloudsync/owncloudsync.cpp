@@ -35,6 +35,24 @@
 #include <configfile.h>
 #include <progressdispatcher.h>
 
+using namespace OCC;
+
+// Hack: FolderMan's ctor is private, OCC::Application is Friend
+namespace OCC {
+    class Application : public QObject
+    {
+        Q_OBJECT
+    public:
+        explicit Application(QObject *parent = 0)
+        : QObject(parent)
+        {
+            _folderManager.reset(new FolderMan);
+        }
+        virtual ~Application() {};
+        QScopedPointer<FolderMan> _folderManager;
+    };
+};
+
 class OwncloudSyncPrivate {
 public:
     OwncloudSync *q;
@@ -49,6 +67,8 @@ public:
     QHash<QString, QDateTime> syncTime;
 
     OCC::FolderMan* folderMan;
+    QScopedPointer<FolderMan> _folderManager;
+
 //     OCC::ownCloudInfo* ocInfo;
     QString configHandle;
     QTimer *delay;
@@ -78,9 +98,13 @@ OwncloudSync::OwncloudSync(QObject *parent)
 
 void OwncloudSync::init()
 {
+
+    new Application(this); // Initializes FolderMan instance
+
     d->folderMan = OCC::FolderMan::instance();
-    connect( d->folderMan, SIGNAL(folderSyncStateChange(const QString&)),
-             this,SLOT(slotSyncStateChange(const QString&)));
+    qDebug() << "folderMan: " << d->folderMan;
+    connect( d->folderMan, &FolderMan::folderSyncStateChange,
+             this, &OwncloudSync::slotSyncStateChange);
 
     //d->ocInfo->setCustomConfigHandle("mirall");
 //     connect(d->ocInfo,SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
@@ -97,15 +121,15 @@ void OwncloudSync::init()
 //              SLOT(slotDirCheckReply(QString,QNetworkReply*)));
 
 
-    connect(OCC::ProgressDispatcher::instance(),
-            SIGNAL(itemProgress(int, const QString&, const QString&, qint64, qint64)),
-            this,
-            SLOT(itemProgress(int, const QString&, const QString&, qint64, qint64)));
+//     connect(OCC::ProgressDispatcher::instance(),
+//             SIGNAL(itemProgress(int, const QString&, const QString&, qint64, qint64)),
+//             this,
+//             SLOT(itemProgress(int, const QString&, const QString&, qint64, qint64)));
 
     connect(OCC::ProgressDispatcher::instance(),
-            SIGNAL(overallProgress(const QString&, const QString&, int, int, qint64, qint64)),
+            &ProgressDispatcher::progressInfo,
             this,
-            SLOT(overallProgress(const QString&, const QString&, int, int, qint64, qint64)));
+            &OwncloudSync::progressInfo);
 
 }
 
@@ -124,32 +148,36 @@ OCC::FolderMan* OwncloudSync::folderMan()
 //     return d->ocInfo;
 // }
 //
-void OwncloudSync::slotSyncStateChange(const QString &s)
+void OwncloudSync::slotSyncStateChange(OCC::Folder *folder)
 {
-    OCC::Folder *f = d->folderMan->folder(s);
-    if (f && (f->syncResult().status() == OCC::SyncResult::Success)) {
-        d->syncTime[s] = QDateTime::currentDateTime();
+    if (folder && (folder->syncResult().status() == OCC::SyncResult::Success)) {
+        d->syncTime[folder->alias()] = QDateTime::currentDateTime();
 //         qDebug() << "OC updated syncTime for " << s << d->syncTime[s];
     }
-    updateFolder(d->folderMan->folder(s));
+    updateFolder(d->folderMan->folder(folder->alias()));
 }
 
-void OwncloudSync::itemProgress(int kind, const QString& folder, const QString& file, qint64 p1, qint64 p2)
+// void OwncloudSync::itemProgress(int kind, const QString& folder, const QString& file, qint64 p1, qint64 p2)
+// {
+//     qDebug() << "POC Item progress: " << folder << file << p1 << p2;
+// }
+//
+// void OwncloudSync::overallProgress(const QString& folder, const QString& file, int fileNo, int fileCnt, qint64 p1, qint64 p2)
+// {
+// }
+//
+void OwncloudSync::progressInfo(const QString& folder, const OCC::ProgressInfo& progress)
 {
-    qDebug() << "POC Item progress: " << folder << file << p1 << p2;
-}
-
-void OwncloudSync::overallProgress(const QString& folder, const QString& file, int fileNo, int fileCnt, qint64 p1, qint64 p2)
-{
-    qDebug() << "POC Overall Progress: " << folder << file << fileNo << fileCnt << p1 << p2;
+//     qDebug() << "POC Overall Progress: " << folder << file << fileNo << fileCnt << p1 << p2;
     QVariantMap vm;
-    vm["folder"] = folder;
-    vm["file"] = file;
-    vm["fileNo"] = fileNo;
-    vm["fileCnt"] = fileCnt;
-    vm["p1"] = p1;
-    vm["p2"] = p2;
+//     vm["folder"] = folder;
+//     vm["file"] = file;
+//     vm["fileNo"] = fileNo;
+//     vm["fileCnt"] = fileCnt;
+//     vm["p1"] = p1;
+//     vm["p2"] = p2;
     emit progressChanged(vm);
+
 }
 
 

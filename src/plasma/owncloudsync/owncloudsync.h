@@ -80,7 +80,7 @@ class OwncloudSync : public QObject
         void remoteFolderExists(QString, bool);
 
     protected Q_SLOTS:
-        void slotSyncStateChange(const QString&);
+        void slotSyncStateChange(OCC::Folder* folder);
         void slotOwnCloudFound( const QString&, const QString&, const QString&, const QString& );
         void slotNoOwnCloudFound( QNetworkReply* );
         void slotCheckAuthentication();
@@ -92,8 +92,11 @@ class OwncloudSync : public QObject
         void slotFetchCredentials();
         void slotGuiLog(const QString &err, const QString &msg);
         void slotCredentialsFetched( bool );
-        void itemProgress( int kind, const QString& folder, const QString& file, qint64 p1, qint64 p2);
-        void overallProgress(const QString& folder, const QString& file, int fileNo, int fileCnt, qint64 p1, qint64 p2);
+
+        void progressInfo(const QString& folder, const OCC::ProgressInfo& progress);
+
+//         void itemProgress( int kind, const QString& folder, const QString& file, qint64 p1, qint64 p2);
+//         void overallProgress(const QString& folder, const QString& file, int fileNo, int fileCnt, qint64 p1, qint64 p2);
 
     protected:
         void loadFolders();
