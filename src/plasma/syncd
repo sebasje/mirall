@@ -1,1 +1,1 @@
-owncloudsyncd 2>&1 |grep OC
+ LD_LIBRARY_PATH=/home/sebas/kf5/install/lib/owncloud /home/sebas/kf5/install/bin/owncloudsyncd

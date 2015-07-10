@@ -16,6 +16,7 @@ Feedback for libsync
 - csync headers need to be installed, ref'ed from libsync headers synengine.h and syncfileitem.h
 - accountmanager.* and accountstate.* would be useful to have in libsync, not in gui (don't seem to contain QWidget stuff anyway), also need headers installed in that case
 - folder.* and folderman.* would be useful in libsync
+- CMake Find-module for libsync is needed
 
 
 
