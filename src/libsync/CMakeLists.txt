@@ -83,6 +83,7 @@ set(owncloudsync_HEADERS
     account.h
     syncengine.h
     configfile.h
+    connectionvalidator.h
     networkjobs.h
     progressdispatcher.h
     syncfileitem.h
