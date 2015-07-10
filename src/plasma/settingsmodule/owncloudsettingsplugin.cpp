@@ -40,7 +40,7 @@
 #include <KGlobalSettings>
 
 #include <QtDeclarative/qdeclarative.h>
-#include <QDeclarativeItem>
+#include <QQuickItem>
 #include <QDate>
 
 K_PLUGIN_FACTORY(OwncloudSettingsFactory, registerPlugin<OwncloudSettingsPlugin>();)

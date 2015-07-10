@@ -31,7 +31,7 @@
 
 // Qt
 #include <QBoxLayout>
-#include <QDeclarativeView>
+#include <QQuickView>
 
 // KDE
 #include <kconfiggroup.h>
@@ -53,7 +53,7 @@ public:
     Plasma::Package *package;
     QString packageName;
 
-    QDeclarativeView *declarativeView;
+    QQuickView *declarativeView;
 
 };
 
@@ -67,14 +67,14 @@ OwncloudConfig::OwncloudConfig(QWidget *parent, const QVariantList &)
     //setButtons(0);
 
     d = new OwncloudConfigPrivate;
-    d->declarativeView = new QDeclarativeView(this);
+    d->declarativeView = new QQuickView(this);
 
     d->kdeclarative.setDeclarativeEngine(d->declarativeView->engine());
     d->kdeclarative.initialize();
     //binds things like kconfig and icons
     d->kdeclarative.setupBindings();
     d->declarativeView->setStyleSheet(QString("background: transparent"));
-    d->declarativeView->setResizeMode(QDeclarativeView::SizeRootObjectToView);
+    d->declarativeView->setResizeMode(QQuickView::SizeRootObjectToView);
 
 //     // avoid flicker on show
     //d->declarativeView->setAttribute(Qt::WA_OpaquePaintEvent);

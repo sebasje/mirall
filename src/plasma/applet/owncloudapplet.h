@@ -23,7 +23,7 @@
 #include <Plasma/PopupApplet>
 #include <Plasma/Label>
 
-#include <QDeclarativeComponent>
+#include <QQmlComponent>
 
 namespace Plasma {
     class DeclarativeWidget;
@@ -37,7 +37,7 @@ class OwncloudApplet : public Plasma::PopupApplet
         ~OwncloudApplet();
 
         void init();
-        QGraphicsWidget *graphicsWidget();
+        QQuickItem *graphicsWidget();
 
     public Q_SLOTS:
         void configChanged();
@@ -47,7 +47,7 @@ class OwncloudApplet : public Plasma::PopupApplet
 
     protected Q_SLOTS:
         void configAccepted();
-        void connectObjects(QDeclarativeComponent::Status);
+        void connectObjects(QQmlComponent::Status);
         void connectObjects();
         void updatePopupIcon(int i);
 

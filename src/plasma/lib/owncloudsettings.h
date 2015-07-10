@@ -28,7 +28,7 @@
 #include "syncprogress.h"
 //#include "minijob.h"
 
-#include <QDeclarativeComponent>
+#include <QQmlComponent>
 #include <QObject>
 #include <QIcon>
 #include <QVariant>

@@ -26,7 +26,7 @@
 #include "syncprogress.h"
 
 #include <QtDeclarative>
-//#include <QDeclarativeItem>
+//#include <QQuickItem>
 
 #include <QDebug>
 #include <KConfigDialog>
@@ -59,7 +59,7 @@ void OwncloudApplet::init()
     //qDebug() << " Loading QML File from package: " << qmlFile;
     m_declarativeWidget = new Plasma::DeclarativeWidget(this);
 
-    connect(m_declarativeWidget->mainComponent(), SIGNAL(statusChanged(QDeclarativeComponent::Status)), SLOT(connectObjects(QDeclarativeComponent::Status)));
+    connect(m_declarativeWidget->mainComponent(), SIGNAL(statusChanged(QQmlComponent::Status)), SLOT(connectObjects(QQmlComponent::Status)));
 
     qmlRegisterType<DirectoryLister>("org.kde.plasma.owncloud", 0, 1, "DirectoryLister");
     qmlRegisterType<DirModel>("org.kde.plasma.owncloud", 0, 1, "DirModel");
@@ -75,13 +75,13 @@ void OwncloudApplet::init()
 
 void OwncloudApplet::connectObjects()
 {
-    connectObjects(QDeclarativeComponent::Ready);
+    connectObjects(QQmlComponent::Ready);
 }
 
-void OwncloudApplet::connectObjects(QDeclarativeComponent::Status s)
+void OwncloudApplet::connectObjects(QQmlComponent::Status s)
 {
     qDebug() << "CONNECT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
-    if (s != QDeclarativeComponent::Ready) {
+    if (s != QQmlComponent::Ready) {
         return;
     }
     qDebug() << "looking for owncloudModule component ...";
@@ -119,7 +119,7 @@ void OwncloudApplet::configChanged()
     // ...
 }
 
-QGraphicsWidget *OwncloudApplet::graphicsWidget()
+QQuickItem *OwncloudApplet::graphicsWidget()
 {
     return m_declarativeWidget;
 }
