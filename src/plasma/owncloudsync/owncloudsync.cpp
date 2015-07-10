@@ -31,6 +31,7 @@
 //#include "mirall/credentialstore.h"
 #include <syncresult.h>
 #include "gui/folder.h"
+#include <gui/accountstate.h>
 #include <configfile.h>
 #include <progressdispatcher.h>
 
@@ -169,7 +170,7 @@ void OwncloudSync::enableFolder(const QString &name, bool enabled)
     qDebug() << " OC enableFolder: " << name << enabled;
     OCC::Folder *f = d->folderMan->folder(name);
     if (f) {
-        f->setSyncEnabled(enabled);
+        f->setSyncPaused(enabled);
         updateFolder(f);
     } else {
         qWarning() << "Folder \"" << name << "\" does not exist.";
@@ -266,14 +267,14 @@ void OwncloudSync::updateFolder(const OCC::Folder* folder)
     QVariantMap m;
     m["name"] = folder->alias();
     m["localPath"] = folder->path();
-    m["remotePath"] = folder->secondPath();
+    m["remotePath"] = folder->remotePath();
     m["syncTime"] = d->syncTime[folder->alias()].toMSecsSinceEpoch();
 //     qDebug() << "OC updateFolder:: path, secondPath: " << folder->path() << ", " << d->syncTime[folder->alias()];
 
     int s = 999;
     int r = folder->syncResult().status();
     //qDebug() << " c" << c << " r" << r;
-    if (folder->syncEnabled()) {
+    if (!folder->syncPaused()) {
         if (r == OCC::SyncResult::Success) s = OwncloudFolder::Idle;
         if (r == OCC::SyncResult::Error) s = OwncloudFolder::Error;
         if (r == OCC::SyncResult::NotYetStarted) s = OwncloudFolder::Waiting;
@@ -301,7 +302,14 @@ void OwncloudSync::updateFolder(const OCC::Folder* folder)
 
 void OwncloudSync::addSyncFolder(const QString& localFolder, const QString& remoteFolder, const QString& alias)
 {
-    d->folderMan->addFolderDefinition(alias, localFolder, remoteFolder);
+    auto fd = OCC::FolderDefinition();
+    fd.localPath = localFolder;
+    fd.targetPath = remoteFolder;
+    fd.alias = alias;
+
+    //OCC::AccountState as = new OCC::AccountState();
+
+    //d->folderMan->addFolder(as, fd);
 
     qDebug() << "POC OCD OwncloudSyncDaemon::addSyncFolder: " << localFolder << remoteFolder << alias;
 
@@ -311,7 +319,7 @@ void OwncloudSync::addSyncFolder(const QString& localFolder, const QString& remo
 
 void OwncloudSync::removeSyncFolder(const QString& alias)
 {
-    d->folderMan->slotRemoveFolder(alias);
+    //d->folderMan->slotRemoveFolder(alias); // Folder*
 
     qDebug() << "OCD OwncloudSyncDaemon::removeSyncFolder: " << alias;
 
@@ -391,7 +399,7 @@ void OwncloudSync::slotOwnCloudFound( const QString& url, const QString& version
     // now check the authentication
 
     OCC::ConfigFile cfgFile;
-    cfgFile.setOwnCloudVersion( version );
+    //cfgFile.setOwnCloudVersion( version );
     qDebug() << " OC polling interval: " << cfgFile.remotePollInterval();
 
     d->owncloudInfo["url"] = url;
