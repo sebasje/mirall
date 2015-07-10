@@ -1,4 +1,24 @@
 ( * means todo or work in progress, o means done )
+
+Porting to Plasma 5
+* make owncloudsync run
+* port credential / account store
+* port import
+* make lib/ a dynamically loaded lib
+* merge settings and kcm into new-style QML kcm
+* Port KCM to QtQuickControls
+
+
+Feedback for libsync
+
+- goal: headless client to control from alternate gui and integrate with Plasma features
+- owncloudlib.h needs to be installed from src/libsync/CMakeLists.txt (patch)
+- csync headers need to be installed, ref'ed from libsync headers synengine.h and syncfileitem.h
+- accountmanager.* and accountstate.* would be useful to have in libsync, not in gui (don't seem to contain QWidget stuff anyway), also need headers installed in that case
+- folder.* and folderman.* would be useful in libsync
+
+
+
 OwncloudFolder
 
 o enum Status: Disabled, Waiting, Idle, Error
