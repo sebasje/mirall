@@ -25,7 +25,7 @@
 #include "createfolderjob.h"
 #include "syncprogress.h"
 
-#include <kdebug.h>
+#include <QDebug>
 #include <KLocale>
 #include <KProcess>
 #include <KRun>
@@ -71,7 +71,7 @@ OwncloudSettings::OwncloudSettings(QObject* parent) :
     d->error = OwncloudSettings::NoError;
     d->status = OwncloudSettings::Disconnected;
 
-    kDebug() << "OwncloudSettings module loaded.";
+    qDebug() << "OwncloudSettings module loaded.";
 
     d->serviceWatcher = new QDBusServiceWatcher("org.kde.owncloudsync",
                                                 QDBusConnection::sessionBus(),
@@ -80,7 +80,7 @@ OwncloudSettings::OwncloudSettings(QObject* parent) :
     connect(d->serviceWatcher, SIGNAL(serviceRegistered(QString)), SLOT(init()));
     connect(d->serviceWatcher, SIGNAL(serviceUnregistered(QString)), SLOT(serviceUnregistered()));
 
-    kDebug() << "OwncloudSettings module loaded.";
+    qDebug() << "OwncloudSettings module loaded.";
     connect(this, SIGNAL(foldersChanged()), SLOT(updateGlobalStatus()));
     init();
     //emit foldersChanged();
@@ -88,7 +88,7 @@ OwncloudSettings::OwncloudSettings(QObject* parent) :
 
 OwncloudSettings::~OwncloudSettings()
 {
-    //kDebug() << "owncloudsettings destroy";
+    //qDebug() << "owncloudsettings destroy";
     delete d;
 }
 
@@ -139,7 +139,7 @@ void OwncloudSettings::serviceUnregistered()
 
 void OwncloudSettings::setOwncloud(const QVariantMap& m)
 {
-    kDebug() << " vm " << m;
+    qDebug() << " vm " << m;
     d->owncloudInfo = m;
     emit editionChanged();
     emit versionChanged();
@@ -159,7 +159,7 @@ QString OwncloudSettings::version() const
 void OwncloudSettings::setUrl(const QString& u)
 {
     Q_UNUSED(u);
-    kWarning() << "setUrl is not supported yet.";
+    qWarning() << "setUrl is not supported yet.";
 }
 
 QString OwncloudSettings::url() const
@@ -191,7 +191,7 @@ int OwncloudSettings::error() const
 void OwncloudSettings::setError(int i)
 {
     if (d->error != i) {
-        kDebug() << "Error is now " << errorString(i);
+        qDebug() << "Error is now " << errorString(i);
         d->error = i;
         emit errorChanged();
     }
@@ -212,14 +212,14 @@ SyncProgress* OwncloudSettings::progress() const
 void OwncloudSettings::startDaemon()
 {
     // start daemon
-    kDebug() << "Start Daemon...";
+    qDebug() << "Start Daemon...";
     KProcess::startDetached("owncloudsyncd");
 }
 
 void OwncloudSettings::setupOwncloud(const QString& server, const QString& user, const QString& password)
 {
     if (d->client) {
-        kDebug() << "setting up owncloud: " << server << user << password;
+        qDebug() << "setting up owncloud: " << server << user << password;
         d->client->setupOwncloud(server, user, password);
     }
 }
@@ -229,7 +229,7 @@ void OwncloudSettings::setupOwncloud(const QString& server, const QString& user,
 
 void OwncloudSettings::setFolderList(const QVariantMap& m)
 {
-    //kDebug() << "Folder changed!" << m;
+    //qDebug() << "Folder changed!" << m;
     foreach (QObject* f, d->folders) {
         delete f;
     }
@@ -247,7 +247,7 @@ void OwncloudSettings::setFolderList(const QVariantMap& m)
 
 void OwncloudSettings::setFolder(const QVariantMap& m)
 {
-    //kDebug() << " Folder updated: " << m;
+    //qDebug() << " Folder updated: " << m;
     QString alias = m["name"].toString();
     OwncloudFolder *folder = 0;
 
@@ -261,9 +261,9 @@ void OwncloudSettings::setFolder(const QVariantMap& m)
         }
     }
     if (exists) {
-//         kDebug() << "OC Updating existing folder" << alias;
+//         qDebug() << "OC Updating existing folder" << alias;
     } else {
-        kDebug() << "OC New Folder" << alias;
+        qDebug() << "OC New Folder" << alias;
         folder = new OwncloudFolder(this);
         d->folders << folder;
         connect(folder, SIGNAL(enableFolder(const QString&, bool)), this, SLOT(enableFolder(const QString&, bool)));
@@ -280,7 +280,7 @@ void OwncloudSettings::setFolder(const QVariantMap& m)
     QDateTime dt;
     dt.setMSecsSinceEpoch(m["syncTime"].toULongLong());
     folder->setSyncTime(dt);
-    //kDebug() << " === OC Updating" << alias << folder->folderStatus() << dt;
+    //qDebug() << " === OC Updating" << alias << folder->folderStatus() << dt;
     if (!exists) {
         emit foldersChanged();
     }
@@ -303,7 +303,7 @@ void OwncloudSettings::checkRemoteFolder(const QString &folder)
 CreateFolderJob* OwncloudSettings::createRemoteFolder(const QString &folder)
 {
     if (d->client && !folder.isEmpty()) {
-        kDebug() << "creating remote folder" << folder;
+        qDebug() << "creating remote folder" << folder;
         CreateFolderJob* j = new CreateFolderJob(folder, this);
         d->createFolderJobs[folder] = j;
         d->client->createRemoteFolder(folder);
@@ -315,7 +315,7 @@ CreateFolderJob* OwncloudSettings::createRemoteFolder(const QString &folder)
 bool OwncloudSettings::createLocalFolder(const QString& folder)
 {
     QDir f = QDir();
-    kDebug() << "mkdir : " << folder;
+    qDebug() << "mkdir : " << folder;
     return f.mkpath(folder);
 }
 
@@ -333,7 +333,7 @@ void OwncloudSettings::enableAllFolders(bool enabled)
 void OwncloudSettings::addSyncFolder(const QString &localFolder, const QString &remoteFolder, const QString &aliasName)
 {
     if (d->client) {
-        kDebug() << " .. addSyncFolder: " << localFolder << remoteFolder << aliasName;
+        qDebug() << " .. addSyncFolder: " << localFolder << remoteFolder << aliasName;
         d->client->addSyncFolder(localFolder, remoteFolder, aliasName);
     }
 }
@@ -341,7 +341,7 @@ void OwncloudSettings::addSyncFolder(const QString &localFolder, const QString &
 void OwncloudSettings::removeSyncFolder(const QString& alias)
 {
     if (d->client) {
-        kDebug() << "removeSyncFolder: " << alias;
+        qDebug() << "removeSyncFolder: " << alias;
         d->client->removeSyncFolder(alias);
         foreach (OwncloudFolder *f, d->folders) {
 
@@ -374,7 +374,7 @@ QString OwncloudSettings::verifyFolder(const QString &localFolder, const QString
     if (aError) {
         err = i18n("The display name \"%1\" is already in use. ", alias);
     }
-    //kDebug() << "verify: " << localFolder << remoteFolder << alias << err;
+    //qDebug() << "verify: " << localFolder << remoteFolder << alias << err;
     return err;
 }
 
@@ -382,14 +382,14 @@ bool OwncloudSettings::isConfigured(const QString &localFolder, const QString &r
 {
 
     foreach (const OwncloudFolder *folder, d->folders) {
-//         kDebug() << " --- !!!!!!!";
-//         kDebug() << "displayName" << alias << folder->displayName() << (folder->displayName() == alias);
-//         kDebug() << "remotePath" << remoteFolder << folder->remotePath() << (folder->remotePath() == remoteFolder);
-//         kDebug() << "displayName" << folder->localPath() << localFolder << (QDir(folder->localPath()) == QDir(localFolder));
+//         qDebug() << " --- !!!!!!!";
+//         qDebug() << "displayName" << alias << folder->displayName() << (folder->displayName() == alias);
+//         qDebug() << "remotePath" << remoteFolder << folder->remotePath() << (folder->remotePath() == remoteFolder);
+//         qDebug() << "displayName" << folder->localPath() << localFolder << (QDir(folder->localPath()) == QDir(localFolder));
         if ((folder->displayName() == alias) &&
             (QDir(folder->localPath()) == QDir(localFolder)) &&
             (folder->remotePath() == remoteFolder)) {
-            kDebug() << "=========== Folder configured: " << folder->displayName();
+            qDebug() << "=========== Folder configured: " << folder->displayName();
             return true;
         }
     }
@@ -443,7 +443,7 @@ void OwncloudSettings::updateGlobalStatus()
 
     if (d->globalStatus != newState) {
         d->globalStatus = newState;
-        //kDebug() << "globalStatusChanged: " << _d;
+        //qDebug() << "globalStatusChanged: " << _d;
         emit globalStatusChanged();
     }
 }
@@ -475,10 +475,10 @@ MiniJob* OwncloudSettings::createMiniJob()
 void OwncloudSettings::openConfig()
 {
     if (KStandardDirs::findExe("active-settings") != QString()) {
-        kDebug() << "Found active-settings, using that as shell: active-settings org.kde.active.settings.owncloud";
+        qDebug() << "Found active-settings, using that as shell: active-settings org.kde.active.settings.owncloud";
         KRun::runCommand("active-settings org.kde.active.settings.owncloud", 0);
     } else {
-        kDebug() << "Opening kcmshell4 owncloudconfig";
+        qDebug() << "Opening kcmshell4 owncloudconfig";
         KRun::runCommand("kcmshell4 owncloudconfig", 0);
     }
 }
@@ -486,10 +486,10 @@ void OwncloudSettings::openConfig()
 void OwncloudSettings::slotRemoteFolderExists(const QString &folder, bool exists)
 {
     if (d->createFolderJobs.keys().contains(folder)) {
-        kDebug() << " job and folder exists" << exists;
+        qDebug() << " job and folder exists" << exists;
         d->createFolderJobs[folder]->setResult(exists);
     } else {
-        kDebug() << "!createjob not found for folder : " << folder;
+        qDebug() << "!createjob not found for folder : " << folder;
     }
     emit remoteFolderExists(folder, exists);
 }

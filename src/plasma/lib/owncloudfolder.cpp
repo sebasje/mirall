@@ -22,7 +22,7 @@
 
 
 #include <QTimer>
-#include <kdebug.h>
+#include <QDebug>
 
 
 class OwncloudFolderPrivate {
@@ -63,9 +63,9 @@ int OwncloudFolder::folderStatus() const
 void OwncloudFolder::setFolderStatus(int i)
 {
     if (d->status != i) {
-        //kDebug() << "folderStatusChanged(" << displayName() << ", " << statusString(i) << ")";
+        //qDebug() << "folderStatusChanged(" << displayName() << ", " << statusString(i) << ")";
         if (d->status == Running && i == Idle) {
-            //kDebug() << "updating sync time" << displayName() << QDateTime::currentDateTime();
+            //qDebug() << "updating sync time" << displayName() << QDateTime::currentDateTime();
             //setSyncTime(QDateTime::currentDateTime());
             // Prevent flickery UI
             QTimer::singleShot(2000, this, SLOT(slotDelayedSuccess()));
@@ -183,21 +183,21 @@ void OwncloudFolder::setRemotePath(const QString& p)
 
 void OwncloudFolder::enable()
 {
-    kDebug() << "Enable folder." << d->name;
+    qDebug() << "Enable folder." << d->name;
     //setFolderStatus(Idle);
     emit enableFolder(d->name, true);
 }
 
 void OwncloudFolder::disable()
 {
-    kDebug() << "Disable folder." << d->name;
+    qDebug() << "Disable folder." << d->name;
     //setFolderStatus(Disabled);
     emit enableFolder(d->name, false);
 }
 
 void OwncloudFolder::remove()
 {
-    kDebug() << "Remove folder." << d->name;
+    qDebug() << "Remove folder." << d->name;
 }
 
 void OwncloudFolder::sync()

@@ -21,7 +21,7 @@
 #include "syncprogress.h"
 
 
-#include <kdebug.h>
+#include <QDebug>
 #include <QVariant>
 
 

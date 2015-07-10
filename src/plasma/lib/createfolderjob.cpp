@@ -22,7 +22,7 @@
 #include "createfolderjob.h"
 
 
-#include <kdebug.h>
+#include <QDebug>
 
 CreateFolderJob::CreateFolderJob(const QString &folder, QObject* parent) :
     Job(parent)
@@ -37,7 +37,7 @@ void CreateFolderJob::setResult(bool result)
 
 CreateFolderJob::~CreateFolderJob()
 {
-    kDebug() << "deleting job";
+    qDebug() << "deleting job";
 }
 
 #include "createfolderjob.moc"

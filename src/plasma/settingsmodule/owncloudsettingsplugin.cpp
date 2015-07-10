@@ -26,7 +26,7 @@
 #include "minijob.h"
 #include "createfolderjob.h"
 
-#include <kdebug.h>
+#include <QDebug>
 #include <KIcon>
 
 #include <QVariant>
@@ -51,7 +51,7 @@ OwncloudSettingsPlugin::OwncloudSettingsPlugin(QObject *parent, const QVariantLi
 {
     Q_UNUSED(list)
 
-    kDebug() << "OwncloudSettingsPlugin created:)";
+    qDebug() << "OwncloudSettingsPlugin created:)";
     //qmlRegisterType<OwncloudSettings>();
     qmlRegisterType<DirectoryLister>("org.kde.plasma.owncloud", 0, 1, "DirectoryLister");
     qmlRegisterType<DirModel>("org.kde.plasma.owncloud", 0, 1, "DirModel");
@@ -64,7 +64,7 @@ OwncloudSettingsPlugin::OwncloudSettingsPlugin(QObject *parent, const QVariantLi
 
 OwncloudSettingsPlugin::~OwncloudSettingsPlugin()
 {
-    kDebug() << "oc plugin del'ed";
+    qDebug() << "oc plugin del'ed";
 }
 
 

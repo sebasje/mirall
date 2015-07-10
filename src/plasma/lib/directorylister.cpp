@@ -22,7 +22,7 @@
 #include "directorylister.h"
 
 #include <KGlobalSettings>
-#include <kdebug.h>
+#include <QDebug>
 
 #include "../applet/owncloud_interface.h"
 
@@ -74,14 +74,14 @@ QString DirectoryLister::currentPath() const
 
 void DirectoryLister::enterDirectory(const QString &directory)
 {
-    //kDebug() << "entering dir: " << directory;
+    //qDebug() << "entering dir: " << directory;
     QString dir = directory;
     if (!dir.startsWith("/")) {
         dir = d->dir.absolutePath() + "/" + directory;
     }
     d->dir.setPath(dir);
     d->directories = d->dir.entryList(QDir::AllDirs);
-    //kDebug() << "Dirs: " << d->directories;
+    //qDebug() << "Dirs: " << d->directories;
     //d->directories.removeAll(QString('.'));
     currentPathChanged();
     emit directoriesChanged();
@@ -94,7 +94,7 @@ QString DirectoryLister::filter() const
 
 void DirectoryLister::setFilter(const QString &f)
 {
-    //kDebug() << "Setting filter to : " << f;
+    //qDebug() << "Setting filter to : " << f;
     if (f != d->filter) {
         d->filter = f;
         emit directoriesChanged();

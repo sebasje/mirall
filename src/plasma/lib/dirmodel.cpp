@@ -22,7 +22,7 @@
 // #include "../proxymodel.h"
 // #include "../dirlister.h"
 
-#include "kdebug.h"
+#include <QDebug>
 
 class DirModelPrivate {
     public:
@@ -47,7 +47,7 @@ DirModel::DirModel(QObject *parent)
     roles[IconNameRole] = "iconName";
     roles[UrlRole] = "url";
     setRoleNames(roles);
-    kDebug() << "Set roles to : " << roles;
+    qDebug() << "Set roles to : " << roles;
 
     //d->dirLister = new DirLister
     d->dirLister = new KDirLister(this);

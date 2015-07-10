@@ -35,7 +35,7 @@
 
 // KDE
 #include <kconfiggroup.h>
-#include <kdebug.h>
+#include <QDebug>
 #include <kstandarddirs.h>
 #include <Plasma/PackageStructure>
 #include <Plasma/Package>
@@ -107,20 +107,20 @@ OwncloudConfig::OwncloudConfig(QWidget *parent, const QVariantList &)
 
 void OwncloudConfig::load()
 {
-    kDebug() << "Load settings....";
+    qDebug() << "Load settings....";
     emit changed(true);
 }
 
 void OwncloudConfig::defaults()
 {
-    kDebug() << "loading defaults....";
+    qDebug() << "loading defaults....";
 
 }
 
 
 void OwncloudConfig::save()
 {
-    kDebug() << "Save settings....";
+    qDebug() << "Save settings....";
 }
 
 

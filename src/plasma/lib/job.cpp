@@ -21,7 +21,7 @@
 
 #include "job.h"
 
-#include <kdebug.h>
+#include <QDebug>
 
 class JobPrivate {
 public:

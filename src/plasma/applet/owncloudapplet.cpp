@@ -28,7 +28,7 @@
 #include <QtDeclarative>
 //#include <QDeclarativeItem>
 
-#include <KDebug>
+#include <QDebug>
 #include <KConfigDialog>
 #include <KConfigGroup>
 
@@ -56,7 +56,7 @@ void OwncloudApplet::init()
     const QString qmlFile = package->filePath("ui", "OwncloudPlasmoid.qml");
     delete package;
 
-    //kDebug() << " Loading QML File from package: " << qmlFile;
+    //qDebug() << " Loading QML File from package: " << qmlFile;
     m_declarativeWidget = new Plasma::DeclarativeWidget(this);
 
     connect(m_declarativeWidget->mainComponent(), SIGNAL(statusChanged(QDeclarativeComponent::Status)), SLOT(connectObjects(QDeclarativeComponent::Status)));
@@ -80,17 +80,17 @@ void OwncloudApplet::connectObjects()
 
 void OwncloudApplet::connectObjects(QDeclarativeComponent::Status s)
 {
-    kDebug() << "CONNECT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+    qDebug() << "CONNECT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
     if (s != QDeclarativeComponent::Ready) {
         return;
     }
-    kDebug() << "looking for owncloudModule component ...";
+    qDebug() << "looking for owncloudModule component ...";
     // "owncloudSettings" is defined as objectName in the QML file
     OwncloudSettings* ocSettings = m_declarativeWidget->rootObject()->findChild<OwncloudSettings*>("owncloudSettings");
     if (ocSettings) {
         connect(ocSettings, SIGNAL(updateGlobalStatus(int)),
                 this, SLOT(updatePopupIcon(int)));
-        kDebug() << "Connnected....: )";
+        qDebug() << "Connnected....: )";
     } else {
         kError() << "owncloudModule component not found.";
     }
@@ -110,7 +110,7 @@ void OwncloudApplet::updatePopupIcon(int e)
     if (e == OwncloudFolder::Disabled) icon = "user-offline";
     if (e == OwncloudFolder::Error) icon = "task-attempt";
 
-    //kDebug() << "===========> Setting popup icon: " << icon;
+    //qDebug() << "===========> Setting popup icon: " << icon;
     setPopupIcon(icon);
 }
 

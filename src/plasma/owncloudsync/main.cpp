@@ -24,7 +24,7 @@
 #include <kaboutdata.h>
 #include <klocale.h>
 #include <kcomponentdata.h>
-#include <kdebug.h>
+#include <QDebug>
 
 #include <QtCore/QCoreApplication>
 #include <QtDBus/QDBusConnection>

@@ -23,7 +23,7 @@
 
 #include <QTimer>
 
-#include <kdebug.h>
+#include <QDebug>
 
 class MiniJobPrivate {
 public:
@@ -35,7 +35,7 @@ public:
 MiniJob::MiniJob(QObject* parent) :
     Job(parent)
 {
-    kDebug() << "Creating Minijob";
+    qDebug() << "Creating Minijob";
     d = new MiniJobPrivate;
     d->t = 0;
     init();
@@ -43,7 +43,7 @@ MiniJob::MiniJob(QObject* parent) :
 
 MiniJob::~MiniJob()
 {
-    kDebug() << "doei!";
+    qDebug() << "doei!";
     delete d;
 }
 
@@ -59,7 +59,7 @@ void MiniJob::init()
 
 void MiniJob::timeout()
 {
-    //kDebug() << "Timeout";
+    //qDebug() << "Timeout";
     d->c = d->c + 4;
     setAdvance(d->c);
     if (d->c >= 100) {
@@ -73,7 +73,7 @@ void MiniJob::timeout()
 
 void MiniJob::start()
 {
-    kDebug() << "Starting Minijob";
+    qDebug() << "Starting Minijob";
     d->t->start();
     Job::start();
     if (d->c >= 100) {
@@ -87,7 +87,7 @@ void MiniJob::stop()
     if (d->t) {
         d->t->stop();
     }
-    kDebug();
+    qDebug();
     Job::stop();
     delete(d->t);
     d->t = 0;
