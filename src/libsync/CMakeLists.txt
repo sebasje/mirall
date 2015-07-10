@@ -81,6 +81,7 @@ endif(USE_NEON)
 # These headers are installed for libowncloudsync to be used by 3rd party apps
 set(owncloudsync_HEADERS
     account.h
+    accountfwd.h
     syncengine.h
     configfile.h
     connectionvalidator.h
