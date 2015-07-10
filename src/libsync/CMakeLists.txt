@@ -88,6 +88,7 @@ set(owncloudsync_HEADERS
     syncfileitem.h
     syncjournaldb.h
     syncresult.h
+    ${CMAKE_CURRENT_BINARY_DIR}/owncloudlib.h
 )
 
 set(creds_HEADERS
