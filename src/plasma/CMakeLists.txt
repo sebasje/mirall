@@ -38,7 +38,8 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/lib/
                      ${CMAKE_SOURCE_DIR}/src/libsync/
                      ${CMAKE_BINARY_DIR}/src/libsync/
                      ${CMAKE_SOURCE_DIR}/csync/src/
-                     ${CMAKE_BINARY_DIR}/csync/)
+                     ${CMAKE_BINARY_DIR}/csync/
+                     ${CMAKE_SOURCE_DIR}/src/)
 
 message("========================== BAH ${CMAKE_SOURCE_DIR}/../libsync/ ${CMAKE_SOURCE_DIR}/csync/src/")
 
