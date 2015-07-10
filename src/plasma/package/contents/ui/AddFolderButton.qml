@@ -18,11 +18,11 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************/
 
-import QtQuick 1.1
-import org.kde.plasma.components 0.1 as PlasmaComponents
-import org.kde.plasma.extras 0.1 as PlasmaExtras
+import QtQuick 2.2
+import org.kde.plasma.components 2.0 as PlasmaComponents
+import org.kde.plasma.extras 2.0 as PlasmaExtras
 //import org.kde.plasma.owncloud 0.1
-import org.kde.qtextracomponents 0.1 as QtExtraComponents
+import org.kde.kquickcontrolsaddons 2.0 as KQuickControlsAddonsComponents
 
 MouseArea {
     id: addFolderButton
@@ -31,7 +31,7 @@ MouseArea {
     height:  64
     width: parent.width
 
-    QtExtraComponents.QIconItem {
+    KQuickControlsAddonsComponents.QIconItem {
         id: folderIcon
         icon: "folder-new"
         width: 32

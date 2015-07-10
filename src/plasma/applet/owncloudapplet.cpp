@@ -36,7 +36,7 @@
 #include <Plasma/Package>
 
 OwncloudApplet::OwncloudApplet(QObject *parent, const QVariantList &args)
-    : Plasma::PopupApplet(parent, args),
+    : Plasma::Applet(parent, args),
     m_declarativeWidget(0)
 {
     setAspectRatioMode(Plasma::IgnoreAspectRatio);

@@ -29,7 +29,7 @@ namespace Plasma {
     class DeclarativeWidget;
 }
 
-class OwncloudApplet : public Plasma::PopupApplet
+class OwncloudApplet : public Plasma::Applet
 {
     Q_OBJECT
     public:
