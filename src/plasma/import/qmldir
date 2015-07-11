@@ -2,3 +2,25 @@ module org.kde.plasma.owncloud
 plugin owncloudimport
 
 
+AddFolderButton 1.0 AddFolderButton.qml
+AddSyncFolder 1.0 AddSyncFolder.qml
+Breadcrumbs 1.0 Breadcrumbs.qml
+DirectoryPicker 1.0 DirectoryPicker.qml
+DirPickerDelegate 1.0 DirPickerDelegate.qml
+
+DirPicker 1.0 DirectoryPicker.qml
+ErrorHandler 1.0 ErrorHandler.qml
+ExampleJobItem 1.0 ExampleJobItem.qml
+ExampleJob 1.0 ExampleJob.qml
+FadeAnimation 1.0 FadeAnimation.qml
+FavoriteDelegate 1.0 FavoriteDelegate.qml
+FavoritesWidget 1.0 FavoritesWidget.qml
+FolderDelegate 1.0 FolderDelegate.qml
+FolderList 1.0 FolderList.qml
+LoginWidget 1.0 LoginWidget.qml
+MiniJobItem 1.0 MiniJobItem.qml
+NavigationItem 1.0 NavigationItem.qml
+#OwncloudSettingsModule 1.0 Own.qml
+ProgressItem.qml 1.0 ProgressItem.qml
+RemoteFolderPicker 1.0 RemoteFolderPicker.qml
+SetupWizard 1.0 SetupWizard.qml
