@@ -21,7 +21,7 @@
 import QtQuick 2.2
 import org.kde.plasma.components 2.0 as PlasmaComponents
 import org.kde.plasma.extras 2.0 as PlasmaExtras
-import org.kde.plasma.owncloud 0.1
+import org.kde.plasma.owncloud 1.0
 import org.kde.kquickcontrolsaddons 2.0
 
 MouseArea {

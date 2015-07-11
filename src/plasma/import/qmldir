@@ -21,6 +21,6 @@ LoginWidget 1.0 LoginWidget.qml
 MiniJobItem 1.0 MiniJobItem.qml
 NavigationItem 1.0 NavigationItem.qml
 #OwncloudSettingsModule 1.0 Own.qml
-ProgressItem.qml 1.0 ProgressItem.qml
+ProgressItem 1.0 ProgressItem.qml
 RemoteFolderPicker 1.0 RemoteFolderPicker.qml
 SetupWizard 1.0 SetupWizard.qml

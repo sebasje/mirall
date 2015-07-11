@@ -30,6 +30,9 @@ target_link_libraries(owncloudimport
 #         KF5::QuickAddons
 )
 
+#install(DIRECTORY qml/ DESTINATION ${KDE_INSTALL_QMLDIR}/org/kde/plasma/components)
+
+message("DESTINATION ${KDE_INSTALL_QMLDIR}")
 
 install(TARGETS owncloudimport DESTINATION ${KDE_INSTALL_QMLDIR}/org/kde/plasma/owncloud)
 install(FILES qmldir DESTINATION ${KDE_INSTALL_QMLDIR}/org/kde/plasma/owncloud)
