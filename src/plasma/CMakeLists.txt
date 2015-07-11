@@ -66,6 +66,7 @@ message("========================== BAH ${CMAKE_SOURCE_DIR}/../libsync/ ${CMAKE_
 
 #add_subdirectory(applet)
 add_subdirectory(owncloudsync)
+add_subdirectory(import)
 #add_subdirectory(settingsmodule)
 #add_subdirectory(kcmodule)
 
