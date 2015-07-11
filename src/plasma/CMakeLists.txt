@@ -22,6 +22,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ECM_MODULE_PATH} ${ECM_KDE_MODULE_D
 include(KDEInstallDirs)
 include(KDECMakeSettings)
 include(KDECompilerSettings)
+#include(KDEFrameworkCompilerSettings)
 
 find_package(Qt5 REQUIRED NO_MODULE COMPONENTS Core DBus Quick Test Gui)
 
@@ -42,27 +43,27 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/lib/
                      ${CMAKE_BINARY_DIR}/csync/
                      ${CMAKE_SOURCE_DIR}/src/gui/
                      ${CMAKE_SOURCE_DIR}/src/
-                     ${CMAKE_SOURCE_DIR}/src/3rdparty/qjson/)
+                     ${CMAKE_SOURCE_DIR}/src/3rdparty/qjson/
+    )
+
 set(LIBSYNC_ADDITIONAL_SRCS
-  ../../gui/folder.cpp
-  ../../gui/folderman.cpp
-  ../../gui/folderwatcher.cpp
-  ../../gui/folderwatcher_linux.cpp
-  ../../gui/accountstate.cpp
-  ../../gui/accountmanager.cpp
-  ../../gui/sslerrordialog.cpp
-  ../../gui/creds/httpcredentialsgui.cpp
-  ../../gui/creds/credentialsfactory.cpp
-  ../../gui/creds/shibbolethcredentials.cpp
-  ../../gui/creds/shibboleth/shibbolethwebview.cpp
-  ../../gui/creds/shibboleth/shibbolethrefresher.cpp
-  ../../gui/creds/shibboleth/shibbolethuserjob.cpp
-  ../../gui/socketapi.cpp
-  ../../gui/syncrunfilelog.cpp
-  )
+    ../../gui/folder.cpp
+    ../../gui/folderman.cpp
+    ../../gui/folderwatcher.cpp
+    ../../gui/folderwatcher_linux.cpp
+    ../../gui/accountstate.cpp
+    ../../gui/accountmanager.cpp
+    ../../gui/sslerrordialog.cpp
+    ../../gui/creds/httpcredentialsgui.cpp
+    ../../gui/creds/credentialsfactory.cpp
+    ../../gui/creds/shibbolethcredentials.cpp
+    ../../gui/creds/shibboleth/shibbolethwebview.cpp
+    ../../gui/creds/shibboleth/shibbolethrefresher.cpp
+    ../../gui/creds/shibboleth/shibbolethuserjob.cpp
+    ../../gui/socketapi.cpp
+    ../../gui/syncrunfilelog.cpp
+    )
 
-
-message("========================== BAH ${CMAKE_SOURCE_DIR}/../libsync/ ${CMAKE_SOURCE_DIR}/csync/src/")
 
 #add_subdirectory(applet)
 add_subdirectory(owncloudsync)
