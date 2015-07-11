@@ -24,6 +24,7 @@
 
 #include <KFileItem>
 #include <KDirModel>
+#include <QDir>
 
 
 class DirModelPrivate;

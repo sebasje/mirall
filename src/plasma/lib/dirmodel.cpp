@@ -97,11 +97,11 @@ QVariant DirModel::data(const QModelIndex & index, int role) const {
     } else if (role == MimetypeRole) {
         return fileItem.mimetype();
     } else if (role == ModificationTimeRole) {
-        return fileItem.time(KFileItem::ModificationTime).dateTime();
+        return fileItem.time(KFileItem::ModificationTime);
     } else if (role == CreationTimeRole) {
-        return fileItem.time(KFileItem::CreationTime).dateTime();
+        return fileItem.time(KFileItem::CreationTime);
     } else if (role == AccessTimeRole) {
-        return fileItem.time(KFileItem::AccessTime).dateTime();
+        return fileItem.time(KFileItem::AccessTime);
     } else if (role == UrlRole) {
         return fileItem.url();
     }
@@ -112,7 +112,7 @@ void DirModel::setUrl(const QString& u)
 {
     if (d->url != u) {
         d->url = u;
-        d->dirLister->openUrl(KUrl(d->url));
+        d->dirLister->openUrl(d->url);
         emit urlChanged();
     }
 }

@@ -26,20 +26,21 @@
 #include "syncprogress.h"
 
 #include <QDebug>
-#include <KLocale>
+
+#include <KLocalizedString>
 #include <KProcess>
 #include <KRun>
-#include <KStandardDirs>
+#include <QStandardPaths>
 
 #include <QTimer>
 #include <QVariant>
 
 #include <QDBusServiceWatcher>
-#include <QtDeclarative/qdeclarative.h>
+
 #include <QQuickItem>
 
 // The DBus interface definition
-#include "../applet/owncloud_interface.h"
+#include "../import/owncloud_interface.h"
 
 
 class OwncloudSettingsPrivate {
@@ -474,12 +475,12 @@ MiniJob* OwncloudSettings::createMiniJob()
 
 void OwncloudSettings::openConfig()
 {
-    if (KStandardDirs::findExe("active-settings") != QString()) {
+    if (QStandardPaths::findExecutable("active-settings") != QString()) {
         qDebug() << "Found active-settings, using that as shell: active-settings org.kde.active.settings.owncloud";
         KRun::runCommand("active-settings org.kde.active.settings.owncloud", 0);
     } else {
         qDebug() << "Opening kcmshell4 owncloudconfig";
-        KRun::runCommand("kcmshell4 owncloudconfig", 0);
+        KRun::runCommand("kcmshell5 owncloudconfig", 0);
     }
 }
 

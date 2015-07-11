@@ -21,10 +21,9 @@
 
 #include "directorylister.h"
 
-#include <KGlobalSettings>
 #include <QDebug>
 
-#include "../applet/owncloud_interface.h"
+#include "../import/owncloud_interface.h"
 
 
 class DirectoryListerPrivate {
@@ -110,30 +109,31 @@ QString DirectoryLister::homePath() const
 QString DirectoryLister::documentPath() const
 {
     return homePath() + "Documents";
-    return KGlobalSettings::documentPath();
+    //return KGlobalSettings::documentPath();
 }
 
 QString DirectoryLister::downloadPath() const
 {
-    return KGlobalSettings::downloadPath();
+    return homePath() + "Downloads";
+    //return KGlobalSettings::downloadPath();
 }
 
 QString DirectoryLister::musicPath() const
 {
     return homePath() + "Music";
-    return KGlobalSettings::musicPath();
+    //return KGlobalSettings::musicPath();
 }
 
 QString DirectoryLister::picturesPath() const
 {
     return homePath() + "Pictures";
-    return KGlobalSettings::picturesPath();
+    //return KGlobalSettings::picturesPath();
 }
 
 QString DirectoryLister::videosPath() const
 {
     return homePath() + "Videos";
-    return KGlobalSettings::videosPath();
+    //return KGlobalSettings::videosPath();
 }
 
 #include "directorylister.moc"
