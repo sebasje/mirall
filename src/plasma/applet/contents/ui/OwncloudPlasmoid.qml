@@ -19,6 +19,9 @@
  ***************************************************************************/
 
 import QtQuick 2.2
+import QtQuick.Layouts 1.1
+
+import org.kde.plasma.plasmoid 2.0
 import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.plasma.components 2.0 as PlasmaComponents
 import org.kde.plasma.extras 2.0 as PlasmaExtras
@@ -29,6 +32,12 @@ import org.kde.plasma.owncloud 1.0
 Item {
     id: root
     objectName: "root"
+
+    Plasmoid.switchWidth: units.gridUnit * 14
+    Plasmoid.switchHeight: units.gridUnit * 10
+    Plasmoid.icon: owncloud
+    Plasmoid.toolTipMainText: i18n("Owncloud Filesync")
+    Plasmoid.status: PlasmaCore.Types.ActiveStatus
 
     property bool webdavInFileManager: false
     property bool showRemoveFolder: false
@@ -46,9 +55,26 @@ Item {
 
     DirectoryLister { id: dir }
 
-    Item {
+    Plasmoid.compactRepresentation: PlasmaCore.IconItem {
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+            onClicked: {
+                if (mouse.button == Qt.MiddleButton) {
+                    //root.playPause()
+                } else {
+                    plasmoid.expanded = !plasmoid.expanded
+                }
+            }
+        }
+    }
+
+    Plasmoid.fullRepresentation: Item {
         id: owncloudItem
-        anchors { fill: parent; margins: 12; }
+
+        Layout.preferredWidth: units.gridUnit * 30
+        Layout.preferredHeight: units.gridUnit * 20
+        //anchors { fill: parent; margins: 12; }
         PlasmaExtras.Heading {
             id: headingLabel
             level: 2
