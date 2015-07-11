@@ -92,6 +92,7 @@ class OwncloudSync : public QObject
         void slotFetchCredentials();
         void slotGuiLog(const QString &err, const QString &msg);
         void slotCredentialsFetched( bool );
+        void accountStateChanged(int state);
 
         void progressInfo(const QString& folder, const OCC::ProgressInfo& progress);
 

@@ -105,21 +105,34 @@ void OwncloudSync::init()
     AccountManager::instance()->restore();
 
     QList<AccountStatePtr> acl = AccountManager::instance()->accounts();
+
+
     for (auto ac : acl) {
+        connect(ac.data(), &AccountState::stateChanged,
+                this, &OwncloudSync::accountStateChanged);
+
         ac->checkConnectivity();
         qDebug() << "AS: " << ac->isConnected() << ac->stateString(ac->state());
     }
-    qDebug() << "accounts: " << acl.count();
+    qDebug() << "accounts #: " << acl.count();
 
 
 
     d->folderMan = OCC::FolderMan::instance();
-    qDebug() << "folderMan: " << d->folderMan;
-    connect( d->folderMan, &FolderMan::folderSyncStateChange,
+
+    qDebug() << "folderMan: " << d->folderMan->map().count();
+
+    connect(d->folderMan, &FolderMan::folderSyncStateChange,
              this, &OwncloudSync::slotSyncStateChange);
+
     FolderMan::instance()->setSyncEnabled(true);
     FolderMan::instance()->setupFolders();
 
+//     qDebug() << "FFM " << FolderMan::instance()->map();
+//     for (auto f : FolderMan::instance()->map()) {
+//         qDebug() << "  F: " << f->alias() << f->path() << f->remotePath();
+//     }
+//     loadFolders();
     //d->ocInfo->setCustomConfigHandle("mirall");
 //     connect(d->ocInfo,SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
 //              SLOT(slotOwnCloudFound(QString,QString,QString,QString)));
@@ -167,13 +180,13 @@ void OwncloudSync::slotSyncStateChange(OCC::Folder *folder)
     if (!folder) {
         qDebug() << "Folder is null";
         return;
-
     }
+    qDebug() << "Folder sync state change" << folder->alias();
     if (folder && (folder->syncResult().status() == OCC::SyncResult::Success)) {
         d->syncTime[folder->alias()] = QDateTime::currentDateTime();
 //         qDebug() << "OC updated syncTime for " << s << d->syncTime[s];
     }
-    updateFolder(d->folderMan->folder(folder->alias()));
+    updateFolder(folder);
 }
 
 // void OwncloudSync::itemProgress(int kind, const QString& folder, const QString& file, qint64 p1, qint64 p2)
@@ -272,6 +285,7 @@ void OwncloudSync::refresh()
 void OwncloudSync::loadFolders()
 {
     if (d->ocStatus == OwncloudSettings::Connected) {
+        qDebug() << "connected";
         QStringList fs;
         foreach (OCC::Folder* f, d->folderMan->map()) {
             //qDebug() << "OC New folder: " << f->alias() << f->path() << f->secondPath();
@@ -280,6 +294,7 @@ void OwncloudSync::loadFolders()
             updateFolder(f);
         }
     } else {
+        qDebug() << "disco";
         d->folderList.clear();
         d->folders.clear();
         emit folderListChanged(d->folderList);
@@ -292,6 +307,7 @@ void OwncloudSync::folderSyncFinished(OCC::SyncResult r)
         OCC::Folder *f = static_cast<OCC::Folder*>(sender());
         if (f) {
             d->syncTime[f->alias()] = QDateTime::currentDateTime();
+            qDebug() << "Updating syncTime for " << f->alias() << d->syncTime[f->alias()];
         } else {
             //qDebug() << " OC no folder found";
         }
@@ -354,11 +370,17 @@ void OwncloudSync::addSyncFolder(const QString& localFolder, const QString& remo
     fd.targetPath = remoteFolder;
     fd.alias = alias;
 
-    //OCC::AccountState as = new OCC::AccountState();
+    auto acl = AccountManager::instance()->accounts();
+    if (acl.count() == 0) {
+        return;
+    }
+    if (acl.count() > 1) {
+        qWarning() << "Application is not fit to use multiple account!";
+    }
+    AccountState* ac = acl.at(0).data();
+    d->folderMan->addFolder(ac, fd);
 
-    //d->folderMan->addFolder(as, fd);
-
-    qDebug() << "POC OCD OwncloudSyncDaemon::addSyncFolder: " << localFolder << remoteFolder << alias;
+    qDebug() << "POC OCD OwncloudSyncDaemon::addSyncFolder: " << ac << localFolder << remoteFolder << alias;
 
     d->folderMan->setupFolders();
     refresh();
@@ -391,6 +413,7 @@ void OwncloudSync::delayedReadConfig()
 void OwncloudSync::checkRemoteFolder(const QString& f)
 {
     if (d->ocStatus == OwncloudSettings::Connected) {
+        qWarning() << "checkRemoteFolder needs porting";
 //         QNetworkReply* reply = d->ocInfo->getDirectoryListing(f);
 //         connect(d->ocInfo, SIGNAL(directoryListingUpdated(const &QStringList)),
 //                 this, SLOT(slotDirectoryListingUpdated(const QStringList&)));
@@ -563,6 +586,61 @@ void OwncloudSync::slotAuthCheck()
         }
     }
 }
+
+void OwncloudSync::accountStateChanged(int state)
+{
+    //auto account = dynamic_cast<AccountStatePtr>(sender());
+
+    if (state == AccountState::Connected) {
+        qDebug() << "HOoooray!";
+        if (d->ocStatus != OwncloudSettings::Connected) {
+
+            qDebug() << "OC ****** changing to Connected/NoError! :-)";
+            d->ocStatus = OwncloudSettings::Connected;
+            d->ocError = OwncloudSettings::NoError;
+            qDebug() << "________ POC emit statusChanged " << (d->ocStatus == OwncloudSettings::Connected);
+            emit statusChanged(d->ocStatus);
+            emit errorChanged(d->ocError);
+            d->folderMan->setupFolders();
+            loadFolders();
+        }
+    } else if (state == AccountState::ConfigurationError) {
+        if (d->ocStatus != OwncloudSettings::Error ||
+            d->ocError != OwncloudSettings::AuthenticationError) {
+
+            qDebug() << "OC ******** Likely, password is wrong!";
+            d->ocStatus = OwncloudSettings::Error;
+            d->ocError = OwncloudSettings::AuthenticationError;
+            emit statusChanged(d->ocStatus);
+            emit errorChanged(d->ocError);
+        }
+    } else if (state == AccountState::Disconnected) {
+        if (d->ocStatus != OwncloudSettings::Disconnected) {
+            d->ocStatus = OwncloudSettings::Disconnected;
+            d->ocError = OwncloudSettings::NoError;
+            emit statusChanged(d->ocStatus);
+            emit errorChanged(d->ocError);
+        }
+            //
+    } else if (state == AccountState::NetworkError || state == AccountState::ServiceUnavailable) {
+        if (d->ocStatus != OwncloudSettings::Error ||
+            d->ocError != OwncloudSettings::NetworkError) {
+
+            qDebug() << "OC ******** NetworkError or ServiceUnavailable!";
+            d->ocStatus = OwncloudSettings::Error;
+            d->ocError = OwncloudSettings::NetworkError;
+            emit statusChanged(d->ocStatus);
+            emit errorChanged(d->ocError);
+        }
+    //} else if (state == AccountState::ServiceUnavailable) {
+
+    } else {
+        qWarning() << "I don't know how to handle this state." << state;
+
+    }
+}
+
+
 
 void OwncloudSync::setupOwncloud(const QString &server, const QString &user, const QString &password)
 {
