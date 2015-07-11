@@ -1,1 +1,1 @@
- LD_LIBRARY_PATH=/home/sebas/kf5/install/lib/owncloud /home/sebas/kf5/install/bin/owncloudsyncd
+ LD_LIBRARY_PATH=/home/sebas/kf5/install/lib/owncloud /home/sebas/kf5/install/bin/owncloudsyncd 2>&1

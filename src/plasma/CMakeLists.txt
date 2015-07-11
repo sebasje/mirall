@@ -67,9 +67,11 @@ message("========================== BAH ${CMAKE_SOURCE_DIR}/../libsync/ ${CMAKE_
 #add_subdirectory(applet)
 add_subdirectory(owncloudsync)
 add_subdirectory(import)
+
 #add_subdirectory(settingsmodule)
 #add_subdirectory(kcmodule)
 
+plasma_install_package(applet org.kde.plasma.owncloud)
 
 # plasma_install_package(package org.kde.active.settings packages package)
 

@@ -1,12 +1,13 @@
 ( * means todo or work in progress, o means done )
 
 Porting to Plasma 5
-* make owncloudsync run
-* port credential / account store
-* port import
-* make lib/ a dynamically loaded lib
+o make owncloudsync run
+o port credential / account store
+o port to import
+* create applet
 * merge settings and kcm into new-style QML kcm
 * Port KCM to QtQuickControls
+* make lib/ a dynamically loaded lib
 
 
 Feedback for libsync
